@@ -44,7 +44,18 @@ func connectDB() (*sql.DB, error) {
 	return db, nil
 }
 
-// 記事一覧を取得する
+func postHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		getPostsHandler(w, r)
+	case http.MethodPost:
+		createPostHandler(w, r)
+	default:
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// 記事一覧取得用のハンドラー関数
 func getPostsHandler(w http.ResponseWriter, r *http.Request) {
 	// DB接続を実施
 	db, err := connectDB()
@@ -78,6 +89,36 @@ func getPostsHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(posts)
 }
 
+// 記事作成用のハンドラー関数
+func createPostHandler(w http.ResponseWriter, r *http.Request) {
+	// Post型の構造体にデコードして格納
+	var post Post
+	if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// DB接続を実施
+	db, err := connectDB()
+	if err != nil {
+		http.Error(w, "DB接続エラー", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// INSERT実行
+	err = db.QueryRow("INSERT INTO posts (title, content) VALUES ($1, $2) RETURNING id", post.Title, post.Content).Scan(&post.ID)
+	if err != nil {
+		http.Error(w, "Failed to insert post", http.StatusInternalServerError)
+		return
+	}
+
+	// 作成した記事IDをJSONで返す
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(post)
+}
+
 func helloHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Hello, Blog API!")
 }
@@ -90,7 +131,7 @@ func main() {
 	}
 	// ハンドラー関数の設定
 	http.HandleFunc("/", helloHandler)
-	http.HandleFunc("/posts", getPostsHandler)
+	http.HandleFunc("/posts", postHandler)
 	// サーバー起動
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatal(err)
