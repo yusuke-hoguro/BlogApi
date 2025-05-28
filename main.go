@@ -13,6 +13,9 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// DBのポインタを保管
+var db *sql.DB
+
 // Post構造体
 type Post struct {
 	ID      int    `json:"id"`
@@ -55,6 +58,8 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		createPostHandler(w, r)
 	case http.MethodPut:
 		updatePostHandler(w, r)
+	case http.MethodDelete:
+		deletePostHandler(w, r)
 	default:
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 	}
@@ -62,14 +67,6 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 
 // 記事一覧取得用のハンドラー関数
 func getPostsHandler(w http.ResponseWriter, r *http.Request) {
-	// DB接続を実施
-	db, err := connectDB()
-	if err != nil {
-		http.Error(w, "DB接続エラー", http.StatusInternalServerError)
-		return
-	}
-	defer db.Close()
-
 	// postsテーブルから指定したカラムのデータを取得する
 	rows, err := db.Query("SELECT id, title, content FROM posts")
 	if err != nil {
@@ -103,16 +100,8 @@ func createPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// DB接続を実施
-	db, err := connectDB()
-	if err != nil {
-		http.Error(w, "DB接続エラー", http.StatusInternalServerError)
-		return
-	}
-	defer db.Close()
-
 	// INSERT実行
-	err = db.QueryRow("INSERT INTO posts (title, content) VALUES ($1, $2) RETURNING id", post.Title, post.Content).Scan(&post.ID)
+	err := db.QueryRow("INSERT INTO posts (title, content) VALUES ($1, $2) RETURNING id", post.Title, post.Content).Scan(&post.ID)
 	if err != nil {
 		http.Error(w, "Failed to insert post", http.StatusInternalServerError)
 		return
@@ -141,14 +130,6 @@ func updatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// DB接続を実施
-	db, err := connectDB()
-	if err != nil {
-		http.Error(w, "DB接続エラー", http.StatusInternalServerError)
-		return
-	}
-	defer db.Close()
-
 	// UPDATE実行
 	result, err := db.Exec("UPDATE posts SET title = $1, content = $2 WHERE id = $3", post.Title, post.Content, id)
 	if err != nil {
@@ -167,11 +148,50 @@ func updatePostHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Post update successfully!")
 }
 
+// 記事削除のハンドラー関数
+func deletePostHandler(w http.ResponseWriter, r *http.Request) {
+	// URLからIDを取得する
+	idStr := strings.TrimPrefix(r.URL.Path, "/posts/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
+
+	// DELETE実行
+	result, err := db.Exec("DELETE FROM posts WHERE id = $1", id)
+	if err != nil {
+		http.Error(w, "Failed to update post", http.StatusInternalServerError)
+		return
+	}
+
+	// 削除行数の確認
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		http.Error(w, "Failed to confirm deletion", http.StatusInternalServerError)
+		return
+	} else if rowsAffected == 0 {
+		http.Error(w, "Post not found", http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func helloHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Hello, Blog API!")
 }
 
 func main() {
+	var err error
+	// DB接続を実施
+	db, err = connectDB()
+	if err != nil {
+		log.Fatalf("DB接続エラー: %v", err)
+		return
+	}
+	defer db.Close()
+
 	// ポート取得
 	port := os.Getenv("PORT")
 	if port == "" {
