@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 
 	_ "github.com/lib/pq"
 )
@@ -44,12 +46,15 @@ func connectDB() (*sql.DB, error) {
 	return db, nil
 }
 
+// 記事用のハンドラー関数
 func postHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		getPostsHandler(w, r)
 	case http.MethodPost:
 		createPostHandler(w, r)
+	case http.MethodPut:
+		updatePostHandler(w, r)
 	default:
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 	}
@@ -119,6 +124,49 @@ func createPostHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(post)
 }
 
+// 記事更新のハンドラー関数
+func updatePostHandler(w http.ResponseWriter, r *http.Request) {
+	// URLからIDを取得する
+	idStr := strings.TrimPrefix(r.URL.Path, "/posts/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
+
+	// Post型の構造体にデコードして格納
+	var post Post
+	if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// DB接続を実施
+	db, err := connectDB()
+	if err != nil {
+		http.Error(w, "DB接続エラー", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// UPDATE実行
+	result, err := db.Exec("UPDATE posts SET title = $1, content = $2 WHERE id = $3", post.Title, post.Content, id)
+	if err != nil {
+		http.Error(w, "Failed to update post", http.StatusInternalServerError)
+		return
+	}
+
+	// 更新行数の確認
+	rowsAffected, err := result.RowsAffected()
+	if err != nil || rowsAffected == 0 {
+		http.Error(w, "Post nor found or no changes", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintln(w, "Post update successfully!")
+}
+
 func helloHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Hello, Blog API!")
 }
@@ -132,6 +180,7 @@ func main() {
 	// ハンドラー関数の設定
 	http.HandleFunc("/", helloHandler)
 	http.HandleFunc("/posts", postHandler)
+	http.HandleFunc("/posts/", postHandler)
 	// サーバー起動
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatal(err)
