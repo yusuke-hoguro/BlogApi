@@ -23,6 +23,13 @@ type Post struct {
 	Content string `json:"content"`
 }
 
+// User登録用の構造体
+type User struct {
+	ID       int    `json:"id"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 // DBへの接続処理
 func connectDB() (*sql.DB, error) {
 	// DB接続を実施する
@@ -178,6 +185,32 @@ func deletePostHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// ユーザー登録用のハンドラー関数
+func signupHandler(w http.ResponseWriter, r *http.Request) {
+	// Postであるかをチェックする
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// GOの構造体にデコード
+	var userData User
+	err := json.NewDecoder(r.Body).Decode(&userData)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	}
+
+	// INSERT実行
+	err = db.QueryRow("INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id", userData.Username, userData.Password).Scan(&userData.ID)
+	if err != nil {
+		http.Error(w, "Failed to insert post", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(userData)
+}
+
 func helloHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Hello, Blog API!")
 }
@@ -201,6 +234,8 @@ func main() {
 	http.HandleFunc("/", helloHandler)
 	http.HandleFunc("/posts", postHandler)
 	http.HandleFunc("/posts/", postHandler)
+	http.HandleFunc("/signup", signupHandler)
+
 	// サーバー起動
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatal(err)
