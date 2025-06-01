@@ -208,8 +208,25 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// バリデーション
+	if userData.Username == "" {
+		http.Error(w, "Username is required", http.StatusBadRequest)
+		return
+	}
+	if len(userData.Password) < 8 {
+		http.Error(w, "Password must be at least 8 characters long", http.StatusBadRequest)
+		return
+	}
+
+	// パスワードをハッシュ化
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userData.Password), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "Failed to hash password", http.StatusInternalServerError)
+		return
+	}
+
 	// INSERT実行
-	err = db.QueryRow("INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id", userData.Username, userData.Password).Scan(&userData.ID)
+	err = db.QueryRow("INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id", userData.Username, string(hashedPassword)).Scan(&userData.ID)
 	if err != nil {
 		http.Error(w, "Failed to insert post", http.StatusInternalServerError)
 		return
