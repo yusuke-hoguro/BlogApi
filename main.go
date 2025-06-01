@@ -9,12 +9,19 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
+	"golang.org/x/crypto/bcrypt"
+
+	"github.com/golang-jwt/jwt/v5"
 	_ "github.com/lib/pq"
 )
 
 // DBのポインタを保管
 var db *sql.DB
+
+// JWT認証用の秘密鍵（最終的には環境変数から）
+var jwtKey = []byte("your_secret_key")
 
 // Post構造体
 type Post struct {
@@ -198,6 +205,7 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&userData)
 	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
 	}
 
 	// INSERT実行
@@ -211,8 +219,102 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(userData)
 }
 
+// ログイン機能用用のハンドラー関数
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	// Postであるかをチェックする
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// GOの構造体にデコード
+	var creds struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	err := json.NewDecoder(r.Body).Decode(&creds)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// ユーザーをDBから検索
+	var id int
+	var hashedPassword string
+	err = db.QueryRow("SELECT id, password FROM users WHERE username = $1", creds.Username).Scan(&id, &hashedPassword)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+		} else {
+			http.Error(w, "Database error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// パスワード照合
+	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(creds.Password))
+	if err != nil {
+		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+		return
+	}
+
+	// JWT生成
+	token, err := generateJWT(id)
+	if err != nil {
+		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+		return
+	}
+
+	// レスポンス
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"token": token})
+}
+
+// JWTの検証を実施するミドルウェア
+func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// リクエストヘッダーの確認
+		tokenStr := r.Header.Get("Authorization")
+		if tokenStr == "" {
+			http.Error(w, "Missing token", http.StatusUnauthorized)
+			return
+		}
+
+		// JWTの解析
+		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+			return jwtKey, nil
+		})
+		if err != nil || !token.Valid {
+			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		// 引数で指定されたハンドラー関数を実行
+		next(w, r)
+	}
+}
+
 func helloHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Hello, Blog API!")
+}
+
+// JWTトークンを発行する
+func generateJWT(userID int) (string, error) {
+	// payloadの生成
+	claims := &jwt.MapClaims{
+		"user_id": userID,
+		"exp":     time.Now().Add(24 * time.Hour).Unix(), //トークンの有効時間(24時間後)
+	}
+
+	// JWTを生成する
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	// 署名付きトークン生成
+	tokenString, err := token.SignedString(jwtKey)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }
 
 func main() {
@@ -232,9 +334,10 @@ func main() {
 	}
 	// ハンドラー関数の設定
 	http.HandleFunc("/", helloHandler)
-	http.HandleFunc("/posts", postHandler)
-	http.HandleFunc("/posts/", postHandler)
+	http.HandleFunc("/posts", authMiddleware(postHandler))
+	http.HandleFunc("/posts/", authMiddleware(postHandler))
 	http.HandleFunc("/signup", signupHandler)
+	http.HandleFunc("/login", loginHandler)
 
 	// サーバー起動
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
