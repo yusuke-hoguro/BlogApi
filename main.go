@@ -255,6 +255,16 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// バリデーション
+	if creds.Username == "" {
+		http.Error(w, "Username is required", http.StatusBadRequest)
+		return
+	}
+	if creds.Password == "" {
+		http.Error(w, "Password is required", http.StatusBadRequest)
+		return
+	}
+
 	// ユーザーをDBから検索
 	var id int
 	var hashedPassword string
