@@ -344,6 +344,24 @@ func generateJWT(userID int) (string, error) {
 	return tokenString, nil
 }
 
+// CORS設定
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// CORSヘッダーを設定
+		w.Header().Set("Access-Control-Allow-Origin", "*") //実環境では任意のドメインにする
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		// プリフライトリクエストへの対応
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		// 次のハンドラーへ処理を渡す
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	var err error
 	// DB接続を実施
@@ -359,15 +377,20 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+
+	mux := http.NewServeMux()
 	// ハンドラー関数の設定
-	http.HandleFunc("/", helloHandler)
-	http.HandleFunc("/posts", authMiddleware(postHandler))
-	http.HandleFunc("/posts/", authMiddleware(postHandler))
-	http.HandleFunc("/signup", signupHandler)
-	http.HandleFunc("/login", loginHandler)
+	mux.HandleFunc("/", helloHandler)
+	mux.HandleFunc("/posts", authMiddleware(postHandler))
+	mux.HandleFunc("/posts/", authMiddleware(postHandler))
+	mux.HandleFunc("/signup", signupHandler)
+	mux.HandleFunc("/login", loginHandler)
+
+	// CORSミドルウェアを適用
+	handler := corsMiddleware(mux)
 
 	// サーバー起動
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
+	if err := http.ListenAndServe(":"+port, handler); err != nil {
 		log.Fatal(err)
 	}
 	log.Println("Server started at :8080")
