@@ -22,9 +22,6 @@ import (
 // DBのポインタを保管
 var db *sql.DB
 
-// JWT認証用の秘密鍵（最終的には環境変数から）
-var jwtKey = []byte("your_secret_key")
-
 // Post構造体
 type Post struct {
 	ID      int    `json:"id"`
@@ -299,30 +296,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"token": token})
 }
 
-// JWTの検証を実施するミドルウェア
-func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// リクエストヘッダーの確認
-		tokenStr := r.Header.Get("Authorization")
-		if tokenStr == "" {
-			http.Error(w, "Missing token", http.StatusUnauthorized)
-			return
-		}
-
-		// JWTの解析
-		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
-			return jwtKey, nil
-		})
-		if err != nil || !token.Valid {
-			http.Error(w, "Invalid token", http.StatusUnauthorized)
-			return
-		}
-
-		// 引数で指定されたハンドラー関数を実行
-		next(w, r)
-	}
-}
-
 func helloHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Hello, Blog API!")
 }
@@ -338,7 +311,7 @@ func generateJWT(userID int) (string, error) {
 	// JWTを生成する
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	// 署名付きトークン生成
-	tokenString, err := token.SignedString(jwtKey)
+	tokenString, err := token.SignedString(middleware.JwtKey)
 	if err != nil {
 		return "", err
 	}
@@ -365,8 +338,8 @@ func main() {
 	mux := http.NewServeMux()
 	// ハンドラー関数の設定
 	mux.HandleFunc("/", helloHandler)
-	mux.HandleFunc("/posts", authMiddleware(postHandler))
-	mux.HandleFunc("/posts/", authMiddleware(postHandler))
+	mux.HandleFunc("/posts", middleware.AuthMiddleware(postHandler))
+	mux.HandleFunc("/posts/", middleware.AuthMiddleware(postHandler))
 	mux.HandleFunc("/signup", signupHandler)
 	mux.HandleFunc("/login", loginHandler)
 
