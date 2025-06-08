@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/yusuke-hoguro/BlogApi/middleware"
+
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -344,24 +346,6 @@ func generateJWT(userID int) (string, error) {
 	return tokenString, nil
 }
 
-// CORS設定
-func corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// CORSヘッダーを設定
-		w.Header().Set("Access-Control-Allow-Origin", "*") //実環境では任意のドメインにする
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-		// プリフライトリクエストへの対応
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		// 次のハンドラーへ処理を渡す
-		next.ServeHTTP(w, r)
-	})
-}
-
 func main() {
 	var err error
 	// DB接続を実施
@@ -387,7 +371,7 @@ func main() {
 	mux.HandleFunc("/login", loginHandler)
 
 	// CORSミドルウェアを適用
-	handler := corsMiddleware(mux)
+	handler := middleware.CorsMiddleware(mux)
 
 	// サーバー起動
 	if err := http.ListenAndServe(":"+port, handler); err != nil {
