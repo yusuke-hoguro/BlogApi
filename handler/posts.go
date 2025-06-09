@@ -71,7 +71,12 @@ func GetPostsHandler(db *sql.DB) http.HandlerFunc {
 func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// JWTからユーザーIDを取得する
-		userID := r.Context().Value("userID").(int)
+		userID, ok := r.Context().Value("userID").(int)
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
 		// Post型の構造体にデコードして格納
 		var post Post
 		if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
@@ -82,7 +87,7 @@ func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 		post.UserID = userID
 
 		// INSERT実行
-		err := db.QueryRow("INSERT INTO posts (title, content) VALUES ($1, $2) RETURNING id", post.Title, post.Content).Scan(&post.ID)
+		err := db.QueryRow("INSERT INTO posts (title, content, user_id) VALUES ($1, $2, $3) RETURNING id", post.Title, post.Content, post.UserID).Scan(&post.ID)
 		if err != nil {
 			http.Error(w, "Failed to insert post", http.StatusInternalServerError)
 			return
