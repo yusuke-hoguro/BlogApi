@@ -1,10 +1,16 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/golang-jwt/jwt"
 )
+
+type contextKey string
+
+// 衝突を防ぐために独自の型をキーに使用
+const userIDKey contextKey = "userID"
 
 // JWT認証用の秘密鍵（最終的には環境変数から）
 var JwtKey = []byte("your_secret_key")
@@ -28,7 +34,24 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
+		// JWTの中身（Claims）を取り出してmap形式に変換
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			http.Error(w, "Invalid token claims", http.StatusUnauthorized)
+			return
+		}
+
+		// user id を保管する
+		userIDFloat, ok := claims["user_id"].(float64)
+		if !ok {
+			http.Error(w, "Invalid user ID in token", http.StatusUnauthorized)
+			return
+		}
+		userID := int(userIDFloat)
+
+		// ユーザーIDをリクエストのContextに埋め込んで次のハンドラー関数に渡す
+		ctx := context.WithValue(r.Context(), userIDKey, userID)
 		// 引数で指定されたハンドラー関数を実行
-		next(w, r)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }

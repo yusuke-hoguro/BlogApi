@@ -14,6 +14,7 @@ type Post struct {
 	ID      int    `json:"id"`
 	Title   string `json:"title"`
 	Content string `json:"content"`
+	UserID  int    `json:"user_id"`
 }
 
 // HTTPメソッドごとのルーティング
@@ -69,12 +70,16 @@ func GetPostsHandler(db *sql.DB) http.HandlerFunc {
 // 記事作成用のハンドラー関数
 func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// JWTからユーザーIDを取得する
+		userID := r.Context().Value("userID").(int)
 		// Post型の構造体にデコードして格納
 		var post Post
 		if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
+		// 記事にユーザーIDを設定する
+		post.UserID = userID
 
 		// INSERT実行
 		err := db.QueryRow("INSERT INTO posts (title, content) VALUES ($1, $2) RETURNING id", post.Title, post.Content).Scan(&post.ID)
@@ -93,11 +98,28 @@ func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 // 記事更新のハンドラー関数
 func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// JWTからユーザーIDを取得する
+		userID := r.Context().Value("userID").(int)
+
 		// URLからIDを取得する
 		idStr := strings.TrimPrefix(r.URL.Path, "/posts/")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
 			http.Error(w, "Invalid post ID", http.StatusBadRequest)
+			return
+		}
+
+		// DBから投稿者のユーザーIDを取得する
+		var postUserID int
+		err = db.QueryRow("SELECT user_id FROM posts WHERE id = $1", id).Scan(&postUserID)
+		if err != nil {
+			http.Error(w, "Post not found", http.StatusNotFound)
+			return
+		}
+
+		// リクエストを投げたユーザーが記事の投稿者でない場合はエラー
+		if postUserID != userID {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
@@ -130,11 +152,28 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 // 記事削除のハンドラー関数
 func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// JWTからリクエストをなげたユーザーIDを取得
+		userID := r.Context().Value("userID").(int)
+
 		// URLからIDを取得する
 		idStr := strings.TrimPrefix(r.URL.Path, "/posts/")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
 			http.Error(w, "Invalid post ID", http.StatusBadRequest)
+			return
+		}
+
+		// 削除対象の投稿を作成したユーザーのIDを取得する
+		var postUserID int
+		err = db.QueryRow("SELECT user_id FROM posts WHERE id = $1", id).Scan(&postUserID)
+		if err != nil {
+			http.Error(w, "Post not found", http.StatusNotFound)
+			return
+		}
+
+		// リクエストを投げたユーザーが記事の投稿者でない場合はエラー
+		if postUserID != userID {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
