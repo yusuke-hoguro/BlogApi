@@ -16,6 +16,28 @@ type Post struct {
 	Content string `json:"content"`
 }
 
+// HTTPメソッドごとのルーティング
+func PostHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			// 記事一覧取得
+			GetPostsHandler(db)(w, r)
+		case http.MethodPost:
+			// 記事作成用
+			CreatePostHandler(db)(w, r)
+		case http.MethodPut:
+			// 記事更新用
+			UpdatePostHandler(db)(w, r)
+		case http.MethodDelete:
+			// 記事削除
+			DeletePostHandler(db)(w, r)
+		default:
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+	}
+}
+
 // 記事一覧取得用のハンドラー関数
 func GetPostsHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

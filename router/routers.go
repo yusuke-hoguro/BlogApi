@@ -10,8 +10,8 @@ import (
 
 // ハンドラー関数の設定を行う
 func RegisterRoutes(mux *http.ServeMux, db *sql.DB) {
-	mux.HandleFunc("/posts", middleware.AuthMiddleware(handler.GetPostsHandler(db)))
-	mux.HandleFunc("/posts/", middleware.AuthMiddleware(handler.CreatePostHandler(db)))
+	mux.HandleFunc("/posts", middleware.AuthMiddleware(handler.PostHandler(db)))
+	mux.HandleFunc("/posts/", middleware.AuthMiddleware(handler.PostHandler(db)))
 	mux.HandleFunc("/signup", handler.SignupHandler(db))
 	mux.HandleFunc("/login", handler.LoginHandler(db))
 
