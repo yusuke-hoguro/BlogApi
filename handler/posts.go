@@ -104,7 +104,11 @@ func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// JWTからユーザーIDを取得する
-		userID := r.Context().Value("userID").(int)
+		userID, ok := r.Context().Value("userID").(int)
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
 
 		// URLからIDを取得する
 		idStr := strings.TrimPrefix(r.URL.Path, "/posts/")
@@ -117,14 +121,17 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 		// DBから投稿者のユーザーIDを取得する
 		var postUserID int
 		err = db.QueryRow("SELECT user_id FROM posts WHERE id = $1", id).Scan(&postUserID)
-		if err != nil {
+		if err == sql.ErrNoRows {
 			http.Error(w, "Post not found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			http.Error(w, "Database error", http.StatusInternalServerError)
 			return
 		}
 
 		// リクエストを投げたユーザーが記事の投稿者でない場合はエラー
 		if postUserID != userID {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
 
@@ -158,7 +165,11 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// JWTからリクエストをなげたユーザーIDを取得
-		userID := r.Context().Value("userID").(int)
+		userID, ok := r.Context().Value("userID").(int)
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
 
 		// URLからIDを取得する
 		idStr := strings.TrimPrefix(r.URL.Path, "/posts/")
@@ -171,14 +182,17 @@ func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 		// 削除対象の投稿を作成したユーザーのIDを取得する
 		var postUserID int
 		err = db.QueryRow("SELECT user_id FROM posts WHERE id = $1", id).Scan(&postUserID)
-		if err != nil {
+		if err == sql.ErrNoRows {
 			http.Error(w, "Post not found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			http.Error(w, "Database error", http.StatusInternalServerError)
 			return
 		}
 
 		// リクエストを投げたユーザーが記事の投稿者でない場合はエラー
 		if postUserID != userID {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
 
