@@ -10,7 +10,7 @@ import (
 type contextKey string
 
 // 衝突を防ぐために独自の型をキーに使用
-const userIDKey contextKey = "userID"
+const UserIDKey contextKey = "userID"
 
 // JWT認証用の秘密鍵（最終的には環境変数から）
 var JwtKey = []byte("your_secret_key")
@@ -50,7 +50,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		userID := int(userIDFloat)
 
 		// ユーザーIDをリクエストのContextに埋め込んで次のハンドラー関数に渡す
-		ctx := context.WithValue(r.Context(), userIDKey, userID)
+		ctx := context.WithValue(r.Context(), UserIDKey, userID)
 		// 引数で指定されたハンドラー関数を実行
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}

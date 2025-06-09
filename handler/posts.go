@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/yusuke-hoguro/BlogApi/middleware"
 )
 
 // Post構造体
@@ -71,7 +73,7 @@ func GetPostsHandler(db *sql.DB) http.HandlerFunc {
 func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// JWTからユーザーIDを取得する
-		userID, ok := r.Context().Value("userID").(int)
+		userID, ok := r.Context().Value(middleware.UserIDKey).(int)
 		if !ok {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
@@ -104,7 +106,7 @@ func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// JWTからユーザーIDを取得する
-		userID, ok := r.Context().Value("userID").(int)
+		userID, ok := r.Context().Value(middleware.UserIDKey).(int)
 		if !ok {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
@@ -165,7 +167,7 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// JWTからリクエストをなげたユーザーIDを取得
-		userID, ok := r.Context().Value("userID").(int)
+		userID, ok := r.Context().Value(middleware.UserIDKey).(int)
 		if !ok {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
@@ -214,5 +216,38 @@ func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+// ユーザー自身の投稿のみを取得する
+func GetMyPostsHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// JWTからリクエストをなげたユーザーIDを取得
+		userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		// DBから自分の投稿を取得
+		rows, err := db.Query("SELECT id, title, content, user_id FROM posts WHERE user_id = $1", userID)
+		if err != nil {
+			http.Error(w, "Failed to fetch posts", http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		var posts []Post
+		for rows.Next() {
+			var post Post
+			if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID); err != nil {
+				http.Error(w, "Post not found", http.StatusNotFound)
+				return
+			}
+			posts = append(posts, post)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(posts)
 	}
 }
