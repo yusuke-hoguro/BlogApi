@@ -45,7 +45,7 @@ func PostHandler(db *sql.DB) http.HandlerFunc {
 func GetPostsHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// postsテーブルから指定したカラムのデータを取得する
-		rows, err := db.Query("SELECT id, title, content FROM posts")
+		rows, err := db.Query("SELECT id, title, content, user_id FROM posts")
 		if err != nil {
 			http.Error(w, "DBクエリエラー", http.StatusInternalServerError)
 			return
@@ -56,7 +56,7 @@ func GetPostsHandler(db *sql.DB) http.HandlerFunc {
 		for rows.Next() {
 			var p Post
 			// DBから取得したデータをGoの変数に格納
-			if err := rows.Scan(&p.ID, &p.Title, &p.Content); err != nil {
+			if err := rows.Scan(&p.ID, &p.Title, &p.Content, &p.UserID); err != nil {
 				http.Error(w, "データ取得エラー", http.StatusInternalServerError)
 				return
 			}
