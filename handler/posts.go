@@ -216,6 +216,7 @@ func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusNoContent)
+		fmt.Fprintln(w, "Post deleted successfully!")
 	}
 }
 
