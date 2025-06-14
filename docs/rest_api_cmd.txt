@@ -1,0 +1,48 @@
+■ログイン
+curl -X POST -H "Content-Type: application/json" -d '{"username":"testuser2", "password":"validpassword"}' http://localhost:8080/login
+
+
+curl -X GET -H "Content-Type: application/json" -d '{"title":"YYY","content":"err"}' http://localhost:8080/posts
+
+■記事投稿
+curl -X PUT -H "Content-Type: application/json" -d '{"title":"YYY","content":"err"}' http://localhost:8080/posts/2
+
+curl -X POST \
+  -H "Authorization: <JWTトークン>" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Hello", "content": "JWT test"}' \
+  http://localhost:8080/posts/2
+
+TOKEN 控え
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDk5NjY5MTUsInVzZXJfaWQiOjN9.w_c0FAODjttk_-0bRgE_jTAQVqZyBXrN3d3_xrVKyo8
+
+■記事の削除
+curl -X DELETE \
+  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDk5NjY5MTUsInVzZXJfaWQiOjN9.w_c0FAODjttk_-0bRgE_jTAQVqZyBXrN3d3_xrVKyo8" \
+  -H "Content-Type: application/json" \
+  http://localhost:8080/posts/4
+  
+■記事の追加
+curl -X POST \
+  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDk1MzgxOTksInVzZXJfaWQiOjN9.mON0iCVolyVCmSMqQfsfhdKX0fbDGa5lldN6JKLngok" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Hello", "content": "JWT test"}' \
+  http://localhost:8080/posts/2
+
+■記事の更新
+curl -X PUT \
+  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDk5NjY5MTUsInVzZXJfaWQiOjN9.w_c0FAODjttk_-0bRgE_jTAQVqZyBXrN3d3_xrVKyo8" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Hello2", "content": "JWT test2"}' \
+  http://localhost:8080/posts/13
+ 
+■記事の取得  
+curl -X GET \
+  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDk1MzgxOTksInVzZXJfaWQiOjN9.mON0iCVolyVCmSMqQfsfhdKX0fbDGa5lldN6JKLngok" \
+  -H "Content-Type: application/json" \
+  http://localhost:8080/posts
+  
+  
+■自分の記事のみ取得
+curl -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDk5NjY5MTUsInVzZXJfaWQiOjN9.w_c0FAODjttk_-0bRgE_jTAQVqZyBXrN3d3_xrVKyo8" http://localhost:8080/myposts
+

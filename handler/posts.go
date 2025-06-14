@@ -9,15 +9,8 @@ import (
 	"strings"
 
 	"github.com/yusuke-hoguro/BlogApi/middleware"
+	"github.com/yusuke-hoguro/BlogApi/models"
 )
-
-// Post構造体
-type Post struct {
-	ID      int    `json:"id"`
-	Title   string `json:"title"`
-	Content string `json:"content"`
-	UserID  int    `json:"user_id"`
-}
 
 // HTTPメソッドごとのルーティング
 func PostHandler(db *sql.DB) http.HandlerFunc {
@@ -45,18 +38,18 @@ func PostHandler(db *sql.DB) http.HandlerFunc {
 func GetPostsHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// postsテーブルから指定したカラムのデータを取得する
-		rows, err := db.Query("SELECT id, title, content, user_id FROM posts")
+		rows, err := db.Query("SELECT id, title, content, user_id, created_at FROM posts")
 		if err != nil {
 			http.Error(w, "DBクエリエラー", http.StatusInternalServerError)
 			return
 		}
 		defer rows.Close()
 
-		var posts []Post
+		var posts []models.Post
 		for rows.Next() {
-			var p Post
+			var p models.Post
 			// DBから取得したデータをGoの変数に格納
-			if err := rows.Scan(&p.ID, &p.Title, &p.Content, &p.UserID); err != nil {
+			if err := rows.Scan(&p.ID, &p.Title, &p.Content, &p.UserID, &p.CreatedAt); err != nil {
 				http.Error(w, "データ取得エラー", http.StatusInternalServerError)
 				return
 			}
@@ -80,7 +73,7 @@ func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// Post型の構造体にデコードして格納
-		var post Post
+		var post models.Post
 		if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
@@ -138,7 +131,7 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// Post型の構造体にデコードして格納
-		var post Post
+		var post models.Post
 		if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
@@ -231,18 +224,44 @@ func GetMyPostsHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// DBから自分の投稿を取得
-		rows, err := db.Query("SELECT id, title, content, user_id FROM posts WHERE user_id = $1", userID)
+		rows, err := db.Query("SELECT id, title, content, user_id, created_at FROM posts WHERE user_id = $1", userID)
 		if err != nil {
 			http.Error(w, "Failed to fetch posts", http.StatusInternalServerError)
 			return
 		}
 		defer rows.Close()
 
-		var posts []Post
+		var posts []models.Post
 		for rows.Next() {
-			var post Post
-			if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID); err != nil {
+			var post models.Post
+			if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt); err != nil {
 				http.Error(w, "Post not found", http.StatusNotFound)
+				return
+			}
+			posts = append(posts, post)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(posts)
+	}
+}
+
+// ユーザー自身の投稿のみを取得する
+func GetAllPostsHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// 全投稿を取得する
+		rows, err := db.Query("SELECT id, title, content, user_id, created_at FROM posts ORDER BY created_at DESC")
+		if err != nil {
+			http.Error(w, "Failed to fetch posts", http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		var posts []models.Post
+		for rows.Next() {
+			var post models.Post
+			if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt); err != nil {
+				http.Error(w, "Failed to parse post", http.StatusNotFound)
 				return
 			}
 			posts = append(posts, post)
