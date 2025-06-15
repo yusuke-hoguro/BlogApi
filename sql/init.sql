@@ -11,3 +11,11 @@ CREATE TABLE IF NOT EXISTS users(
     username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL
 );
+
+CREATE TABLE comments(
+    id SERIAL PRIMARY KEY,
+    post_id INTEGER NOT NULL REFERENCE posts(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCE users(id),
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
