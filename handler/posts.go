@@ -12,53 +12,30 @@ import (
 	"github.com/yusuke-hoguro/BlogApi/models"
 )
 
-// HTTPメソッドごとのルーティング
-func PostHandler(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet:
-			// 記事一覧取得
-			GetPostsHandler(db)(w, r)
-		case http.MethodPost:
-			// 記事作成用
-			CreatePostHandler(db)(w, r)
-		case http.MethodPut:
-			// 記事更新用
-			UpdatePostHandler(db)(w, r)
-		case http.MethodDelete:
-			// 記事削除
-			DeletePostHandler(db)(w, r)
-		default:
-			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		}
-	}
-}
-
 // 記事一覧取得用のハンドラー関数
-func GetPostsHandler(db *sql.DB) http.HandlerFunc {
+func GetPostsyIDHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// postsテーブルから指定したカラムのデータを取得する
-		rows, err := db.Query("SELECT id, title, content, user_id, created_at FROM posts")
+		// IDを抽出する
+		idStr := strings.TrimPrefix(r.URL.Path, "/posts/")
+		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			http.Error(w, "DBクエリエラー", http.StatusInternalServerError)
+			http.Error(w, "Invalid ID", http.StatusBadRequest)
+		}
+
+		// postsテーブルから指定したカラムのデータを取得する
+		var post models.Post
+		err = db.QueryRow("SELECT id, title, content, user_id, created_at FROM posts WHERE id = $1", id).Scan(&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt)
+		if err == sql.ErrNoRows {
+			http.Error(w, "Post not found", http.StatusInternalServerError)
+			return
+		} else if err != nil {
+			http.Error(w, "Database error", http.StatusInternalServerError)
 			return
 		}
-		defer rows.Close()
 
-		var posts []models.Post
-		for rows.Next() {
-			var p models.Post
-			// DBから取得したデータをGoの変数に格納
-			if err := rows.Scan(&p.ID, &p.Title, &p.Content, &p.UserID, &p.CreatedAt); err != nil {
-				http.Error(w, "データ取得エラー", http.StatusInternalServerError)
-				return
-			}
-			// Post構造体のスライスに追加
-			posts = append(posts, p)
-		}
 		// json形式に変更してレスポンスに書き込む
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(posts)
+		json.NewEncoder(w).Encode(post)
 	}
 }
 
