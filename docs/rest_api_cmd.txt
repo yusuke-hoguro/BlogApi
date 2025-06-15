@@ -14,24 +14,24 @@ curl -X POST \
   http://localhost:8080/posts/2
 
 TOKEN 控え
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDk5NjY5MTUsInVzZXJfaWQiOjN9.w_c0FAODjttk_-0bRgE_jTAQVqZyBXrN3d3_xrVKyo8
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTAwNTI4NjQsInVzZXJfaWQiOjN9.QZnc-UwQOYpRXPB_cU8uUBvQCEbwuG2qKiCfN-IdHbU
 
 ■記事の削除
 curl -X DELETE \
-  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDk5NjY5MTUsInVzZXJfaWQiOjN9.w_c0FAODjttk_-0bRgE_jTAQVqZyBXrN3d3_xrVKyo8" \
+  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTAwNTI4NjQsInVzZXJfaWQiOjN9.QZnc-UwQOYpRXPB_cU8uUBvQCEbwuG2qKiCfN-IdHbU" \
   -H "Content-Type: application/json" \
   http://localhost:8080/posts/4
   
 ■記事の追加
 curl -X POST \
-  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDk1MzgxOTksInVzZXJfaWQiOjN9.mON0iCVolyVCmSMqQfsfhdKX0fbDGa5lldN6JKLngok" \
+  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTAwNTI4NjQsInVzZXJfaWQiOjN9.QZnc-UwQOYpRXPB_cU8uUBvQCEbwuG2qKiCfN-IdHbU" \
   -H "Content-Type: application/json" \
   -d '{"title": "Hello", "content": "JWT test"}' \
   http://localhost:8080/posts/2
 
 ■記事の更新
 curl -X PUT \
-  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDk5NjY5MTUsInVzZXJfaWQiOjN9.w_c0FAODjttk_-0bRgE_jTAQVqZyBXrN3d3_xrVKyo8" \
+  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTAwNDYzMDQsInVzZXJfaWQiOjN9.YwzGHJJYxFUqS-f9MHVr4WjDDNRBrAMf1qU4zF1JD7M" \
   -H "Content-Type: application/json" \
   -d '{"title": "Hello2", "content": "JWT test2"}' \
   http://localhost:8080/posts/13
@@ -46,3 +46,9 @@ curl -X GET \
 ■自分の記事のみ取得
 curl -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDk5NjY5MTUsInVzZXJfaWQiOjN9.w_c0FAODjttk_-0bRgE_jTAQVqZyBXrN3d3_xrVKyo8" http://localhost:8080/myposts
 
+■コメントの追加
+curl -X POST \
+  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTAwNTUxOTIsInVzZXJfaWQiOjN9.cbc8Y59aIXrUUHqTPkJfBkBiVpYlq3cZQ7ENqvF7NSo" \
+  -H "Content-Type: application/json" \
+  -d '{"content": "これはコメントです"}' \
+  http://localhost:8080/posts/8/comments

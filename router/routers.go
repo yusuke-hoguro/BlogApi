@@ -21,5 +21,6 @@ func RegisterRoutes(r *mux.Router, db *sql.DB) {
 	r.HandleFunc("/signup", handler.SignupHandler(db)) //ユーザー登録用
 	r.HandleFunc("/login", handler.LoginHandler(db))   //ログイン用
 	// コメント取得
-	r.HandleFunc("/posts/{id}/comments", handler.GetCommentsByPostIDHandler(db)).Methods("GET") //投稿のコメント取得
+	r.HandleFunc("/posts/{id}/comments", handler.GetCommentsByPostIDHandler(db)).Methods("GET")                     //投稿のコメント取得
+	r.HandleFunc("/posts/{id}/comments", middleware.AuthMiddleware(handler.PostCommentHandler(db))).Methods("POST") //投稿のコメント投稿
 }
