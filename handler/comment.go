@@ -3,6 +3,7 @@ package handler
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -43,6 +44,11 @@ func GetCommentsByPostIDHandler(db *sql.DB) http.HandlerFunc {
 				return
 			}
 			comments = append(comments, c)
+		}
+
+		// コメントがない場合
+		if len(comments) == 0 {
+			fmt.Println("No comments.")
 		}
 
 		w.Header().Set("Content-Type", "application/json")

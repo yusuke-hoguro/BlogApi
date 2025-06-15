@@ -13,7 +13,7 @@ import (
 )
 
 // 記事一覧取得用のハンドラー関数
-func GetPostsyIDHandler(db *sql.DB) http.HandlerFunc {
+func GetPostsByIDHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// IDを抽出する
 		idStr := strings.TrimPrefix(r.URL.Path, "/posts/")

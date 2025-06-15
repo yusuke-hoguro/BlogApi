@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/gorilla/mux"
 	"github.com/yusuke-hoguro/BlogApi/db"
 	"github.com/yusuke-hoguro/BlogApi/middleware"
 	"github.com/yusuke-hoguro/BlogApi/router"
@@ -27,10 +28,10 @@ func main() {
 		port = "8080"
 	}
 
-	mux := http.NewServeMux()
-	router.RegisterRoutes(mux, db.DB)
+	r := mux.NewRouter()
+	router.RegisterRoutes(r, db.DB)
 	// CORSミドルウェアを適用
-	handler := middleware.CorsMiddleware(mux)
+	handler := middleware.CorsMiddleware(r)
 
 	// サーバー起動
 	if err := http.ListenAndServe(":"+port, handler); err != nil {
