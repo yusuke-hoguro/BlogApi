@@ -59,6 +59,36 @@ func GetCommentsByPostIDHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
+// 投稿のコメント取得用ハンドラー関数
+func GetCommentsByIDHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// URIからpostのIDを取得
+		vars := mux.Vars(r)
+		IDStr := vars["id"]
+		ID, err := strconv.Atoi(IDStr)
+		if err != nil {
+			http.Error(w, "Invalid post ID", http.StatusBadRequest)
+			return
+		}
+
+		// 指定したIDのコメントを取得する
+		var comment models.Comment
+		err = db.QueryRow("SELECT id, post_id, user_id, content, created_at FROM comments WHERE id = $1", ID).Scan(&comment.ID, &comment.PostID, &comment.UserID, &comment.Content, &comment.CreatedAt)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, "Comment Not Found", http.StatusInternalServerError)
+			} else {
+				http.Error(w, "Database error", http.StatusInternalServerError)
+			}
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(comment)
+
+	}
+}
+
 // コメント投稿用のハンドラー関数
 func PostCommentHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
