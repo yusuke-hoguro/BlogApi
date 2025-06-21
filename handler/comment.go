@@ -132,31 +132,43 @@ func PostCommentHandler(db *sql.DB) http.HandlerFunc {
 // コメント投稿用のハンドラー関数
 func DeleteCommentHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// JWTからuser_idを取得
+		userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
 		// URIからcommentのIDを取得
 		vars := mux.Vars(r)
-		idStr := vars["id"]
-		id, err := strconv.Atoi(idStr)
+		commentIDStr := vars["id"]
+		commentID, err := strconv.Atoi(commentIDStr)
 		if err != nil {
 			http.Error(w, "Invalid comment ID", http.StatusBadRequest)
 			return
 		}
 
-		// 削除するコメントがあるか確認する
-		result, err := db.Exec("DELETE FROM comments WHERE id = $1", id)
-		if err != nil {
-			http.Error(w, "Failed to delete comment", http.StatusInternalServerError)
+		// コメントの所有者か確認する
+		var commentOwnerID int
+		err = db.QueryRow("SELECT user_id FROM comments WHERE id = $1", commentID).Scan(&commentOwnerID)
+		if err == sql.ErrNoRows {
+			http.Error(w, "Comment not found", http.StatusNotFound)
+			return
+		} else if err != nil {
+			http.Error(w, "Database error", http.StatusInternalServerError)
 			return
 		}
 
-		// コメントの行数を取得する
-		rowsAffected, err := result.RowsAffected()
-		if err != nil {
-			http.Error(w, "Error checking delete result", http.StatusInternalServerError)
+		// 所有者ではない場合は削除不可
+		if commentOwnerID != userID {
+			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
-		// コメントなしの場合
-		if rowsAffected == 0 {
-			http.Error(w, "Comment not found", http.StatusNotFound)
+
+		// コメントを削除する
+		_, err = db.Exec("DELETE FROM comments WHERE id = $1", commentID)
+		if err != nil {
+			http.Error(w, "Failed to delete comment", http.StatusInternalServerError)
 			return
 		}
 
