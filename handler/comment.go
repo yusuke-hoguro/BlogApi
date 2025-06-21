@@ -132,12 +132,12 @@ func PostCommentHandler(db *sql.DB) http.HandlerFunc {
 // コメント投稿用のハンドラー関数
 func DeleteCommentHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// URIからpostのIDを取得
+		// URIからcommentのIDを取得
 		vars := mux.Vars(r)
 		idStr := vars["id"]
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			http.Error(w, "Invalid post ID", http.StatusBadRequest)
+			http.Error(w, "Invalid comment ID", http.StatusBadRequest)
 			return
 		}
 
@@ -162,6 +162,60 @@ func DeleteCommentHandler(db *sql.DB) http.HandlerFunc {
 
 		// リクエスト正常終了（表示コンテンツはなし）
 		w.WriteHeader(http.StatusNoContent)
+		fmt.Fprintln(w, "Comment deleted successfully!")
+
+	}
+}
+
+// コメント更新用のハンドラー関数
+func UpdateCommentHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// JWTからuser_idを取得
+		userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		// コメントIDを取得
+		vars := mux.Vars(r)
+		commentIDStr := vars["id"]
+		commentID, err := strconv.Atoi(commentIDStr)
+		if err != nil {
+			http.Error(w, "Invalid comment ID", http.StatusBadRequest)
+			return
+		}
+
+		// リクエストボディから新しいコメント内容を取得する
+		var req struct {
+			Content string `json:"content"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		// コメントの所有者か確認
+		var existringUserID int
+		err = db.QueryRow("SELECT user_id FROM comments WHERE id = $1", commentID).Scan(&existringUserID)
+		if err == sql.ErrNoRows {
+			http.Error(w, "Comment not found", http.StatusNotFound)
+		} else if err != nil {
+			http.Error(w, "Database error", http.StatusInternalServerError)
+		}
+		if existringUserID != userID {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+		}
+
+		// コメントの更新を実施
+		_, err = db.Exec("UPDATE comments SET content = $1 WHERE id = $2", req.Content, commentID)
+		if err != nil {
+			http.Error(w, "Failed to update comment", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintln(w, "Comment update successfully!")
 
 	}
 }
