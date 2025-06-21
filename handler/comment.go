@@ -128,3 +128,40 @@ func PostCommentHandler(db *sql.DB) http.HandlerFunc {
 
 	}
 }
+
+// コメント投稿用のハンドラー関数
+func DeleteCommentHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// URIからpostのIDを取得
+		vars := mux.Vars(r)
+		idStr := vars["id"]
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, "Invalid post ID", http.StatusBadRequest)
+			return
+		}
+
+		// 削除するコメントがあるか確認する
+		result, err := db.Exec("DELETE FROM comments WHERE id = $1", id)
+		if err != nil {
+			http.Error(w, "Failed to delete comment", http.StatusInternalServerError)
+			return
+		}
+
+		// コメントの行数を取得する
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			http.Error(w, "Error checking delete result", http.StatusInternalServerError)
+			return
+		}
+		// コメントなしの場合
+		if rowsAffected == 0 {
+			http.Error(w, "Comment not found", http.StatusNotFound)
+			return
+		}
+
+		// リクエスト正常終了（表示コンテンツはなし）
+		w.WriteHeader(http.StatusNoContent)
+
+	}
+}

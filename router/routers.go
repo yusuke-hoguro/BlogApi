@@ -24,4 +24,5 @@ func RegisterRoutes(r *mux.Router, db *sql.DB) {
 	r.HandleFunc("/posts/{id}/comments", handler.GetCommentsByPostIDHandler(db)).Methods("GET")                     //投稿のコメント取得
 	r.HandleFunc("/posts/{id}/comments", middleware.AuthMiddleware(handler.PostCommentHandler(db))).Methods("POST") //投稿のコメント投稿
 	r.HandleFunc("/comments/{id}", handler.GetCommentsByIDHandler(db)).Methods("GET")                               //コメントIDで詳細取得
+	r.HandleFunc("/comments/{id}", middleware.AuthMiddleware(handler.DeleteCommentHandler(db))).Methods("DELETE")   //コメントIDで削除
 }

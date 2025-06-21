@@ -48,10 +48,14 @@ curl -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDk5NjY
 
 ■コメントの追加
 curl -X POST \
-  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTA0MjgwNzMsInVzZXJfaWQiOjN9.kRCVJmcGCO4Q1uNGLe233W9Kn1oLbqlB3IfYT55hwkE" \
+  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTA1NzMwMTEsInVzZXJfaWQiOjN9.S0YL_43Aq0T_frDBr3jKlmWwGibAdHIC6KADczV_tUU" \
   -H "Content-Type: application/json" \
   -d '{"content": "ヒロシです"}' \
   http://localhost:8080/posts/8/comments
 
 ■コメントの取得  
 curl -X GET http://localhost:8080/comments/2
+
+■コメントの削除
+curl -X DELETE http://localhost:8080/comments/2 \
+  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTA1NzMwMTEsInVzZXJfaWQiOjN9.S0YL_43Aq0T_frDBr3jKlmWwGibAdHIC6KADczV_tUU"
