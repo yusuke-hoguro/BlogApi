@@ -67,3 +67,9 @@ curl -X PUT \
   -H "Content-Type: application/json" \
   -d '{"content": "Updated comment!"}' \
   http://localhost:8080/comments/3  
+
+
+■いいねを設定
+curl -X POST \
+  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTA2NjI4NzgsInVzZXJfaWQiOjN9.NLSBaQibVy8SRPATEfpeFmJLEKQaxAW_6Ao4UN5WWBg" \
+  http://localhost:8080/posts/4/like
