@@ -83,3 +83,34 @@ func GetLikesHandler(db *sql.DB) http.HandlerFunc {
 		json.NewEncoder(w).Encode(resp)
 	}
 }
+
+// 指定した投稿の「いいね」を削除する
+func UnlikePostHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// 認証情報からユーザーIDを取得
+		userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		}
+
+		// URIからpostのIDを取得
+		vars := mux.Vars(r)
+		postIDStr := vars["id"]
+		postID, err := strconv.Atoi(postIDStr)
+		if err != nil {
+			http.Error(w, "Invalid post ID", http.StatusBadRequest)
+			return
+		}
+
+		// 「いいね」を削除する
+		_, err = db.Exec("DELETE FROM likes WHERE user_id = $1 AND post_id = $2", userID, postID)
+		if err != nil {
+			http.Error(w, "Failed to remove like", http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Fprintln(w, "like removed successfully!")
+		w.WriteHeader(http.StatusNoContent)
+	}
+
+}

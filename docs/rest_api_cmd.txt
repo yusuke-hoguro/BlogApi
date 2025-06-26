@@ -1,24 +1,23 @@
-■ログイン
-curl -X POST -H "Content-Type: application/json" -d '{"username":"testuser2", "password":"validpassword"}' http://localhost:8080/login
-
-
-curl -X GET -H "Content-Type: application/json" -d '{"title":"YYY","content":"err"}' http://localhost:8080/posts
-
-■記事投稿
-curl -X PUT -H "Content-Type: application/json" -d '{"title":"YYY","content":"err"}' http://localhost:8080/posts/2
-
-curl -X POST \
-  -H "Authorization: <JWTトークン>" \
-  -H "Content-Type: application/json" \
-  -d '{"title": "Hello", "content": "JWT test"}' \
-  http://localhost:8080/posts/2
-
 TOKEN 控え
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTAwNTI4NjQsInVzZXJfaWQiOjN9.QZnc-UwQOYpRXPB_cU8uUBvQCEbwuG2qKiCfN-IdHbU
 
+■新規ユーザー追加(signup)
+curl -X POST -H "Content-Type: application/json" -d '{"username":"testuser3","password":"11111111"}' http://localhost:8080/signup
+
+■ログイン
+curl -X POST -H "Content-Type: application/json" -d '{"username":"testuser2", "password":"validpassword"}' http://localhost:8080/login
+
+■記事投稿
+curl -X POST \
+  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTEwMjQ1NTEsInVzZXJfaWQiOjN9.pzvTj7Ovjfd22q2EJM_sedQNDHK_APLuhOxDSApMiJQ" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Hello", "content": "JWT test"}' \
+  http://localhost:8080/posts
+
+
 ■記事の削除
 curl -X DELETE \
-  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTAwNTI4NjQsInVzZXJfaWQiOjN9.QZnc-UwQOYpRXPB_cU8uUBvQCEbwuG2qKiCfN-IdHbU" \
+  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTEwMjQ1NTEsInVzZXJfaWQiOjN9.pzvTj7Ovjfd22q2EJM_sedQNDHK_APLuhOxDSApMiJQ" \
   -H "Content-Type: application/json" \
   http://localhost:8080/posts/4
   
@@ -71,5 +70,13 @@ curl -X PUT \
 
 ■いいねを設定
 curl -X POST \
-  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTA2NjI4NzgsInVzZXJfaWQiOjN9.NLSBaQibVy8SRPATEfpeFmJLEKQaxAW_6Ao4UN5WWBg" \
+  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTEwMjQ1NTEsInVzZXJfaWQiOjN9.pzvTj7Ovjfd22q2EJM_sedQNDHK_APLuhOxDSApMiJQ" \
+  http://localhost:8080/posts/4/like
+
+■いいねの取得
+curl -X GET http://localhost:8080/posts/4/likes
+
+■いいねを削除する
+curl -X DELETE \
+  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTEwMjQ1NTEsInVzZXJfaWQiOjN9.pzvTj7Ovjfd22q2EJM_sedQNDHK_APLuhOxDSApMiJQ" \
   http://localhost:8080/posts/4/like

@@ -172,9 +172,9 @@ func DeleteCommentHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		fmt.Fprintln(w, "Comment deleted successfully!")
 		// リクエスト正常終了（表示コンテンツはなし）
 		w.WriteHeader(http.StatusNoContent)
-		fmt.Fprintln(w, "Comment deleted successfully!")
 
 	}
 }
