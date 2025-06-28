@@ -3,16 +3,34 @@ package handler
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
+// 初期化処理
+func init() {
+	// 環境変数の読み込みを実施
+	godotenv.Load("../.env")
+}
+
 // テスト用のDBを設定
 func setupTestDB() (*sql.DB, error) {
-	return sql.Open("postgres", "host=localhost port=5432 user=postgres password=yourpassword dbname=blog sslmode=disable")
+	// DB接続設定
+	dbHost := "localhost"
+	dbPort := os.Getenv("DB_PORT")
+	dbUser := os.Getenv("DB_USER")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+
+	// Data Souce Nameの設定
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", dbHost, dbPort, dbUser, dbPassword, dbName)
+	return sql.Open("postgres", dsn)
 }
 
 // 全投稿を取得するAPIのテスト
@@ -55,6 +73,4 @@ func TestGetAllPostsHandler(t *testing.T) {
 	} else {
 		t.Logf("取得した投稿データ: \n%s", postsJSON)
 	}
-
-	//次回はまず、この関数内の処理を理解するところから！
 }
