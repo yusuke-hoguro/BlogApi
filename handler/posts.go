@@ -223,7 +223,7 @@ func GetMyPostsHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// ユーザー自身の投稿のみを取得する
+// 全投稿を取得する
 func GetAllPostsHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// 全投稿を取得する
