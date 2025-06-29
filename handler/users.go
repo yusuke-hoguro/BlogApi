@@ -115,7 +115,7 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// JWT生成
-		token, err := generateJWT(id)
+		token, err := GenerateJWT(id)
 		if err != nil {
 			http.Error(w, "Failed to generate token", http.StatusInternalServerError)
 			return
@@ -128,7 +128,7 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 }
 
 // JWTトークンを発行する
-func generateJWT(userID int) (string, error) {
+func GenerateJWT(userID int) (string, error) {
 	// payloadの生成
 	claims := &jwt.MapClaims{
 		"user_id": userID,
