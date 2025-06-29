@@ -25,6 +25,16 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./sql:/docker-entrypoint-initdb.d
+
+  test-db:
+    image: postgres:15
+    container_name: postgres_test
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_TEST_NAME}
+    ports:
+      - "5433:5432"
     
   pgadmin:
     image: dpage/pgadmin4
