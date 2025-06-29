@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -13,7 +14,6 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/yusuke-hoguro/BlogApi/handler"
-	"github.com/yusuke-hoguro/BlogApi/middleware"
 	"github.com/yusuke-hoguro/BlogApi/testutils"
 )
 
@@ -39,26 +39,22 @@ func setupTestDB() (*sql.DB, error) {
 
 // 全投稿を取得するAPIのテスト
 func TestGetAllPostsHandler(t *testing.T) {
-	//DBのセットアップを開始する
-	db, err := setupTestDB()
-	if err != nil {
-		t.Fatalf("DB接続に失敗: %v", err)
-	}
+	//テスト用DBのセットアップを開始する
+	db := testutils.SetupTestDB(t)
 	defer db.Close()
 
-	// HTTPリクエストの擬似オブジェクトの作成
-	req := httptest.NewRequest(http.MethodGet, "/posts", nil)
-	// ResponsWriterの擬似オブジェクト作成
-	w := httptest.NewRecorder()
+	//テスト用のサーバーを作成する
+	server := httptest.NewServer(testutils.SetupTestServer(db))
+	defer server.Close()
 
-	// ハンドラー関数を取得して実行する
-	handler := handler.GetAllPostsHandler(db)
-	handler(w, req)
-
-	// 実行結果のレスポンスを取得
-	resp := w.Result()
+	// HTTP Getリクエストの送信
+	resp, err := http.Get(server.URL + "/posts")
+	if err != nil {
+		t.Fatalf("HTTPリクエスト失敗: %v", err)
+	}
 	defer resp.Body.Close()
 
+	// 実行結果の確認
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("期待するテストコード %d, 実際は %d", http.StatusOK, resp.StatusCode)
 	}
@@ -77,11 +73,14 @@ func TestGetAllPostsHandler(t *testing.T) {
 	} else {
 		t.Logf("取得した投稿データ: \n%s", postsJSON)
 	}
+
+	// Todo: Getした内容がただしかを比較する処理を追加
+
 }
 
 // 投稿作成用APIのテスト
 func TestCreatePostHandler(t *testing.T) {
-	//DBのセットアップを開始する
+	//テスト用DBのセットアップを開始する
 	db := testutils.SetupTestDB(t)
 	defer db.Close()
 
@@ -98,19 +97,26 @@ func TestCreatePostHandler(t *testing.T) {
 
 	//jsonデータを構築
 	postJSON := `{"title": "テスト投稿", "content": "これはテスト用です"}`
-	req := httptest.NewRequest(http.MethodPost, server.URL+"/posts", strings.NewReader(postJSON))
+	req, err := http.NewRequest(http.MethodPost, server.URL+"/posts", strings.NewReader(postJSON))
+	if err != nil {
+		t.Fatal("リクエスト生成エラー:", err)
+	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", token)
-	// ResponsWriterの擬似オブジェクト作成
-	w := httptest.NewRecorder()
 
-	//ハンドラー関数を取得して実行
-	handler := middleware.AuthMiddleware(handler.CreatePostHandler(db))
-	handler(w, req)
+	client := server.Client()
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal("HTTPリクエスト失敗:", err)
+	}
+	defer resp.Body.Close()
 
-	if w.Code != http.StatusCreated {
-		t.Errorf("期待するテストコード %d, 実際は %d", http.StatusCreated, w.Code)
+	if resp.StatusCode != http.StatusCreated {
+		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusCreated, resp.StatusCode)
 	}
 
-	t.Logf("Response body: %s", w.Body.String())
+	body, _ := io.ReadAll(resp.Body)
+	t.Logf("Response body: %s", string(body))
+
+	// Todo:取得してあってるか確認もやる
 }
