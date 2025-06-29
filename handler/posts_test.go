@@ -7,10 +7,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"github.com/yusuke-hoguro/BlogApi/middleware"
 )
 
 // 初期化処理
@@ -73,4 +75,39 @@ func TestGetAllPostsHandler(t *testing.T) {
 	} else {
 		t.Logf("取得した投稿データ: \n%s", postsJSON)
 	}
+}
+
+// 投稿作成用APIのテスト
+func TestCreatePostHandler(t *testing.T) {
+	//DBのセットアップを開始する
+	db, err := setupTestDB()
+	if err != nil {
+		t.Fatalf("DB接続に失敗: %v", err)
+	}
+	defer db.Close()
+
+	//JWTトークンを発行
+	token, err := generateJWT(3)
+	if err != nil {
+		t.Fatal("Failed to generate token")
+		return
+	}
+
+	//jsonデータを構築
+	postJSON := `{"title": "テスト投稿", "content": "これはテスト用です"}`
+	req := httptest.NewRequest(http.MethodPost, "/posts", strings.NewReader(postJSON))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", token)
+	// ResponsWriterの擬似オブジェクト作成
+	w := httptest.NewRecorder()
+
+	//ハンドラー関数を取得して実行
+	handler := middleware.AuthMiddleware(CreatePostHandler(db))
+	handler(w, req)
+
+	if w.Code != http.StatusCreated {
+		t.Errorf("期待するテストコード %d, 実際は %d", http.StatusCreated, w.Code)
+	}
+
+	t.Logf("Response body: %s", w.Body.String())
 }
