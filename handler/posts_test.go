@@ -1,41 +1,17 @@
 package handler_test
 
 import (
-	"database/sql"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/yusuke-hoguro/BlogApi/handler"
 	"github.com/yusuke-hoguro/BlogApi/testutils"
 )
-
-// 初期化処理
-func init() {
-	// 環境変数の読み込みを実施
-	godotenv.Load("../.env")
-}
-
-// テスト用のDBを設定
-func setupTestDB() (*sql.DB, error) {
-	// DB接続設定
-	dbHost := "localhost"
-	dbPort := os.Getenv("DB_PORT")
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-
-	// Data Souce Nameの設定
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", dbHost, dbPort, dbUser, dbPassword, dbName)
-	return sql.Open("postgres", dsn)
-}
 
 // 全投稿を取得するAPIのテスト
 func TestGetAllPostsHandler(t *testing.T) {
@@ -95,7 +71,7 @@ func TestCreatePostHandler(t *testing.T) {
 		return
 	}
 
-	//jsonデータを構築
+	//JSONデータを構築
 	postJSON := `{"title": "テスト投稿", "content": "これはテスト用です"}`
 	req, err := http.NewRequest(http.MethodPost, server.URL+"/posts", strings.NewReader(postJSON))
 	if err != nil {
@@ -119,4 +95,47 @@ func TestCreatePostHandler(t *testing.T) {
 	t.Logf("Response body: %s", string(body))
 
 	// Todo:取得してあってるか確認もやる
+}
+
+// 記事更新用ハンドラー関数のテスト
+func TestUpdatePostHandler(t *testing.T) {
+	// テスト用DBのセットアップ
+	db := testutils.SetupTestDB(t)
+	defer db.Close()
+
+	// テスト用サーバーを作成する
+	server := httptest.NewServer(testutils.SetupTestServer(db))
+	defer server.Close()
+
+	// JWTトークンを発行
+	token, err := handler.GenerateJWT(1)
+	if err != nil {
+		t.Fatal("Failed to generate token")
+		return
+	}
+
+	// 更新用データのJSON
+	updateJSON := `{"title": "更新されたタイトル", "content": "更新された内容"}`
+	req, err := http.NewRequest(http.MethodPut, server.URL+"/posts/1", strings.NewReader(updateJSON))
+	if err != nil {
+		t.Fatal("リクエスト生成エラー:", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", token)
+
+	// HTTPリクエストを実行
+	client := server.Client()
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal("HTTPリクエスト失敗:", err)
+	}
+	defer resp.Body.Close()
+
+	// ステータスコードの確認
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusOK, resp.StatusCode)
+	}
+	// レスポンスを表示
+	body, _ := io.ReadAll(resp.Body)
+	t.Logf("Response body: %s", string(body))
 }
