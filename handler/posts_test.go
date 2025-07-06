@@ -2,6 +2,7 @@ package handler_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -67,7 +68,7 @@ func TestCreatePostHandler(t *testing.T) {
 	//JWTトークンを発行
 	token, err := handler.GenerateJWT(3)
 	if err != nil {
-		t.Fatal("Failed to generate token")
+		t.Fatal("JWTの生成に失敗:", err)
 		return
 	}
 
@@ -110,13 +111,15 @@ func TestUpdatePostHandler(t *testing.T) {
 	// JWTトークンを発行
 	token, err := handler.GenerateJWT(1)
 	if err != nil {
-		t.Fatal("Failed to generate token")
+		t.Fatal("JWTの生成に失敗:", err)
 		return
 	}
 
 	// 更新用データのJSON
 	updateJSON := `{"title": "更新されたタイトル", "content": "更新された内容"}`
-	req, err := http.NewRequest(http.MethodPut, server.URL+"/posts/1", strings.NewReader(updateJSON))
+	postID := 1
+	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
+	req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(updateJSON))
 	if err != nil {
 		t.Fatal("リクエスト生成エラー:", err)
 	}
@@ -138,4 +141,50 @@ func TestUpdatePostHandler(t *testing.T) {
 	// レスポンスを表示
 	body, _ := io.ReadAll(resp.Body)
 	t.Logf("Response body: %s", string(body))
+}
+
+// 記事削除用ハンドラー関数のテスト
+func TestDeletePostHandler(t *testing.T) {
+	// テスト用DBのセットアップ
+	db := testutils.SetupTestDB(t)
+	defer db.Close()
+
+	// テスト用サーバーのセットアップ
+	server := httptest.NewServer(testutils.SetupTestServer(db))
+	defer server.Close()
+
+	// JWTトークンを発行
+	token, err := handler.GenerateJWT(1)
+	if err != nil {
+		t.Fatal("JWTの生成に失敗:", err)
+	}
+
+	// 削除対象のIDからURLを作成
+	postID := 1
+	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
+
+	// リクエストの作成
+	req, err := http.NewRequest(http.MethodDelete, url, nil)
+	if err != nil {
+		t.Fatal("リクエスト生成エラー:", err)
+	}
+	req.Header.Set("Authorization", token)
+
+	// リクエスト実行
+	client := server.Client()
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal("HTTPリクエスト失敗:", err)
+	}
+	defer resp.Body.Close()
+
+	// ステータスコードの確認
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusOK, resp.StatusCode)
+	}
+
+	// レスポンスを表示
+	body, _ := io.ReadAll(resp.Body)
+	t.Logf("Response body: %s", body)
+
 }
