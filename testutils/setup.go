@@ -63,10 +63,11 @@ func loadTestSQL(t *testing.T, db *sql.DB, filepath string) {
 // テスト用のサーバーを設定する
 func SetupTestServer(db *sql.DB) http.Handler {
 	r := mux.NewRouter()
-	r.HandleFunc("/posts", handler.GetAllPostsHandler(db)).Methods("GET")                                   //全投稿取得用
-	r.HandleFunc("/posts", middleware.AuthMiddleware(handler.CreatePostHandler(db))).Methods("POST")        //個別投稿作成用
-	r.HandleFunc("/posts/{id}", middleware.AuthMiddleware(handler.UpdatePostHandler(db))).Methods("PUT")    //個別投稿更新用
-	r.HandleFunc("/posts/{id}", middleware.AuthMiddleware(handler.DeletePostHandler(db))).Methods("DELETE") //個別投稿削除用
+	r.HandleFunc("/posts", handler.GetAllPostsHandler(db)).Methods("GET")                                           //全投稿取得用
+	r.HandleFunc("/posts", middleware.AuthMiddleware(handler.CreatePostHandler(db))).Methods("POST")                //個別投稿作成用
+	r.HandleFunc("/posts/{id}", middleware.AuthMiddleware(handler.UpdatePostHandler(db))).Methods("PUT")            //個別投稿更新用
+	r.HandleFunc("/posts/{id}", middleware.AuthMiddleware(handler.DeletePostHandler(db))).Methods("DELETE")         //個別投稿削除用
+	r.HandleFunc("/posts/{id}/comments", middleware.AuthMiddleware(handler.PostCommentHandler(db))).Methods("POST") //コメント投稿
 	return r
 }
 
