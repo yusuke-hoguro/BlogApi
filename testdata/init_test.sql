@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS likes;
 DROP TABLE IF EXISTS comments;
 DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS users;
@@ -25,6 +26,17 @@ CREATE TABLE comments(
     user_id INTEGER NOT NULL REFERENCES users(id),
     content TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- いいねのテーブル作成
+CREATE TABLE IF NOT EXISTS likes(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    post_id INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, post_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
 );
 
 -- 初期データ投入
