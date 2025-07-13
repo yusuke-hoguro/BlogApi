@@ -36,4 +36,6 @@ INSERT INTO users (id, username, password) VALUES
   (1, 'testuser', 'pass'),
   (2, 'testuser2', 'pass2');
 
+INSERT INTO comments (id, post_id, user_id, content) VALUES
+  (1, 1, 1, 'Delete Comment');
 
