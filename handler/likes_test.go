@@ -1,6 +1,7 @@
 package handler_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/yusuke-hoguro/BlogApi/handler"
+	"github.com/yusuke-hoguro/BlogApi/models"
 	"github.com/yusuke-hoguro/BlogApi/testutils"
 )
 
@@ -69,4 +71,54 @@ func TestLikePostHandler(t *testing.T) {
 		t.Errorf("重複登録されている可能性あり: いいね件数 = %d (期待値: 1)", count)
 	}
 
+}
+
+// いいね取得用APIのテスト
+func TestGetLikesHandler(t *testing.T) {
+	//テスト用DBのセットアップを開始する
+	db := testutils.SetupTestDB(t)
+	defer db.Close()
+
+	//テスト用サーバーのセットアップ
+	server := httptest.NewServer(testutils.SetupTestServer(db))
+	defer server.Close()
+
+	//いいねを取得する投稿
+	postID := 1
+	url := fmt.Sprintf("%s/posts/%d/likes", server.URL, postID)
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		t.Fatal("リクエスト生成失敗:", err)
+	}
+
+	//リクエスト送信
+	client := server.Client()
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal("HTTPリクエスト失敗:", err)
+	}
+	defer resp.Body.Close()
+
+	//ステータスコード確認
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusOK, resp.StatusCode)
+	}
+
+	//レスポンスをパースして検証
+	var result models.LikesResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("JSONのデコード失敗: %v", err)
+	}
+
+	//結果を比較する
+	if result.PostID != postID {
+		t.Errorf("PostID が一致しない: get %d, want %d", result.PostID, postID)
+	}
+	if result.LikeCount != len(result.UserIDs) {
+		t.Errorf("like_count (%d) と user_ids の数 (%d) が一致しません", result.LikeCount, len(result.UserIDs))
+	}
+
+	//ログに表示
+	t.Logf("取得したいいねの情報: %+v", result)
 }

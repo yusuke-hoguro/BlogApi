@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/yusuke-hoguro/BlogApi/middleware"
+	"github.com/yusuke-hoguro/BlogApi/models"
 )
 
 // 指定した投稿に「いいね」をつける
@@ -74,10 +75,10 @@ func GetLikesHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// JSONレスポンスを返す
-		resp := map[string]any{
-			"post_id":    postID,
-			"like_count": len(userIDs),
-			"user_ids":   userIDs,
+		resp := models.LikesResponse{
+			PostID:    postID,
+			LikeCount: len(userIDs),
+			UserIDs:   userIDs,
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(resp)

@@ -54,3 +54,8 @@ INSERT INTO comments (id, post_id, user_id, content) VALUES
   (3, 1, 1, 'Default Comment'),
   (4, 1, 1, 'Default Comment'),
   (2, 2, 2, 'Delete Comment');
+
+INSERT INTO likes (id, user_id, post_id) VALUES
+  (1, 1, 1),
+  (2, 2, 1),
+  (3, 3, 1);
