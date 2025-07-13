@@ -1,7 +1,7 @@
 DROP TABLE IF EXISTS likes;
 DROP TABLE IF EXISTS comments;
-DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS posts;
 
 -- ユーザー用のテーブル作成
 CREATE TABLE IF NOT EXISTS users(
@@ -42,12 +42,15 @@ CREATE TABLE IF NOT EXISTS likes(
 -- 初期データ投入
 INSERT INTO posts (user_id, title, content) VALUES
   (1, 'テストタイトル1', 'テスト内容1'),
-  (2, 'テストタイトル2', 'テスト内容2');
+  (2, 'テストタイトル2', 'テスト内容2'),
+  (3, 'コメントテスト用', 'コメント追加テスト');
 
 INSERT INTO users (id, username, password) VALUES
   (1, 'testuser', 'pass'),
-  (2, 'testuser2', 'pass2');
+  (2, 'testuser2', 'pass2'),
+  (3, 'testuser3', 'pass3');
 
 INSERT INTO comments (id, post_id, user_id, content) VALUES
-  (1, 1, 1, 'Delete Comment');
-
+  (3, 1, 1, 'Default Comment'),
+  (4, 1, 1, 'Default Comment'),
+  (2, 2, 2, 'Delete Comment');

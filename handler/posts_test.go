@@ -154,13 +154,13 @@ func TestDeletePostHandler(t *testing.T) {
 	defer server.Close()
 
 	// JWTトークンを発行
-	token, err := handler.GenerateJWT(1)
+	token, err := handler.GenerateJWT(2)
 	if err != nil {
 		t.Fatal("JWTの生成に失敗:", err)
 	}
 
 	// 削除対象のIDからURLを作成
-	postID := 1
+	postID := 2
 	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
 
 	// リクエストの作成

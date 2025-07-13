@@ -23,7 +23,7 @@ func TestPostCommentHandle(t *testing.T) {
 	defer server.Close()
 
 	//テスト用のJWTトークン発行
-	token, err := handler.GenerateJWT(2)
+	token, err := handler.GenerateJWT(3)
 	if err != nil {
 		t.Fatal("JWTの生成に失敗", err)
 		return
@@ -31,7 +31,7 @@ func TestPostCommentHandle(t *testing.T) {
 
 	//コメント投稿用のJSONデータ作成
 	commentJSON := `{"content":"テストコメント"}`
-	postID := 2
+	postID := 3
 	url := fmt.Sprintf("%s/posts/%d/comments", server.URL, postID)
 	req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(commentJSON))
 	if err != nil {
@@ -70,14 +70,14 @@ func TestDeleteCommentHandler(t *testing.T) {
 	defer server.Close()
 
 	//テスト用のJWTトークン発行
-	token, err := handler.GenerateJWT(1)
+	token, err := handler.GenerateJWT(2)
 	if err != nil {
 		t.Fatal("JWTの生成に失敗", err)
 		return
 	}
 
 	//コメント削除用のJSONデータ作成
-	commentID := 1
+	commentID := 2
 	url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
