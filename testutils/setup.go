@@ -70,6 +70,7 @@ func SetupTestServer(db *sql.DB) http.Handler {
 	r.HandleFunc("/posts/{id}/comments", middleware.AuthMiddleware(handler.PostCommentHandler(db))).Methods("POST") //コメント投稿
 	r.HandleFunc("/posts/{id}/comments", handler.GetCommentsByPostIDHandler(db)).Methods("GET")                     //投稿のコメント取得
 	r.HandleFunc("/comments/{id}", middleware.AuthMiddleware(handler.DeleteCommentHandler(db))).Methods("DELETE")   //コメントIDで削除
+	r.HandleFunc("/comments/{id}", middleware.AuthMiddleware(handler.UpdateCommentHandler(db))).Methods("PUT")      //コメントを更新する
 	r.HandleFunc("/posts/{id}/like", middleware.AuthMiddleware(handler.LikePostHandler(db))).Methods("POST")        //投稿にいいねをつける
 	r.HandleFunc("/posts/{id}/likes", handler.GetLikesHandler(db)).Methods("GET")                                   //投稿のいいねを取得する
 	return r
