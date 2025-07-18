@@ -103,3 +103,42 @@ func TestDeleteCommentHandler(t *testing.T) {
 	t.Logf("レスポンス: %s", string(body))
 
 }
+
+// 投稿のコメント取得用APIのテスト
+func TestGetCommentsByPostIDHandler(t *testing.T) {
+	// テスト用DBのセットアップを開始する
+	db := testutils.SetupTestDB(t)
+	defer db.Close()
+
+	// テスト用サーバーのセットアップ
+	server := httptest.NewServer(testutils.SetupTestServer(db))
+	defer server.Close()
+
+	// 投稿IDを設定
+	postID := 1
+
+	// リクエストの作成
+	url := fmt.Sprintf("%s/posts/%d/comments", server.URL, postID)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		t.Fatal("リクエスト生成失敗:", err)
+	}
+
+	//リクエスト送信
+	client := server.Client()
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal("HTTPリクエスト失敗:", err)
+	}
+	defer resp.Body.Close()
+
+	//ステータスコード確認
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusOK, resp.StatusCode)
+	}
+
+	//ログに表示
+	body, _ := io.ReadAll(resp.Body)
+	t.Logf("レスポンス: %s", string(body))
+
+}
