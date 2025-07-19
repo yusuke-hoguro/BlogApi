@@ -212,11 +212,14 @@ func UpdateCommentHandler(db *sql.DB) http.HandlerFunc {
 		err = db.QueryRow("SELECT user_id FROM comments WHERE id = $1", commentID).Scan(&existringUserID)
 		if err == sql.ErrNoRows {
 			http.Error(w, "Comment not found", http.StatusNotFound)
+			return
 		} else if err != nil {
 			http.Error(w, "Database error", http.StatusInternalServerError)
+			return
 		}
 		if existringUserID != userID {
 			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
 		}
 
 		// コメントの更新を実施
