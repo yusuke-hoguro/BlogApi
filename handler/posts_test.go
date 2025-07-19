@@ -312,7 +312,7 @@ func TestGetPostsByIDHandler(t *testing.T) {
 	server := httptest.NewServer(testutils.SetupTestServer(db))
 	defer server.Close()
 
-	//存在しないコメントIDを指定してJSONデータ作成
+	//投稿IDを指定してJSONデータ作成
 	postID := 1
 	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -346,7 +346,7 @@ func TestGetPostsByIDHandlerNotFound(t *testing.T) {
 	server := httptest.NewServer(testutils.SetupTestServer(db))
 	defer server.Close()
 
-	//存在しないコメントIDを指定してJSONデータ作成
+	//存在しない投稿IDを指定してJSONデータ作成
 	postID := 9999
 	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -364,6 +364,39 @@ func TestGetPostsByIDHandlerNotFound(t *testing.T) {
 	// ステータスコードの確認
 	if resp.StatusCode != http.StatusNotFound {
 		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusNotFound, resp.StatusCode)
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	t.Logf("Response body: %s", string(body))
+}
+
+// 投稿取得用API IDが数値でないテストを実施
+func TestGetPostsByIDHandlerInvalidID(t *testing.T) {
+	//テスト用DBのセットアップを開始する
+	db := testutils.SetupTestDB(t)
+	defer db.Close()
+
+	//テスト用のサーバーを作成する
+	server := httptest.NewServer(testutils.SetupTestServer(db))
+	defer server.Close()
+
+	//数値以外のIDを指定してJSONデータ作成
+	url := fmt.Sprintf("%s/posts/aaa", server.URL)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		t.Fatal("リクエスト生成失敗:", err)
+	}
+
+	client := server.Client()
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal("HTTPリクエスト失敗:", err)
+	}
+	defer resp.Body.Close()
+
+	// ステータスコードの確認
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusBadRequest, resp.StatusCode)
 	}
 
 	body, _ := io.ReadAll(resp.Body)

@@ -20,6 +20,7 @@ func GetPostsByIDHandler(db *sql.DB) http.HandlerFunc {
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
 			http.Error(w, "Invalid ID", http.StatusBadRequest)
+			return
 		}
 
 		// postsテーブルから指定したカラムのデータを取得する
