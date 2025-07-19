@@ -26,7 +26,7 @@ func GetPostsByIDHandler(db *sql.DB) http.HandlerFunc {
 		var post models.Post
 		err = db.QueryRow("SELECT id, title, content, user_id, created_at FROM posts WHERE id = $1", id).Scan(&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt)
 		if err == sql.ErrNoRows {
-			http.Error(w, "Post not found", http.StatusInternalServerError)
+			http.Error(w, "Post not found", http.StatusNotFound)
 			return
 		} else if err != nil {
 			http.Error(w, "Database error", http.StatusInternalServerError)
