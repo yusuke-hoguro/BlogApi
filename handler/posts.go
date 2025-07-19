@@ -55,6 +55,12 @@ func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
+		// タイトルが空の場合はエラーとする
+		if strings.TrimSpace(post.Title) == "" {
+			http.Error(w, "Title must not be empty", http.StatusBadRequest)
+			return
+		}
+
 		// 記事にユーザーIDを設定する
 		post.UserID = userID
 
