@@ -94,6 +94,39 @@ func TestCreatePostHandler(t *testing.T) {
 
 	body, _ := io.ReadAll(resp.Body)
 	t.Logf("Response body: %s", string(body))
+}
+
+// 投稿作成用API JWTトークンが無い場合のテストを実施する
+func TestCreatePostHandlerUnauthorized(t *testing.T) {
+	//テスト用DBのセットアップを開始する
+	db := testutils.SetupTestDB(t)
+	defer db.Close()
+
+	//テスト用のサーバーを作成する
+	server := httptest.NewServer(testutils.SetupTestServer(db))
+	defer server.Close()
+
+	//JSONデータを構築
+	postJSON := `{"title": "テスト投稿", "content": "これはテスト用です"}`
+	req, err := http.NewRequest(http.MethodPost, server.URL+"/posts", strings.NewReader(postJSON))
+	if err != nil {
+		t.Fatal("リクエスト生成エラー:", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := server.Client()
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal("HTTPリクエスト失敗:", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusUnauthorized, resp.StatusCode)
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	t.Logf("Response body: %s", string(body))
 
 	// Todo:取得してあってるか確認もやる
 }
