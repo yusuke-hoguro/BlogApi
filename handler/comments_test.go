@@ -269,6 +269,81 @@ func TestGetCommentsByPostIDHandler(t *testing.T) {
 
 }
 
+// 投稿のコメント取得用API 存在しない投稿IDのテスト
+func TestGetCommentsByPostIDHandlerPostNotFound(t *testing.T) {
+	// テスト用DBのセットアップを開始する
+	db := testutils.SetupTestDB(t)
+	defer db.Close()
+
+	// テスト用サーバーのセットアップ
+	server := httptest.NewServer(testutils.SetupTestServer(db))
+	defer server.Close()
+
+	// 存在しない投稿IDを設定
+	postID := 9999
+
+	// リクエストの作成
+	url := fmt.Sprintf("%s/posts/%d/comments", server.URL, postID)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		t.Fatal("リクエスト生成失敗:", err)
+	}
+
+	//リクエスト送信
+	client := server.Client()
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal("HTTPリクエスト失敗:", err)
+	}
+	defer resp.Body.Close()
+
+	//ステータスコード確認
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusOK, resp.StatusCode)
+	}
+
+	//ログに表示
+	body, _ := io.ReadAll(resp.Body)
+	t.Logf("レスポンス: %s", string(body))
+
+}
+
+// 投稿のコメント取得用API 数値でない投稿IDのテスト
+func TestGetCommentsByPostIDHandlerInvalidID(t *testing.T) {
+	// テスト用DBのセットアップを開始する
+	db := testutils.SetupTestDB(t)
+	defer db.Close()
+
+	// テスト用サーバーのセットアップ
+	server := httptest.NewServer(testutils.SetupTestServer(db))
+	defer server.Close()
+
+	// リクエストの作成
+	url := fmt.Sprintf("%s/posts/ddd/comments", server.URL)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		t.Fatal("リクエスト生成失敗:", err)
+	}
+
+	//リクエスト送信
+	client := server.Client()
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal("HTTPリクエスト失敗:", err)
+	}
+	defer resp.Body.Close()
+
+	//ステータスコード確認
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusBadRequest, resp.StatusCode)
+	}
+
+	//ログに表示
+	body, _ := io.ReadAll(resp.Body)
+	t.Logf("レスポンス: %s", string(body))
+
+}
+
 // コメント更新用APIのテスト
 func TestUpdateCommentHandler(t *testing.T) {
 	// テスト用DBのセットアップを開始する
