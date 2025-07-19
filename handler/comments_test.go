@@ -334,3 +334,44 @@ func TestUpdateCommentHandlerEmptyContent(t *testing.T) {
 	t.Logf("レスポンス: %s", string(body))
 
 }
+
+// コメント更新用API JWTトークンが無い場合のテスト
+func TestUpdateCommentHandlerNoAuthorization(t *testing.T) {
+	// テスト用DBのセットアップを開始する
+	db := testutils.SetupTestDB(t)
+	defer db.Close()
+
+	// テスト用サーバーのセットアップ
+	server := httptest.NewServer(testutils.SetupTestServer(db))
+	defer server.Close()
+
+	// 空のコメントを設定して更新用JSONデータ作成
+	commentID := 2
+	updateJSON := `{"content":""}`
+
+	// リクエストを作成する
+	url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
+	req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(updateJSON))
+	if err != nil {
+		t.Fatal("リクエスト生成失敗:", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	//リクエスト送信
+	client := server.Client()
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal("HTTPリクエスト失敗:", err)
+	}
+	defer resp.Body.Close()
+
+	//ステータスコード確認
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusUnauthorized, resp.StatusCode)
+	}
+
+	//ログに表示
+	body, _ := io.ReadAll(resp.Body)
+	t.Logf("レスポンス: %s", string(body))
+
+}
