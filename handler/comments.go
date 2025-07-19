@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/yusuke-hoguro/BlogApi/middleware"
@@ -204,6 +205,12 @@ func UpdateCommentHandler(db *sql.DB) http.HandlerFunc {
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		// 更新コメントが空の場合はエラーとする
+		if strings.TrimSpace(req.Content) == "" {
+			http.Error(w, "Content must not be empty", http.StatusBadRequest)
 			return
 		}
 
