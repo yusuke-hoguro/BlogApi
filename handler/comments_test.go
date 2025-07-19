@@ -104,6 +104,51 @@ func TestDeleteCommentHandler(t *testing.T) {
 
 }
 
+// コメント削除用APIで他人のコメント削除拒否テストを実施する
+func TestDeleteCommentHandlerUnauthorized(t *testing.T) {
+	//テスト用DBのセットアップを開始する
+	db := testutils.SetupTestDB(t)
+	defer db.Close()
+
+	//テスト用サーバーのセットアップ
+	server := httptest.NewServer(testutils.SetupTestServer(db))
+	defer server.Close()
+
+	//コメント投稿した人以外のユーザーIDを設定する
+	token, err := handler.GenerateJWT(99)
+	if err != nil {
+		t.Fatal("JWTの生成に失敗", err)
+		return
+	}
+
+	//コメント削除用のJSONデータ作成
+	commentID := 2
+	url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
+	req, err := http.NewRequest(http.MethodDelete, url, nil)
+	if err != nil {
+		t.Fatal("リクエスト生成失敗:", err)
+	}
+	req.Header.Set("Authorization", token)
+
+	//リクエスト送信
+	client := server.Client()
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal("HTTPリクエスト失敗:", err)
+	}
+	defer resp.Body.Close()
+
+	//ステータスコード確認
+	if resp.StatusCode != http.StatusForbidden {
+		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusForbidden, resp.StatusCode)
+	}
+
+	//ログに表示
+	body, _ := io.ReadAll(resp.Body)
+	t.Logf("レスポンス: %s", string(body))
+
+}
+
 // 投稿のコメント取得用APIのテスト
 func TestGetCommentsByPostIDHandler(t *testing.T) {
 	// テスト用DBのセットアップを開始する
