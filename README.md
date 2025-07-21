@@ -18,9 +18,10 @@ Go言語とPostgreSQLを使ったブログAPIのポートフォリオです。�
 
 ### 必要ツール
 
-- Go 1.20+
-- PostgreSQL 12+
-- Docker（任意）
+- Go: 1.24.2
+- PostgreSQL: 15.13
+- OS: Ubuntu 22.04
+- Docker:27.5.1
 
 ### クローンと初期化
 
