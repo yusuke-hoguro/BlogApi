@@ -60,7 +60,7 @@ http://localhost:8080 にてAPIサーバーが起動します。
 
 ## API仕様
 
-RESTAPI設計書を参照
+詳しくは[API設計書](docs/API_SPEC.md)を参照
 
 ---
 
