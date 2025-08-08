@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import React, {useEffect, useState} from "react";
 import client from "../api/client";
 
@@ -24,7 +25,9 @@ export default function PostList(){
             <ul>
                 {posts.map(post => (
                     <li key={post.id} className="mb-4 p-4 border rounded shadow" >
-                        <h2 className="text-xl font-semibold">{post.title}</h2>
+                        <Link to={`/post/${post.id}`} className="text-xl font-semibold text-blue-600 hover:underline">
+                            {post.title}
+                        </Link>
                         <p className="text-gray-700">{post.content?.slice(0,100)}...</p>
                     </li>
                 ))}
