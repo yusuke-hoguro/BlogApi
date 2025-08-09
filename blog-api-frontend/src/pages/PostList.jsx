@@ -21,7 +21,7 @@ export default function PostList(){
 
     return(
         <div className="p-4">
-            <hi className="text-2xl font-bold mb-4" >投稿一覧</hi>
+            <h1 className="text-2xl font-bold mb-4" >投稿一覧</h1>
             <ul>
                 {posts.map(post => (
                     <li key={post.id} className="mb-4 p-4 border rounded shadow" >
