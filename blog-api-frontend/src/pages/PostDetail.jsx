@@ -9,28 +9,57 @@ export default function PostDetail(){
     const [post, setPost] = useState(null);
     const [comments, setComments] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [newComment, setNewComment] = useState('');
+    const [submitting, setSubmitting] = useState(false);
 
-    /*
-    * 初回レンダリング時のみ実行
-    * useEffectはasyncを直接渡せないので内部でasync関数を定義して呼び出す
-    */
+    // 初回レンダリング時のみ実行
     useEffect(() => {
-        async function fetchPostAndComments(){
-            try{
-                const [postRes, commentRes] = await Promise.all([
-                    client.get(`/posts/${id}`),
-                    client.get(`/posts/${id}/comments`)
-                ]);
-                setPost(postRes.data);
-                setComments(commentRes.data || []);
-            }catch(error){
-                console.error('取得エラー:', error);
-            }finally{
-                setLoading(false);
-            }
-        }
         fetchPostAndComments();
     }, [id]);
+
+    async function fetchPostAndComments(){
+        try{
+            const [postRes, commentRes] = await Promise.all([
+                client.get(`/posts/${id}`),
+                client.get(`/posts/${id}/comments`)
+            ]);
+            setPost(postRes.data);
+            setComments(commentRes.data || []);
+        }catch(error){
+            console.error('取得エラー:', error);
+        }finally{
+            setLoading(false);
+        }
+    }
+
+    // コメント送信処理
+    async function handleSubmit(e) {
+        // ブラウザのデフォルト動作を停止させる
+        e.preventDefault();
+        if(!newComment.trim()) return;
+
+        setSubmitting(true);
+        try{
+            const token = localStorage.getItem('token');
+            const response = await client.post(
+                `/posts/${id}/comments`,
+                { content: newComment },
+                {
+                    headers:{
+                        Authorization: token
+                    }
+                }
+            );
+            console.log('投稿APIレスポンス:', response);
+            setNewComment('');
+            await fetchPostAndComments();
+        }catch(error){
+            console.error('コメント投稿エラー:', error);
+            alert('コメント投稿でエラーが発生しました: ' + error.message);
+        }finally{
+            setSubmitting(false);
+        }
+    }
 
     if(loading) return <p className="p-4">読み込み中...</p>;
     if(!post) return <p className="p-4 text-red-600">投稿が見つかりません</p>;
@@ -59,6 +88,13 @@ export default function PostDetail(){
                     </ul>
                 )}
             </div>
+
+            <form onSubmit={handleSubmit} className="mt-6 border-t pt-4">
+                <textarea className='w-full border rounded p-2' rows="3" placeholder='コメントを入力…' value={newComment} onChange={(e) => setNewComment(e.target.value)}/>
+                <button type="submit" disabled={submitting} className='mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400'>
+                    {submitting ?  '送信中...' : 'コメント送信'}
+                </button>
+            </form>
         </div>
     );
 }
