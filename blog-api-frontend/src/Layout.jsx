@@ -7,6 +7,7 @@ export default function Layout() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <main className="p-4">
+        {/* 子ルートのコンポーネントが表示される */}
         <Outlet />
       </main>
     </div>
