@@ -11,6 +11,9 @@ export default function PostDetail(){
     const [loading, setLoading] = useState(true);
     const [newComment, setNewComment] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    // コメント編集用
+    const [editingCommentId, setEditingCommentId] = useState(null);
+    const [editingContent, setEditingContent] = useState('');
 
     // 初回レンダリング時のみ実行
     useEffect(() => {
@@ -92,6 +95,28 @@ export default function PostDetail(){
         }
     }
 
+    // コメント更新用の関数
+    async function handleUpdateComment(commentId) {
+        if(!editingContent.trim()) return;
+
+        try{
+            const token = localStorage.getItem("token");
+            await client.put(
+                `/comments/${commentId}`,
+                { content: editingContent },
+                { headers: { Authorization: token } }
+            );
+            // 編集終了のためリセットする
+            setEditingCommentId(null);
+            setEditingContent('');
+            // コメント更新後に投稿とコメントを再取得
+            await fetchPostAndComments();
+        } catch(error){
+            console.error("コメント更新エラー:", error);
+            alert("コメントの更新に失敗しました。");            
+        }
+    }
+
     if(loading) return <p className="p-4">読み込み中...</p>;
     if(!post) return <p className="p-4 text-red-600">投稿が見つかりません</p>;
 
@@ -112,17 +137,54 @@ export default function PostDetail(){
                     <ul className='space-y-3'>
                         {comments.map(comment => (
                             <li key={comment.id} className='border p-3 rounded'>
-                                <p className='text-gray-700'>{comment.content}</p>
-                                <p className='text-sm text-gray-400'>ユーザーID:{comment.user_id}</p>
+                                {editingCommentId === comment.id ? (
+                                    <>
+                                        <textarea
+                                            className="w-full border rounded p-2"
+                                            value={editingContent}
+                                            onChange={(e) => setEditingContent(e.target.value)}
+                                        />
+                                        <div className="mt-2 flex gap-2">
+                                            <button
+                                                onClick={() => handleUpdateComment(comment.id)}
+                                                className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                                            >
+                                                保存
+                                            </button>
+                                            <button
+                                                onClick={() => setEditingCommentId(null)}
+                                                className="px-2 py-1 bg-gray-400 text-white rounded hover:bg-gray-500"
+                                            >
+                                                キャンセル
+                                            </button>
+                                        </div>
+                                    </>                                
+                                ):(
+                                    <>
+                                        <p className='text-gray-700'>{comment.content}</p>
+                                        <p className='text-sm text-gray-400'>ユーザーID:{comment.user_id}</p>
 
-                                {/* 自分のコメントのみ削除ボタン表示 */}
-                                {comment.user_id === getCurrentUserId() && (
-                                    <button
-                                        onClick={() => handleDeleteComment(comment.id)}
-                                         className="mt-2 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                                    >
-                                        削除
-                                    </button>
+                                        {/* 自分のコメントのみ削除ボタン表示 */}
+                                        {comment.user_id === getCurrentUserId() && (
+                                            <div className="mt-2 flex gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        setEditingCommentId(comment.id);
+                                                        setEditingContent(comment.content);
+                                                    }}
+                                                    className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                                                >
+                                                    編集
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteComment(comment.id)}
+                                                    className="mt-2 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                                >
+                                                    削除
+                                                </button>
+                                            </div>  
+                                        )}
+                                    </>
                                 )}
                             </li>
                         ))}
