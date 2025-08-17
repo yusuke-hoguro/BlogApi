@@ -5,6 +5,7 @@ import client from "../api/client";
 export default function PostList(){
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [errorMsg, setErrorMsg] = useState('');
 
     useEffect(() => {
         client.get('/posts')
@@ -13,6 +14,7 @@ export default function PostList(){
             })
             .catch(error => {
                 console.error('投稿取得エラー:', error);
+                setErrorMsg('投稿の取得に失敗しました。');
             })
             .finally(() => setLoading(false))
     }, []);

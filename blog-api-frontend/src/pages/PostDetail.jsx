@@ -14,6 +14,7 @@ export default function PostDetail(){
     // コメント編集用
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editingContent, setEditingContent] = useState('');
+    const [errorMsg, setErrorMsg] = useState('');
 
     // 初回レンダリング時のみ実行
     useEffect(() => {
@@ -31,6 +32,7 @@ export default function PostDetail(){
             setComments(commentRes.data || []);
         }catch(error){
             console.error('取得エラー:', error);
+            setErrorMsg('投稿とコメントの取得に失敗しました。');
         }finally{
             setLoading(false);
         }
@@ -59,7 +61,7 @@ export default function PostDetail(){
             await fetchPostAndComments();
         }catch(error){
             console.error('コメント投稿エラー:', error);
-            alert('コメント投稿でエラーが発生しました: ' + error.message);
+            setErrorMsg('コメント投稿でエラーが発生しました。' + error.message);
         }finally{
             setSubmitting(false);
         }
@@ -78,7 +80,7 @@ export default function PostDetail(){
             await fetchPostAndComments();
         } catch (error) {
             console.error("コメント削除エラー:", error);
-            alert("コメントの削除に失敗しました。");
+            setErrorMsg('コメントの削除に失敗しました。');
         }
     }
 
@@ -113,7 +115,7 @@ export default function PostDetail(){
             await fetchPostAndComments();
         } catch(error){
             console.error("コメント更新エラー:", error);
-            alert("コメントの更新に失敗しました。");            
+            setErrorMsg('コメントの更新に失敗しました。');
         }
     }
 
