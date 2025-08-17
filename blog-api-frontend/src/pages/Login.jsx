@@ -35,28 +35,28 @@ export default function Login(){
     }
 
     return(
-        <div className='p-4 max-w-md mx-auto'>
-            <h1 className='text-2xl font-bold mb-4'>ログイン</h1>
-            {error && <p className='text-red-500 mb-2'>{error}</p>}
+        <div className='p-4 max-w-md mx-auto mt-10 bg-gray-50 border rounded shadow'>
+            <h1 className='text-2xl font-bold mb-4 text-center'>ログイン</h1>
+            {error && <p className='text-red-500 mb-4 text-center'>{error}</p>}
             <form onSubmit={handleSubmit} className="space-y-4">
                 <input 
                     type="text" 
                     placeholder='ユーザー名'
                     value={username}
                     onChange={(e) => setUsername(e.target.value)} 
-                    className='w-full border rounded p-2'
+                    className='w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400'
                 />
                 <input 
                     type="password" 
                     placeholder='パスワード'
                     value={password}
                     onChange={(e) => setPassword(e.target.value)} 
-                    className='w-full border rounded p-2'
+                    className='w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400'
                 />
                 <button
                     type='submit'
                     disabled={loading}
-                    className='w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-gray-400'
+                    className='w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-gray-400 transition-colors'
                 >
                     {loading ? "ログイン中..." : "ログイン"}
                 </button>

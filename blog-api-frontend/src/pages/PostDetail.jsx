@@ -121,39 +121,43 @@ export default function PostDetail(){
     if(!post) return <p className="p-4 text-red-600">投稿が見つかりません</p>;
 
     return(
-        <div className='p-4'>
-            {/* &larr;は左向き矢印 */}
+        <div className="p-4 max-w-3xl mx-auto">
+            {/* 戻るリンク &larr;は左向き矢印 */}
             <Link to="/" className="text-blue-600 hover:underline">&larr; 投稿一覧に戻る</Link>
+
+            {/* 投稿タイトルと内容 */}
             <h1 className='text-2xl font-bold mt-4'>{post.titile}</h1>
             {/* mt:margin-top whitespace-pre-wrap:改行や連続スペースをそのまま表示しつつ、必要に応じで自動で折り返す */}
             <p className='mt-2 text-gray-800 whitespace-pre-wrap'>{post.content}</p>
 
+            {/* コメント一覧 */}
             <div className="mt-6">
                 <h2 className='text-xl font-semibold mb-2'>コメント一覧</h2>
+                {errorMsg && <p className="text-red-500 mb-2">{errorMsg}</p>}
                 {/* JSX内ではif文は使えないので三項演算子で記載 */}
                 {!comments || comments.length === 0 ? (
                     <p className='text-gray-500'>コメントはまだありません。</p>
                 ):(
-                    <ul className='space-y-3'>
+                    <ul className='space-y-4'>
                         {comments.map(comment => (
-                            <li key={comment.id} className='border p-3 rounded'>
+                            <li key={comment.id} className='border rounded p-4 shadow bg-white'>
                                 {editingCommentId === comment.id ? (
                                     <>
                                         <textarea
-                                            className="w-full border rounded p-2"
+                                            className="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-400"
                                             value={editingContent}
                                             onChange={(e) => setEditingContent(e.target.value)}
                                         />
-                                        <div className="mt-2 flex gap-2">
+                                        <div className="mt-2 flex flex-wrap gap-2">
                                             <button
                                                 onClick={() => handleUpdateComment(comment.id)}
-                                                className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                                                className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
                                             >
                                                 保存
                                             </button>
                                             <button
                                                 onClick={() => setEditingCommentId(null)}
-                                                className="px-2 py-1 bg-gray-400 text-white rounded hover:bg-gray-500"
+                                                className="px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-500 transition-colors"
                                             >
                                                 キャンセル
                                             </button>
@@ -166,19 +170,19 @@ export default function PostDetail(){
 
                                         {/* 自分のコメントのみ削除ボタン表示 */}
                                         {comment.user_id === getCurrentUserId() && (
-                                            <div className="mt-2 flex gap-2">
+                                            <div className="mt-2 flex flex-wrap gap-2">
                                                 <button
                                                     onClick={() => {
                                                         setEditingCommentId(comment.id);
                                                         setEditingContent(comment.content);
                                                     }}
-                                                    className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                                                    className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors"
                                                 >
                                                     編集
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteComment(comment.id)}
-                                                    className="mt-2 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
                                                 >
                                                     削除
                                                 </button>
@@ -192,11 +196,25 @@ export default function PostDetail(){
                 )}
             </div>
 
-            <form onSubmit={handleSubmit} className="mt-6 border-t pt-4">
-                <textarea className='w-full border rounded p-2' rows="3" placeholder='コメントを入力…' value={newComment} onChange={(e) => setNewComment(e.target.value)}/>
-                <button type="submit" disabled={submitting} className='mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400'>
-                    {submitting ?  '送信中...' : 'コメント送信'}
-                </button>
+            <form onSubmit={handleSubmit} className="mt-6 border-t pt-4 space-y-2">
+                <label htmlFor="new-comment" className="block font-medium">コメントを入力</label>
+                <textarea 
+                    id="new-comment" 
+                    className='w-full border rounded p-2' 
+                    rows="3" 
+                    placeholder='コメントを入力…' 
+                    value={newComment} 
+                    onChange={(e) => setNewComment(e.target.value)}
+                />
+                <div className="flex justify-end">
+                    <button 
+                        type="submit" 
+                        disabled={submitting} 
+                        className='mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400'
+                    >
+                        {submitting ?  '送信中...' : 'コメント送信'}
+                    </button>
+                </div>
             </form>
         </div>
     );
