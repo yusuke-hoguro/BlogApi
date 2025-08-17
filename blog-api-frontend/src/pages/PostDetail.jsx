@@ -140,7 +140,7 @@ export default function PostDetail(){
                 ):(
                     <ul className='space-y-4'>
                         {comments.map(comment => (
-                            <li key={comment.id} className='border rounded p-4 shadow bg-white'>
+                            <li key={comment.id} className='border rounded p-4 shadow bg-white break-words'>
                                 {editingCommentId === comment.id ? (
                                     <>
                                         <textarea
@@ -166,7 +166,7 @@ export default function PostDetail(){
                                 ):(
                                     <>
                                         <p className='text-gray-700'>{comment.content}</p>
-                                        <p className='text-sm text-gray-400'>ユーザーID:{comment.user_id}</p>
+                                        <p className='text-sm text-gray-400 mt-1'>ユーザーID:{comment.user_id}</p>
 
                                         {/* 自分のコメントのみ削除ボタン表示 */}
                                         {comment.user_id === getCurrentUserId() && (
