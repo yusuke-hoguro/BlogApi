@@ -17,6 +17,7 @@ export default function PostDetail(){
         fetchPostAndComments();
     }, [id]);
 
+    // 投稿とコメントの取得を実施する
     async function fetchPostAndComments(){
         try{
             const [postRes, commentRes] = await Promise.all([
@@ -61,6 +62,36 @@ export default function PostDetail(){
         }
     }
 
+    // コメント削除用関数
+    async function handleDeleteComment(commentId) {
+        if(!window.confirm("本当にコメントを削除しますか？")) return;
+
+        try{
+            const token = localStorage.getItem("token");
+            await client.delete(`/comments/${commentId}`, {
+                headers: { Authorization: token },
+            });
+            // 削除後にコメント一覧を再取得
+            await fetchPostAndComments();
+        } catch (error) {
+            console.error("コメント削除エラー:", error);
+            alert("コメントの削除に失敗しました。");
+        }
+    }
+
+    // JWTからログイン中のユーザーIDを取得
+    function getCurrentUserId(){
+        const token = localStorage.getItem("token");
+        if (!token) return null;
+
+        try{
+            const payload = JSON.parse(atob(token.split('.')[1]))
+            return payload.user_id;
+        }catch{
+            return null;
+        }
+    }
+
     if(loading) return <p className="p-4">読み込み中...</p>;
     if(!post) return <p className="p-4 text-red-600">投稿が見つかりません</p>;
 
@@ -83,6 +114,16 @@ export default function PostDetail(){
                             <li key={comment.id} className='border p-3 rounded'>
                                 <p className='text-gray-700'>{comment.content}</p>
                                 <p className='text-sm text-gray-400'>ユーザーID:{comment.user_id}</p>
+
+                                {/* 自分のコメントのみ削除ボタン表示 */}
+                                {comment.user_id === getCurrentUserId() && (
+                                    <button
+                                        onClick={() => handleDeleteComment(comment.id)}
+                                         className="mt-2 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                    >
+                                        削除
+                                    </button>
+                                )}
                             </li>
                         ))}
                     </ul>
