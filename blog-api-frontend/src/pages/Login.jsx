@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import client from '../api/client';
 
 export default function Login(){
@@ -10,6 +10,10 @@ export default function Login(){
     const [loading, setLoading] = useState(false);
     // useNavigate:「navigate」関数を取得して任意のパスに移動できる
     const navigate = useNavigate();
+    // useLocation: 現在のURLの場所に関する情報を取得
+    const location = useLocation();
+    // 元のアクセス先があれば戻す
+    const from = location.state?.from?.pathname || '/';
 
     async function handleSubmit(e) {
         // ブラウザのデフォルト動作を停止させる
@@ -21,7 +25,7 @@ export default function Login(){
             // 取得したトークンを保存する
             localStorage.setItem('token', res.data.token);
             // ログイン成功時はトップページへ
-            navigate('/');
+            navigate(from, { replace: true });
         } catch(error){
             console.error("ログイン失敗:", err)
             setError('ログインに失敗しました。ユーザー名とパスワードを確認してください。');
