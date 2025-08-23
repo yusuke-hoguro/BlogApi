@@ -130,7 +130,7 @@ export default function PostDetail(){
             {/* 投稿タイトルと内容 */}
             <h1 className='text-2xl font-bold mt-4'>{post.titile}</h1>
             {/* mt:margin-top whitespace-pre-wrap:改行や連続スペースをそのまま表示しつつ、必要に応じで自動で折り返す */}
-            <p className='mt-2 text-gray-800 whitespace-pre-wrap'>{post.content}</p>
+            <p className='mt-2 text-gray-800 whitespace-pre-wrap break-all max-w-full'>{post.content}</p>
 
             {/* コメント一覧 */}
             <div className="mt-6">
@@ -167,7 +167,9 @@ export default function PostDetail(){
                                     </>                                
                                 ):(
                                     <>
-                                        <p className='text-gray-700'>{comment.content}</p>
+                                        <p className='text-gray-700 whitespace-pre-wrap break-all max-w-full'>
+                                            {comment.content}
+                                        </p>
                                         <p className='text-sm text-gray-400 mt-1'>ユーザーID:{comment.user_id}</p>
 
                                         {/* 自分のコメントのみ削除ボタン表示 */}
