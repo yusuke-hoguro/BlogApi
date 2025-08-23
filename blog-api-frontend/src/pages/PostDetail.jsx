@@ -223,7 +223,11 @@ export default function PostDetail(){
                         e.target.style.height = "auto";
                         e.target.style.height = e.target.scrollHeight + "px";
                     }}
+                    maxLength={500} // 最大文字数を500文字に設定
                 />
+                {/* 文字数カウント表示 */}
+                <p className="text-sm text-gray-500 text-right">{newComment.length} / 500文字</p>
+                {/* エラーメッセージを表示 */}
                 {errorMsg && <p className="text-red-500 text-sm">{errorMsg}</p>}
                 <div className="flex justify-end">
                     <button 
