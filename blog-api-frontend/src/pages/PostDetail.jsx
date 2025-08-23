@@ -123,7 +123,7 @@ export default function PostDetail(){
     if(!post) return <p className="p-4 text-red-600">投稿が見つかりません</p>;
 
     return(
-        <div className="p-4 max-w-3xl mx-auto">
+        <div className="p-4 max-w-3xl mx-auto w-full overflow-x-hidden box-border">
             {/* 戻るリンク &larr;は左向き矢印 */}
             <Link to="/" className="text-blue-600 hover:underline">&larr; 投稿一覧に戻る</Link>
 
@@ -142,14 +142,20 @@ export default function PostDetail(){
                 ):(
                     <ul className='space-y-4'>
                         {comments.map(comment => (
-                            <li key={comment.id} className='border rounded p-4 shadow bg-white break-words'>
+                            // コメントカード全体
+                            <li key={comment.id} className='border rounded shadow bg-white p-3 min-w-0 overflow-x-hidden'>
+                                {/* 編集モードか表示モードかを切り替え */}
                                 {editingCommentId === comment.id ? (
                                     <>
+                                        {/* 編集用テキストエリア */}
                                         <textarea
-                                            className="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+                                            className="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-green-400 resize-none max-w-full"
                                             value={editingContent}
                                             onChange={(e) => setEditingContent(e.target.value)}
+                                            // 高さを3行で揃える
+                                            rows={3}
                                         />
+                                        {/* 保存・キャンセルボタン */}
                                         <div className="mt-2 flex flex-wrap gap-2">
                                             <button
                                                 onClick={() => handleUpdateComment(comment.id)}
@@ -167,12 +173,15 @@ export default function PostDetail(){
                                     </>                                
                                 ):(
                                     <>
-                                        <p className='text-gray-700 whitespace-pre-wrap break-all max-w-full'>
+                                        {/* コメント本文 */}
+                                        <p className='text-gray-700 whitespace-pre-wrap break-all max-w-full overflow-x-hidden'>
                                             {comment.content}
                                         </p>
+                                        {/* ユーザーID・日時表示 */}
                                         <p className='text-sm text-gray-400 mt-1'>ユーザーID:{comment.user_id}</p>
+                                        <p className="text-xs text-gray-400">{new Date(comment.created_at).toLocaleString()}</p>
 
-                                        {/* 自分のコメントのみ削除ボタン表示 */}
+                                        {/* 編集・削除ボタン（自分のコメントのみ） */}
                                         {comment.user_id === getCurrentUserId() && (
                                             <div className="mt-2 flex flex-wrap gap-2">
                                                 <button
@@ -204,7 +213,7 @@ export default function PostDetail(){
                 <label htmlFor="new-comment" className="block font-medium">コメントを入力</label>
                 <textarea 
                     id="new-comment" 
-                    className='w-full border rounded p-2' 
+                    className='block w-full border rounded p-2 box-border max-w-full' 
                     rows="3" 
                     placeholder='コメントを入力…' 
                     value={newComment} 
@@ -214,7 +223,7 @@ export default function PostDetail(){
                     <button 
                         type="submit" 
                         disabled={submitting} 
-                        className='mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400'
+                        className='mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 box-border max-w-full'
                     >
                         {submitting ?  '送信中...' : 'コメント送信'}
                     </button>
