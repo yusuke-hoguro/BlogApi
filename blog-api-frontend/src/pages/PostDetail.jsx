@@ -4,17 +4,18 @@ import client from '../api/client';
 
 export default function PostDetail(){
     // useParams:URLに含まれるパラメータをオブジェクトとして返す
-    const { id } = useParams();
+    const { id } = useParams();                                     // 投稿ID
     // useState:状態管理フック 変数の初期値を設定し、その変数を更新するための関数を返す
-    const [post, setPost] = useState(null);
-    const [comments, setComments] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [newComment, setNewComment] = useState('');
-    const [submitting, setSubmitting] = useState(false);
-    // コメント編集用
-    const [editingCommentId, setEditingCommentId] = useState(null);
-    const [editingContent, setEditingContent] = useState('');
-    const [errorMsg, setErrorMsg] = useState('');
+    const [post, setPost] = useState(null);                         // 投稿管理
+    const [comments, setComments] = useState([]);                   // コメント一覧
+    const [loading, setLoading] = useState(true);                   // 表示読み込み管理
+    const [newComment, setNewComment] = useState('');               // 新規コメント
+    const [submitting, setSubmitting] = useState(false);            // コメント送信管理
+    const [successMsg, setSuccessMsg] = useState('');               // 送信完了時のメッセージ
+    const [editingCommentId, setEditingCommentId] = useState(null); // 更新中のコメントID
+    const [editingContent, setEditingContent] = useState('');       // 更新用コメント
+    const [errorMsg, setErrorMsg] = useState('');                   // エラーメッセージ
+
 
     // 初回レンダリング時のみ実行
     useEffect(() => {
@@ -45,6 +46,7 @@ export default function PostDetail(){
         if(!newComment.trim()) return;
 
         setSubmitting(true);
+        setErrorMsg('');
         try{
             const token = localStorage.getItem('token');
             const response = await client.post(
@@ -59,6 +61,10 @@ export default function PostDetail(){
             console.log('投稿APIレスポンス:', response);
             setNewComment('');
             await fetchPostAndComments();
+            // 送信成功メッセージ
+            setSuccessMsg('コメントを送信しました！');
+            // 3秒後にメッセージを消す
+            setTimeout(() => setSuccessMsg(''), 300000);
         }catch(error){
             console.error('コメント投稿エラー:', error);
             setErrorMsg('コメント投稿でエラーが発生しました。' + error.message);
@@ -227,12 +233,15 @@ export default function PostDetail(){
                 />
                 {/* 文字数カウント表示 */}
                 <p className="text-sm text-gray-500 text-right">{newComment.length} / 500文字</p>
-                {/* エラーメッセージを表示 */}
-                {errorMsg && <p className="text-red-500 text-sm">{errorMsg}</p>}
+
+                {/* エラー・成功メッセージ */}
+                {errorMsg && <p className="!text-red-500 text-sm">{errorMsg}</p>}
+                {successMsg && <p className="!text-green-500 text-sm">{successMsg}</p>}
+
                 <div className="flex justify-end">
                     <button 
                         type="submit" 
-                        disabled={submitting} 
+                        disabled={submitting || !newComment.trim()} 
                         className='mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 box-border max-w-full'
                     >
                         {submitting ?  '送信中...' : 'コメント送信'}
