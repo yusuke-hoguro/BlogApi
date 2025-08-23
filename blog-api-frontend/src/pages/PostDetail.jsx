@@ -135,7 +135,6 @@ export default function PostDetail(){
             {/* コメント一覧 */}
             <div className="mt-6">
                 <h2 className='text-xl font-semibold mb-2'>コメント一覧</h2>
-                {errorMsg && <p className="text-red-500 mb-2">{errorMsg}</p>}
                 {/* JSX内ではif文は使えないので三項演算子で記載 */}
                 {!comments || comments.length === 0 ? (
                     <p className='text-gray-500'>コメントはまだありません。</p>
@@ -213,12 +212,19 @@ export default function PostDetail(){
                 <label htmlFor="new-comment" className="block font-medium">コメントを入力</label>
                 <textarea 
                     id="new-comment" 
-                    className='block w-full border rounded p-2 box-border max-w-full' 
+                    className='block w-full border rounded p-2 box-border max-w-full resize-none' 
                     rows="3" 
                     placeholder='コメントを入力…' 
                     value={newComment} 
-                    onChange={(e) => setNewComment(e.target.value)}
+                    disabled={submitting}   // 送信中は入力不可
+                    onChange={(e) => {
+                        setNewComment(e.target.value);
+                        // 自動リサイズ
+                        e.target.style.height = "auto";
+                        e.target.style.height = e.target.scrollHeight + "px";
+                    }}
                 />
+                {errorMsg && <p className="text-red-500 text-sm">{errorMsg}</p>}
                 <div className="flex justify-end">
                     <button 
                         type="submit" 
