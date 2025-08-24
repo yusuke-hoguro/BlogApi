@@ -148,7 +148,7 @@ export default function PostDetail(){
                     <ul className='space-y-4'>
                         {comments.map(comment => (
                             // コメントカード全体
-                            <li key={comment.id} className='border  rounded-lg shadow-md bg-white p-4 max-w-full mx-auto min-w-0 overflow-x-hidden break-words'>
+                            <li key={comment.id} className='border  rounded-lg shadow-sm bg-white p-4 max-w-full mx-auto min-w-0 overflow-x-hidden break-words'>
                                 {/* 編集モードか表示モードかを切り替え */}
                                 {editingCommentId === comment.id ? (
                                     <>
@@ -179,17 +179,17 @@ export default function PostDetail(){
                                 ):(
                                     <>
                                         {/* コメント本文 */}
-                                        <p className='text-gray-800 whitespace-pre-wrap break-all max-w-full overflow-x-hidden'>
+                                        <p className='text-gray-800 whitespace-pre-wrap break-all max-w-full overflow-x-hidden leading-relaxed'>
                                             {comment.content}
                                         </p>
-                                        <div className="mt-2 flex flex-wrap justify-between items-center gap-2">
+                                        <div className="mt-2 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                                             <div className="text-sm text-gray-500">
                                                 <span>ユーザーID: {comment.user_id}</span> | 
                                                 <span className="ml-1">{new Date(comment.created_at).toLocaleString()}</span>
                                             </div>
                                             {/* 編集・削除ボタン（自分のコメントのみ） */}
                                             {comment.user_id === getCurrentUserId() && (
-                                                <div className="mt-2 flex flex-wrap gap-2">
+                                                <div className="mt-2 sm:mt-0 flex flex-wrap gap-2">
                                                     <button
                                                         onClick={() => {
                                                             setEditingCommentId(comment.id);
