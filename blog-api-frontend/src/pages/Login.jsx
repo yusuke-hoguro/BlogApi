@@ -35,7 +35,7 @@ export default function Login(){
     }
 
     return(
-        <div className='p-4 max-w-md mx-auto mt-10 bg-gray-50 border rounded shadow  box-border'>
+        <div className='p-4 max-w-md mx-auto mt-10 bg-gray-50 border rounded shadow overflow-x-hidden box-border'>
             <h1 className='text-2xl font-bold mb-4 text-center'>ログイン</h1>
             {error && <p className='text-red-500 mb-4 text-center'>{error}</p>}
             <form onSubmit={handleSubmit} className="space-y-4 px-4">
