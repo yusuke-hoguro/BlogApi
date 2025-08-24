@@ -148,7 +148,7 @@ export default function PostDetail(){
                     <ul className='space-y-4'>
                         {comments.map(comment => (
                             // コメントカード全体
-                            <li key={comment.id} className='border rounded shadow bg-white p-3 min-w-0 overflow-x-hidden'>
+                            <li key={comment.id} className='border  rounded-lg shadow-md bg-white p-4 max-w-full mx-auto min-w-0 overflow-x-hidden break-words'>
                                 {/* 編集モードか表示モードかを切り替え */}
                                 {editingCommentId === comment.id ? (
                                     <>
@@ -179,33 +179,35 @@ export default function PostDetail(){
                                 ):(
                                     <>
                                         {/* コメント本文 */}
-                                        <p className='text-gray-700 whitespace-pre-wrap break-all max-w-full overflow-x-hidden'>
+                                        <p className='text-gray-800 whitespace-pre-wrap break-all max-w-full overflow-x-hidden'>
                                             {comment.content}
                                         </p>
-                                        {/* ユーザーID・日時表示 */}
-                                        <p className='text-sm text-gray-400 mt-1'>ユーザーID:{comment.user_id}</p>
-                                        <p className="text-xs text-gray-400">{new Date(comment.created_at).toLocaleString()}</p>
-
-                                        {/* 編集・削除ボタン（自分のコメントのみ） */}
-                                        {comment.user_id === getCurrentUserId() && (
-                                            <div className="mt-2 flex flex-wrap gap-2">
-                                                <button
-                                                    onClick={() => {
-                                                        setEditingCommentId(comment.id);
-                                                        setEditingContent(comment.content);
-                                                    }}
-                                                    className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors"
-                                                >
-                                                    編集
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteComment(comment.id)}
-                                                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                                                >
-                                                    削除
-                                                </button>
-                                            </div>  
-                                        )}
+                                        <div className="mt-2 flex flex-wrap justify-between items-center gap-2">
+                                            <div className="text-sm text-gray-500">
+                                                <span>ユーザーID: {comment.user_id}</span> | 
+                                                <span className="ml-1">{new Date(comment.created_at).toLocaleString()}</span>
+                                            </div>
+                                            {/* 編集・削除ボタン（自分のコメントのみ） */}
+                                            {comment.user_id === getCurrentUserId() && (
+                                                <div className="mt-2 flex flex-wrap gap-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingCommentId(comment.id);
+                                                            setEditingContent(comment.content);
+                                                        }}
+                                                        className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors"
+                                                    >
+                                                        編集
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteComment(comment.id)}
+                                                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                                                    >
+                                                        削除
+                                                    </button>
+                                                </div>  
+                                            )}
+                                        </div>
                                     </>
                                 )}
                             </li>
