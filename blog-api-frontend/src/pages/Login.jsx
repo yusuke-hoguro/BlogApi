@@ -27,7 +27,7 @@ export default function Login(){
             // ログイン成功時はトップページへ
             navigate(from, { replace: true });
         } catch(error){
-            console.error("ログイン失敗:", err)
+            console.error("ログイン失敗:", error)
             setError('ログインに失敗しました。ユーザー名とパスワードを確認してください。');
         } finally{
             setLoading(false);
