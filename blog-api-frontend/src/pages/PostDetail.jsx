@@ -64,7 +64,7 @@ export default function PostDetail(){
             // 送信成功メッセージ
             setSuccessMsg('コメントを送信しました！');
             // 3秒後にメッセージを消す
-            setTimeout(() => setSuccessMsg(''), 300000);
+            setTimeout(() => setSuccessMsg(''), 3000);
         }catch(error){
             console.error('コメント投稿エラー:', error);
             setErrorMsg('コメント投稿でエラーが発生しました。' + error.message);
@@ -134,7 +134,7 @@ export default function PostDetail(){
             <Link to="/" className="text-blue-600 hover:underline">&larr; 投稿一覧に戻る</Link>
 
             {/* 投稿タイトルと内容 */}
-            <h1 className='text-2xl font-bold mt-4'>{post.titile}</h1>
+            <h1 className='text-2xl font-bold mt-4'>{post.title}</h1>
             {/* mt:margin-top whitespace-pre-wrap:改行や連続スペースをそのまま表示しつつ、必要に応じで自動で折り返す */}
             <p className='mt-2 text-gray-800 whitespace-pre-wrap break-all max-w-full'>{post.content}</p>
 
