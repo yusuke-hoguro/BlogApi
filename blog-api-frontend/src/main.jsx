@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './Layout.jsx';
+import PostCreate from './pages/PostCreate.jsx';
 import PostList from './pages/PostList.jsx';
 import PostDetail from './pages/PostDetail.jsx';
 import Login from "./pages/Login.jsx";
@@ -17,6 +18,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/" element={<PostList />} />
           <Route path="/post/:id" element={<PostDetail />} />
         </Route>
+
+        {/* 投稿作成 */}
+        <Route path="/post/create" element={<RequireAuth><PostCreate /></RequireAuth>} />
 
         {/* Headerなしの単独ルート */}
         <Route path="/login" element={<Login />} />
