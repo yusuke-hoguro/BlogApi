@@ -24,6 +24,12 @@ export default function PostList(){
     return(
         <div className="p-4 max-w-3xl mx-auto">
             <h1 className="text-2xl font-bold mb-4" >投稿一覧</h1>
+            <Link
+                to="/post/create"
+                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+            >
+                新規投稿作成
+            </Link>
             {errorMsg && <p className="text-red-500 mb-4">{errorMsg}</p>}
             <ul className="space-y-4">
                 {posts.map(post => (
