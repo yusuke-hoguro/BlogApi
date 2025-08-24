@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import client from '../api/client';
 
 export default function PostDetail(){
     // useParams:URLに含まれるパラメータをオブジェクトとして返す
     const { id } = useParams();                                     // 投稿ID
+    // useNavigate:「navigate」関数を取得して任意のパスに移動できる
+    const navigate = useNavigate();                                 // navigate関数
     // useState:状態管理フック 変数の初期値を設定し、その変数を更新するための関数を返す
     const [post, setPost] = useState(null);                         // 投稿管理
     const [comments, setComments] = useState([]);                   // コメント一覧
@@ -15,7 +17,6 @@ export default function PostDetail(){
     const [editingCommentId, setEditingCommentId] = useState(null); // 更新中のコメントID
     const [editingContent, setEditingContent] = useState('');       // 更新用コメント
     const [errorMsg, setErrorMsg] = useState('');                   // エラーメッセージ
-
 
     // 初回レンダリング時のみ実行
     useEffect(() => {
@@ -103,6 +104,20 @@ export default function PostDetail(){
         }
     }
 
+    // 投稿削除を実行する
+    async function handleDeletePost() {
+        if (!window.confirm("本当に投稿を削除しますか？")) return;
+
+        try {
+            const token = localStorage.getItem("token");
+            await client.delete(`/posts/${post.id}`, { headers: { Authorization: token } });
+            navigate("/"); // 削除後は投稿一覧に戻る
+        } catch (error) {
+            console.error("投稿削除エラー:", error);
+            setErrorMsg("投稿の削除に失敗しました。");
+        }
+    }
+
     // コメント更新用の関数
     async function handleUpdateComment(commentId) {
         if(!editingContent.trim()) return;
@@ -137,6 +152,19 @@ export default function PostDetail(){
             <h1 className='text-2xl font-bold mt-4'>{post.title}</h1>
             {/* mt:margin-top whitespace-pre-wrap:改行や連続スペースをそのまま表示しつつ、必要に応じで自動で折り返す */}
             <p className='mt-2 text-gray-800 whitespace-pre-wrap break-all max-w-full'>{post.content}</p>
+
+
+            {/* 自分の投稿なら削除ボタンを表示 */}
+            {post.user_id === getCurrentUserId() && (
+                <div className="mt-4">
+                <button
+                    onClick={handleDeletePost}
+                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                >
+                    投稿削除
+                </button>
+                </div>
+            )}
 
             {/* コメント一覧 */}
             <div className="mt-6">
