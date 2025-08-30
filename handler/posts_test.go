@@ -211,6 +211,82 @@ func TestCreatePostHandlerMissingTitle(t *testing.T) {
 	t.Logf("Response body: %s", string(body))
 }
 
+// 投稿作成用API バリデーション確認用のテストを実施する
+func TestCreatePostHandlerValidation(t *testing.T) {
+	//テスト用DBのセットアップを開始する
+	db := testutils.SetupTestDB(t)
+	defer db.Close()
+
+	//テスト用のサーバーを作成する
+	server := httptest.NewServer(testutils.SetupTestServer(db))
+	defer server.Close()
+
+	//JWTトークンを発行
+	token, err := handler.GenerateJWT(3)
+	if err != nil {
+		t.Fatal("JWTの生成に失敗:", err)
+		return
+	}
+
+	// テスト実施用のテーブル（関数ごとに書いたほうがわかりやすいのでグローバルにしない）
+	tests := []struct {
+		name       string
+		body       string
+		wantStatus int
+	}{
+		// タイトルが空のテスト
+		{
+			name:       "empty title",
+			body:       `{"title": "", "content": "本文"}`,
+			wantStatus: http.StatusBadRequest,
+		},
+		// タイトルが文字数オーバーのテスト
+		{
+			name:       "title too long",
+			body:       fmt.Sprintf(`{"title": "%s", "content": "本文"}`, strings.Repeat("a", handler.MaxTitleLength+1)),
+			wantStatus: http.StatusBadRequest,
+		},
+		// 投稿内容が空の場合のテスト
+		{
+			name:       "empty content",
+			body:       `{"title": "タイトル", "content": ""}`,
+			wantStatus: http.StatusBadRequest,
+		},
+		// 投稿内容が文字数オーバーのテスト
+		{
+			name:       "content too long",
+			body:       fmt.Sprintf(`{"title": "タイトル", "content": "%s"}`, strings.Repeat("a", handler.MaxContentLength+1)),
+			wantStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		// サブテストを作成（第1引数：サブテストの名前 第2引数：サブテストの処理）
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodPost, server.URL+"/posts", strings.NewReader(tt.body))
+			if err != nil {
+				t.Fatal("リクエスト生成エラー:", err)
+			}
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", token)
+
+			client := server.Client()
+			resp, err := client.Do(req)
+			if err != nil {
+				t.Fatal("HTTPリクエスト失敗:", err)
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != tt.wantStatus {
+				t.Errorf("[%s] 期待するステータスコード %d, 実際は %d", tt.name, tt.wantStatus, resp.StatusCode)
+			}
+
+			body, _ := io.ReadAll(resp.Body)
+			t.Logf("[%s] Response body: %s", tt.name, string(body))
+		})
+	}
+}
+
 // 記事更新用ハンドラー関数のテスト
 func TestUpdatePostHandler(t *testing.T) {
 	// テスト用DBのセットアップ

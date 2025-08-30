@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	maxTitleLength   = 100
-	maxContentLength = 1000
+	MaxTitleLength   = 100
+	MaxContentLength = 1000
 )
 
 // 記事一覧取得用のハンドラー関数
@@ -69,7 +69,7 @@ func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// タイトルが100文字より大きい場合はエラーとする
-		if len(post.Title) > maxTitleLength {
+		if len(post.Title) > MaxTitleLength {
 			http.Error(w, "Title must be 100 characters or less", http.StatusBadRequest)
 			return
 		}
@@ -81,7 +81,7 @@ func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// タイトルが1000文字より大きい場合はエラーとする
-		if len(post.Content) > maxContentLength {
+		if len(post.Content) > MaxContentLength {
 			http.Error(w, "Content must be 1000 characters or less", http.StatusBadRequest)
 			return
 		}
@@ -152,7 +152,7 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// タイトルが100文字より大きい場合はエラーとする
-		if len(post.Title) > maxTitleLength {
+		if len(post.Title) > MaxTitleLength {
 			http.Error(w, "Title must be 100 characters or less", http.StatusBadRequest)
 			return
 		}
@@ -164,7 +164,7 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// タイトルが1000文字より大きい場合はエラーとする
-		if len(post.Content) > maxContentLength {
+		if len(post.Content) > MaxContentLength {
 			http.Error(w, "Content must be 1000 characters or less", http.StatusBadRequest)
 			return
 		}
