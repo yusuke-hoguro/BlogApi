@@ -12,6 +12,11 @@ import (
 	"github.com/yusuke-hoguro/BlogApi/models"
 )
 
+const (
+	maxTitleLength   = 100
+	maxContentLength = 1000
+)
+
 // 記事一覧取得用のハンドラー関数
 func GetPostsByIDHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -56,9 +61,28 @@ func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
+
 		// タイトルが空の場合はエラーとする
 		if strings.TrimSpace(post.Title) == "" {
 			http.Error(w, "Title must not be empty", http.StatusBadRequest)
+			return
+		}
+
+		// タイトルが100文字より大きい場合はエラーとする
+		if len(post.Title) > maxTitleLength {
+			http.Error(w, "Title must be 100 characters or less", http.StatusBadRequest)
+			return
+		}
+
+		// 投稿の内容が空の場合はエラーとする
+		if strings.TrimSpace(post.Content) == "" {
+			http.Error(w, "Content is required", http.StatusBadRequest)
+			return
+		}
+
+		// タイトルが1000文字より大きい場合はエラーとする
+		if len(post.Content) > maxContentLength {
+			http.Error(w, "Content must be 1000 characters or less", http.StatusBadRequest)
 			return
 		}
 
@@ -118,6 +142,30 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 		var post models.Post
 		if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		// タイトルが空の場合はエラーとする
+		if strings.TrimSpace(post.Title) == "" {
+			http.Error(w, "Title must not be empty", http.StatusBadRequest)
+			return
+		}
+
+		// タイトルが100文字より大きい場合はエラーとする
+		if len(post.Title) > maxTitleLength {
+			http.Error(w, "Title must be 100 characters or less", http.StatusBadRequest)
+			return
+		}
+
+		// 投稿の内容が空の場合はエラーとする
+		if strings.TrimSpace(post.Content) == "" {
+			http.Error(w, "Content is required", http.StatusBadRequest)
+			return
+		}
+
+		// タイトルが1000文字より大きい場合はエラーとする
+		if len(post.Content) > maxContentLength {
+			http.Error(w, "Content must be 1000 characters or less", http.StatusBadRequest)
 			return
 		}
 
