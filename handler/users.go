@@ -35,11 +35,13 @@ func SignupHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// バリデーション
+		// ユーザー名が空の場合はエラーとする
 		if userData.Username == "" {
 			http.Error(w, "Username is required", http.StatusBadRequest)
 			return
 		}
+
+		// パスワードが8文字未満の場合はエラーとする
 		if len(userData.Password) < 8 {
 			http.Error(w, "Password must be at least 8 characters long", http.StatusBadRequest)
 			return
@@ -84,11 +86,13 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// バリデーション
+		// ユーザー名が空の場合はエラーとする
 		if creds.Username == "" {
 			http.Error(w, "Username is required", http.StatusBadRequest)
 			return
 		}
+
+		// パスワードが空の場合、エラーとする
 		if creds.Password == "" {
 			http.Error(w, "Password is required", http.StatusBadRequest)
 			return
