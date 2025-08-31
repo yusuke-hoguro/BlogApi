@@ -288,6 +288,45 @@ func TestDeleteCommentHandlerNoAuthorization(t *testing.T) {
 
 }
 
+// コメント削除用API  無効なトークンを送信した場合のテスト
+func TestDeleteCommentHandlerInvalidToken(t *testing.T) {
+	//テスト用DBのセットアップを開始する
+	db := testutils.SetupTestDB(t)
+	defer db.Close()
+
+	//テスト用サーバーのセットアップ
+	server := httptest.NewServer(testutils.SetupTestServer(db))
+	defer server.Close()
+
+	// 改ざんされたトークンを用意
+	invalidToken := "Bearer invalid.jwt.token"
+
+	//コメントIDを指定してJSONデータ作成
+	commentID := 2
+	url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
+	req, err := http.NewRequest(http.MethodDelete, url, nil)
+	if err != nil {
+		t.Fatal("リクエスト生成失敗:", err)
+	}
+	req.Header.Set("Authorization", invalidToken)
+
+	//リクエスト送信
+	client := server.Client()
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal("HTTPリクエスト失敗:", err)
+	}
+	defer resp.Body.Close()
+
+	//ステータスコード確認
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusUnauthorized, resp.StatusCode)
+	}
+	//ログに表示
+	body, _ := io.ReadAll(resp.Body)
+	t.Logf("レスポンス: %s", string(body))
+}
+
 // 投稿のコメント取得用APIのテスト
 func TestGetCommentsByPostIDHandler(t *testing.T) {
 	// テスト用DBのセットアップを開始する
