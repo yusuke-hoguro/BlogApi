@@ -369,6 +369,53 @@ func TestUpdatePostHandler(t *testing.T) {
 	t.Logf("Response body: %s", string(body))
 }
 
+// 記事更新用API　存在しないコメントID選択時のテストを実施する
+func TestUpdatePostNotFound(t *testing.T) {
+	// テスト用DBのセットアップ
+	db := testutils.SetupTestDB(t)
+	defer db.Close()
+
+	// テスト用サーバーを作成する
+	server := httptest.NewServer(testutils.SetupTestServer(db))
+	defer server.Close()
+
+	// JWTトークンを発行
+	token, err := handler.GenerateJWT(1)
+	if err != nil {
+		t.Fatal("JWTの生成に失敗:", err)
+		return
+	}
+
+	// 更新用データのJSON　※存在しない投稿IDを指定する
+	updateJSON := `{"title": "更新されたタイトル", "content": "更新された内容"}`
+	postID := 9999
+
+	// リクエストを作成する
+	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
+	req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(updateJSON))
+	if err != nil {
+		t.Fatal("リクエスト生成エラー:", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", token)
+
+	// HTTPリクエストを実行
+	client := server.Client()
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal("HTTPリクエスト失敗:", err)
+	}
+	defer resp.Body.Close()
+
+	// ステータスコードの確認
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusNotFound, resp.StatusCode)
+	}
+	// レスポンスを表示
+	body, _ := io.ReadAll(resp.Body)
+	t.Logf("Response body: %s", string(body))
+}
+
 // 記事更新用ハンドラー関数のバリデーションテスト
 func TestUpdatePostHandlerValidation(t *testing.T) {
 	// テスト用DBのセットアップ
