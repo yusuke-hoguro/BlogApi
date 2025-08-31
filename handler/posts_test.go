@@ -332,6 +332,81 @@ func TestUpdatePostHandler(t *testing.T) {
 	t.Logf("Response body: %s", string(body))
 }
 
+// 記事更新用ハンドラー関数のバリデーションテスト
+func TestUpdatePostHandlerValidation(t *testing.T) {
+	// テスト用DBのセットアップ
+	db := testutils.SetupTestDB(t)
+	defer db.Close()
+
+	// テスト用サーバーを作成する
+	server := httptest.NewServer(testutils.SetupTestServer(db))
+	defer server.Close()
+
+	// JWTトークンを発行
+	token, err := handler.GenerateJWT(1)
+	if err != nil {
+		t.Fatal("JWTの生成に失敗:", err)
+		return
+	}
+
+	// 更新用データのJSON
+	updateJSON := `{"title": "更新されたタイトル", "content": "更新された内容"}`
+	postID := 1
+	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
+	req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(updateJSON))
+	if err != nil {
+		t.Fatal("リクエスト生成エラー:", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", token)
+
+	// HTTPリクエストを実行
+	client := server.Client()
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal("HTTPリクエスト失敗:", err)
+	}
+	defer resp.Body.Close()
+
+	// テスト実施用のテーブル作成
+	tests := []struct {
+		name       string
+		body       string
+		wantStatus int
+	}{
+		{"empty title", `{"title": "", "content": "本文"}`, http.StatusBadRequest},
+		{"title too long", fmt.Sprintf(`{"title": "%s", "content": "本文"}`, strings.Repeat("a", handler.MaxTitleLength+1)), http.StatusBadRequest},
+		{"empty content", `{"title": "タイトル", "content": ""}`, http.StatusBadRequest},
+		{"content too long", fmt.Sprintf(`{"title": "タイトル", "content": "%s"}`, strings.Repeat("a", handler.MaxContentLength+1)), http.StatusBadRequest},
+	}
+
+	// サブテストを実行する
+	for _, tt := range tests {
+		// サブテストを作成（第1引数：サブテストの名前 第2引数：サブテストの処理）
+		t.Run(tt.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodPut, server.URL+"/posts/1", strings.NewReader(tt.body))
+			if err != nil {
+				t.Fatal("リクエスト生成エラー:", err)
+			}
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", token)
+
+			resp, err := client.Do(req)
+			if err != nil {
+				t.Fatal("HTTPリクエスト失敗:", err)
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != tt.wantStatus {
+				t.Errorf("[%s] 期待するステータスコード %d, 実際は %d", tt.name, tt.wantStatus, resp.StatusCode)
+			}
+
+			body, _ := io.ReadAll(resp.Body)
+			t.Logf("[%s] Response body: %s", tt.name, string(body))
+		})
+	}
+}
+
 // 記事削除用ハンドラー関数のテスト
 func TestDeletePostHandler(t *testing.T) {
 	// テスト用DBのセットアップ
