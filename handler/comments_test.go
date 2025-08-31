@@ -590,6 +590,55 @@ func TestUpdateCommentHandlerNoAuthorization(t *testing.T) {
 
 }
 
+// コメント更新用API 他人のコメントを更新しようとした場合のテスト
+func TestUpdateCommentHandlerForbidden(t *testing.T) {
+	// テスト用DBのセットアップを開始する
+	db := testutils.SetupTestDB(t)
+	defer db.Close()
+
+	// テスト用サーバーのセットアップ
+	server := httptest.NewServer(testutils.SetupTestServer(db))
+	defer server.Close()
+
+	// テスト用のJWTトークン発行
+	token, err := handler.GenerateJWT(2)
+	if err != nil {
+		t.Fatal("JWTの生成に失敗", err)
+		return
+	}
+
+	// テスト用のコメントはinit_test.sqlで作成済み
+	commentID := 3
+	updateJSON := `{"content":"他人のコメントを不正に更新しようとする"}`
+
+	// リクエストを作成する
+	url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
+	req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(updateJSON))
+	if err != nil {
+		t.Fatal("リクエスト生成失敗:", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", token)
+
+	//リクエスト送信
+	client := server.Client()
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal("HTTPリクエスト失敗:", err)
+	}
+	defer resp.Body.Close()
+
+	//ステータスコード確認
+	if resp.StatusCode != http.StatusForbidden {
+		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusForbidden, resp.StatusCode)
+	}
+
+	//ログに表示
+	body, _ := io.ReadAll(resp.Body)
+	t.Logf("レスポンス: %s", string(body))
+
+}
+
 // コメント更新用APIのテスト
 func TestUpdateCommentHandlerValidation(t *testing.T) {
 	// テスト用DBのセットアップを開始する
