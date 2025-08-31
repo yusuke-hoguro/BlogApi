@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	maxCommentLength = 500
+	MaxCommentLength = 500
 )
 
 // 投稿のコメント取得用ハンドラー関数
@@ -126,7 +126,7 @@ func PostCommentHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// コメントが500文字以上の場合はエラーとする
-		if len(comment.Content) > maxCommentLength {
+		if len(comment.Content) > MaxCommentLength {
 			http.Error(w, "Content must be 500 characters or less", http.StatusBadRequest)
 			return
 		}
@@ -229,7 +229,7 @@ func UpdateCommentHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// コメントが500文字以上の場合はエラーとする
-		if len(req.Content) > maxCommentLength {
+		if len(req.Content) > MaxCommentLength {
 			http.Error(w, "Content must be 500 characters or less", http.StatusBadRequest)
 			return
 		}

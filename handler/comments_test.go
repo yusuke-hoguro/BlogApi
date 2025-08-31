@@ -59,6 +59,64 @@ func TestPostCommentHandle(t *testing.T) {
 
 }
 
+// コメント投稿用APIのバリデーション確認用テスト
+func TestPostCommentHandleValidation(t *testing.T) {
+	// テスト用DBのセットアップを開始する
+	db := testutils.SetupTestDB(t)
+	defer db.Close()
+
+	// テスト用サーバーのセットアップ
+	server := httptest.NewServer(testutils.SetupTestServer(db))
+	defer server.Close()
+
+	// テスト用のJWTトークン発行
+	token, err := handler.GenerateJWT(3)
+	if err != nil {
+		t.Fatal("JWTの生成に失敗", err)
+		return
+	}
+
+	// 投稿は起動時にテスト用sqlで作成済み（postID=3）
+	postID := 3
+	// テスト実施用のテーブル作成
+	tests := []struct {
+		name       string
+		body       string
+		wantStatus int
+	}{
+		{"empty content", `{"content": ""}`, http.StatusBadRequest},
+		{"content too long", fmt.Sprintf(`{"content": "%s"}`, strings.Repeat("a", handler.MaxCommentLength+1)), http.StatusBadRequest},
+	}
+
+	// サブテストを実行する
+	for _, tt := range tests {
+		// サブテストを作成（第1引数：サブテストの名前 第2引数：サブテストの処理）
+		t.Run(tt.name, func(t *testing.T) {
+			url := fmt.Sprintf("%s/posts/%d/comments", server.URL, postID)
+			req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(tt.body))
+			if err != nil {
+				t.Fatal("リクエスト生成エラー:", err)
+			}
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", token)
+
+			client := server.Client()
+			resp, err := client.Do(req)
+			if err != nil {
+				t.Fatal("HTTPリクエスト失敗:", err)
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != tt.wantStatus {
+				t.Errorf("[%s] 期待するステータスコード %d, 実際は %d", tt.name, tt.wantStatus, resp.StatusCode)
+			}
+
+			body, _ := io.ReadAll(resp.Body)
+			t.Logf("[%s] Response body: %s", tt.name, string(body))
+		})
+	}
+}
+
 // コメント削除用APIのテストを実施する
 func TestDeleteCommentHandler(t *testing.T) {
 	//テスト用DBのセットアップを開始する
@@ -530,4 +588,63 @@ func TestUpdateCommentHandlerNoAuthorization(t *testing.T) {
 	body, _ := io.ReadAll(resp.Body)
 	t.Logf("レスポンス: %s", string(body))
 
+}
+
+// コメント更新用APIのテスト
+func TestUpdateCommentHandlerValidation(t *testing.T) {
+	// テスト用DBのセットアップを開始する
+	db := testutils.SetupTestDB(t)
+	defer db.Close()
+
+	// テスト用サーバーのセットアップ
+	server := httptest.NewServer(testutils.SetupTestServer(db))
+	defer server.Close()
+
+	// テスト用のJWTトークン発行
+	token, err := handler.GenerateJWT(1)
+	if err != nil {
+		t.Fatal("JWTの生成に失敗", err)
+		return
+	}
+
+	// init_test.sqlでテスト用のコメント作成済み
+	commentID := 3
+
+	// テスト実施用のテーブル作成
+	tests := []struct {
+		name       string
+		body       string
+		wantStatus int
+	}{
+		{"empty content", `{"content": ""}`, http.StatusBadRequest},
+		{"content too long", fmt.Sprintf(`{"content": "%s"}`, strings.Repeat("a", handler.MaxCommentLength+1)), http.StatusBadRequest},
+	}
+
+	// サブテストを実行する
+	for _, tt := range tests {
+		// サブテストを作成（第1引数：サブテストの名前 第2引数：サブテストの処理）
+		t.Run(tt.name, func(t *testing.T) {
+			url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
+			req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(tt.body))
+			if err != nil {
+				t.Fatal("リクエスト生成エラー:", err)
+			}
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", token)
+
+			client := server.Client()
+			resp, err := client.Do(req)
+			if err != nil {
+				t.Fatal("HTTPリクエスト失敗:", err)
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != tt.wantStatus {
+				t.Errorf("[%s] 期待するステータスコード %d, 実際は %d", tt.name, tt.wantStatus, resp.StatusCode)
+			}
+
+			body, _ := io.ReadAll(resp.Body)
+			t.Logf("[%s] Response body: %s", tt.name, string(body))
+		})
+	}
 }
