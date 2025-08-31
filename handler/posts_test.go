@@ -463,7 +463,7 @@ func TestDeletePostHandlerForbidden(t *testing.T) {
 	server := httptest.NewServer(testutils.SetupTestServer(db))
 	defer server.Close()
 
-	// JWTトークンを発行
+	// コメント投稿した人以外のユーザーIDを設定する
 	token, err := handler.GenerateJWT(99)
 	if err != nil {
 		t.Fatal("JWTの生成に失敗:", err)
@@ -491,6 +491,52 @@ func TestDeletePostHandlerForbidden(t *testing.T) {
 	// ステータスコードの確認
 	if resp.StatusCode != http.StatusForbidden {
 		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusForbidden, resp.StatusCode)
+	}
+
+	// レスポンスを表示
+	body, _ := io.ReadAll(resp.Body)
+	t.Logf("Response body: %s", body)
+
+}
+
+// 記事削除用ハンドラー関数 存在しないIDを指定した場合のテストを実施する
+func TestDeletePostHandlerNotFound(t *testing.T) {
+	// テスト用DBのセットアップ
+	db := testutils.SetupTestDB(t)
+	defer db.Close()
+
+	// テスト用サーバーのセットアップ
+	server := httptest.NewServer(testutils.SetupTestServer(db))
+	defer server.Close()
+
+	// JWTトークンを発行
+	token, err := handler.GenerateJWT(2)
+	if err != nil {
+		t.Fatal("JWTの生成に失敗:", err)
+	}
+
+	// 削除対象のIDからURLを作成
+	postID := 9999
+	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
+
+	// リクエストの作成
+	req, err := http.NewRequest(http.MethodDelete, url, nil)
+	if err != nil {
+		t.Fatal("リクエスト生成エラー:", err)
+	}
+	req.Header.Set("Authorization", token)
+
+	// リクエスト実行
+	client := server.Client()
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal("HTTPリクエスト失敗:", err)
+	}
+	defer resp.Body.Close()
+
+	// ステータスコードの確認
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusNotFound, resp.StatusCode)
 	}
 
 	// レスポンスを表示

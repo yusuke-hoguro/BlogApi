@@ -209,22 +209,22 @@ func TestDeleteCommentHandlerUnauthorized(t *testing.T) {
 
 // コメント削除用API 存在しないIDを指定した場合のテストを実施する
 func TestDeleteCommentHandlerNotFound(t *testing.T) {
-	//テスト用DBのセットアップを開始する
+	// テスト用DBのセットアップを開始する
 	db := testutils.SetupTestDB(t)
 	defer db.Close()
 
-	//テスト用サーバーのセットアップ
+	// テスト用サーバーのセットアップ
 	server := httptest.NewServer(testutils.SetupTestServer(db))
 	defer server.Close()
 
-	//コメント投稿した人以外のユーザーIDを設定する
-	token, err := handler.GenerateJWT(99)
+	// JWTトークンを発行
+	token, err := handler.GenerateJWT(2)
 	if err != nil {
 		t.Fatal("JWTの生成に失敗", err)
 		return
 	}
 
-	//存在しないコメントIDを指定してJSONデータ作成
+	// 存在しないコメントIDを指定してJSONデータ作成
 	commentID := 9999
 	url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
@@ -233,7 +233,7 @@ func TestDeleteCommentHandlerNotFound(t *testing.T) {
 	}
 	req.Header.Set("Authorization", token)
 
-	//リクエスト送信
+	// リクエスト送信
 	client := server.Client()
 	resp, err := client.Do(req)
 	if err != nil {
@@ -241,12 +241,12 @@ func TestDeleteCommentHandlerNotFound(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	//ステータスコード確認
+	// ステータスコード確認
 	if resp.StatusCode != http.StatusNotFound {
 		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusNotFound, resp.StatusCode)
 	}
 
-	//ログに表示
+	// ログに表示
 	body, _ := io.ReadAll(resp.Body)
 	t.Logf("レスポンス: %s", string(body))
 
