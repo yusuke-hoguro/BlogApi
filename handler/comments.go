@@ -13,6 +13,10 @@ import (
 	"github.com/yusuke-hoguro/BlogApi/models"
 )
 
+const (
+	MaxCommentLength = 500
+)
+
 // 投稿のコメント取得用ハンドラー関数
 func GetCommentsByPostIDHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -116,6 +120,17 @@ func PostCommentHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		// コメントが空の場合はエラーとする
+		if strings.TrimSpace(comment.Content) == "" {
+			http.Error(w, "Content is required", http.StatusBadRequest)
+		}
+
+		// コメントが500文字以上の場合はエラーとする
+		if len(comment.Content) > MaxCommentLength {
+			http.Error(w, "Content must be 500 characters or less", http.StatusBadRequest)
+			return
+		}
+
 		// コメントを挿入する
 		query := `INSERT INTO comments (post_id, user_id, content) VALUES ($1, $2, $3)`
 		_, err = db.Exec(query, postID, userID, comment.Content)
@@ -130,7 +145,7 @@ func PostCommentHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// コメント投稿用のハンドラー関数
+// コメント削除用のハンドラー関数
 func DeleteCommentHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// JWTからuser_idを取得
@@ -208,9 +223,14 @@ func UpdateCommentHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// 更新コメントが空の場合はエラーとする
+		// コメントが空の場合はエラーとする
 		if strings.TrimSpace(req.Content) == "" {
-			http.Error(w, "Content must not be empty", http.StatusBadRequest)
+			http.Error(w, "Content is required", http.StatusBadRequest)
+		}
+
+		// コメントが500文字以上の場合はエラーとする
+		if len(req.Content) > MaxCommentLength {
+			http.Error(w, "Content must be 500 characters or less", http.StatusBadRequest)
 			return
 		}
 
