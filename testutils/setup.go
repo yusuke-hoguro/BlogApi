@@ -2,7 +2,6 @@ package testutils
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -26,15 +25,14 @@ func SetupTestDB(t *testing.T) *sql.DB {
 	// ヘルパー関数定義（呼び出し元のエラーを表示する）
 	t.Helper()
 	// DB接続設定
-	dbHost := "localhost"
-	dbPort := os.Getenv("DB_TEST_PORT")
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_TEST_NAME")
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		// ローカル開発用のデフォルト値
+		dbURL = "postgres://postgres:yourpassword@localhost:5433/blog_test?sslmode=disable"
+	}
 
-	// Data Souce Nameの設定
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", dbHost, dbPort, dbUser, dbPassword, dbName)
-	db, err := sql.Open("postgres", dsn)
+	// DB接続
+	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		t.Fatalf("DB接続失敗: %v", err)
 	}
