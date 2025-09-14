@@ -8,41 +8,23 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: testpass
-          POSTGRES_DB: testdb
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U testuser"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       # ランナー環境にリポジトリのコードをチェックアウトする
       - uses: actions/checkout@v3
 
-      - name: Set up Go
-      #actions/setup-go アクションのバージョン 4 を利用
-        uses: actions/setup-go@v4
-        with:
-          go-version: 1.21
-      
-      - name: Install dependencies
-        run: go mod tidy
-
-      - name: Wait for Postgres
+      # Docker Composeでビルドとテスト実行
+      - name: Build and run tests
         run: |
-          until pg_isready -h localhost -p 5432 -U testuser; do
-            sleep 1
-          done
+          docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit || exit 1
+    
+      # コンテナログを取得する
+      - name: Save container logs if failed
+        if: failure()
+        run: |
+          mkdir -p logs
+          docker-compose -f docker-compose.test.yml logs > logs/test.log || true
+          cat logs/test.log
 
-      - name: Run test
-        env:
-          DATABASE_URL: postgres://testuser:testpass@localhost:5432/testdb?sslmode=disable
-        run: go test -v ./...
+      - name: Cleanup
+        run:  docker-compose -f docker-compose.test.yml down -v
+
