@@ -1,4 +1,5 @@
 name: Go CI with PostgreSQL
+on:
   push:
     branches: [main, develop]
   pull_request:
