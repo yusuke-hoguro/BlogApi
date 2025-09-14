@@ -16,16 +16,16 @@ jobs:
       # Docker Composeでビルドとテスト実行
       - name: Build and run tests
         run: |
-          docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit || exit 1
+          docker compose -f docker-compose.test.yml up --build --abort-on-container-exit || exit 1
     
       # コンテナログを取得する
       - name: Save container logs if failed
         if: failure()
         run: |
           mkdir -p logs
-          docker-compose -f docker-compose.test.yml logs > logs/test.log || true
+          docker compose -f docker-compose.test.yml logs > logs/test.log || true
           cat logs/test.log
 
       - name: Cleanup
-        run:  docker-compose -f docker-compose.test.yml down -v
+        run:  docker compose -f docker-compose.test.yml down -v
 
