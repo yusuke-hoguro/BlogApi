@@ -1,0 +1,48 @@
+name: Go CI with PostgreSQL
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]  
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U testuser"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      # ランナー環境にリポジトリのコードをチェックアウトする
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+      #actions/setup-go アクションのバージョン 4 を利用
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.21
+      
+      - name: Install dependencies
+        run: go mod tidy
+
+      - name: Wait for Postgres
+        run: |
+          until pg_isready -h localhost -p 5432 -U testuser; do
+            sleep 1
+          done
+
+      - name: Run test
+        env:
+          DATABASE_URL: postgres://testuser:testpass@localhost:5432/testdb?sslmode=disable
+        run: go test -v ./...
