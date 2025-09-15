@@ -1,4 +1,4 @@
-name: Go CI with PostgreSQL
+name: CI Auto Test 
 on:
   push:
     branches: [main, develop]
@@ -11,10 +11,27 @@ jobs:
 
     steps:
       # ランナー環境にリポジトリのコードをチェックアウトする
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set Up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+             ${{ runner.os }}-go-
+
+      - name: Verify dependencies
+        run: go mod tidy && git diff --exit-code go.mod go.sum 
 
       # Docker Composeでビルドとテスト実行
-      - name: Build and run tests
+      - name: Build and run tests (docker-compose)
         run: docker compose -f docker-compose.test.yml up --build --abort-on-container-exit || exit 1
     
       # テスト失敗時はコンテナログを取得する
