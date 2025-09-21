@@ -4,6 +4,9 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]  
+  # 毎日午前3：00に実行する(JST 03:00 = UTC 18:00)
+  schedule:
+    - cron: "0 18 * * *"
 
 jobs:
   lint:
