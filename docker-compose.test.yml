@@ -18,9 +18,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: go_test
     depends_on:
       db:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://postgres:yourpassword@db:5432/blog_test?sslmode=disable
-    command: ["go", "test", "-v", "./..."]
+    command: >
+      sh -c "go test ./... -v -coverprofile=coverage/coverage.out -covermode=atomic"
+    volumes:
+      - ./coverage:/app/coverage
+

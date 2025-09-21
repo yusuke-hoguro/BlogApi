@@ -55,6 +55,13 @@ jobs:
       # Docker Composeでビルドとテスト実行
       - name: Build and run tests (docker-compose)
         run: docker compose -f docker-compose.test.yml up --build --abort-on-container-exit || exit 1
+
+      # カバレッジ対応
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/coverage.out
     
       # テスト失敗時はコンテナログを取得する
       - name: Save container logs if failed
