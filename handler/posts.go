@@ -41,7 +41,10 @@ func GetPostsByIDHandler(db *sql.DB) http.HandlerFunc {
 
 		// json形式に変更してレスポンスに書き込む
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(post)
+		if err := json.NewEncoder(w).Encode(post); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
@@ -99,7 +102,10 @@ func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 		// 作成した記事IDをJSONで返す
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(post)
+		if err := json.NewEncoder(w).Encode(post); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
@@ -274,7 +280,10 @@ func GetMyPostsHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(posts)
+		if err := json.NewEncoder(w).Encode(posts); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
@@ -300,6 +309,9 @@ func GetAllPostsHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(posts)
+		if err := json.NewEncoder(w).Encode(posts); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }

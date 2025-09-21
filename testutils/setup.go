@@ -2,6 +2,7 @@ package testutils
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -17,7 +18,9 @@ import (
 // 初期化処理
 func init() {
 	// 環境変数の読み込みを実施
-	godotenv.Load("../.env")
+	if err := godotenv.Load("../.env"); err != nil {
+		log.Printf("warning: could not load .env file: %v", err)
+	}
 }
 
 // テスト用のDBを設定する
