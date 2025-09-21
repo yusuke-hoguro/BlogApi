@@ -190,7 +190,10 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "Post update successfully!")
+		if _, err := fmt.Fprintln(w, "Post update successfully!"); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
@@ -246,7 +249,10 @@ func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		fmt.Fprintln(w, "Post deleted successfully!")
+		if _, err := fmt.Fprintln(w, "Post deleted successfully!"); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusNoContent)
 	}
 }

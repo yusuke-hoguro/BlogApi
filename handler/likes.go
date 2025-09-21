@@ -38,9 +38,11 @@ func LikePostHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		fmt.Fprintln(w, "Post liked successfully")
+		if _, err := fmt.Fprintln(w, "Post liked successfully"); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
-
 }
 
 // 指定した投稿の「いいね」数とユーザーを取得する
@@ -113,7 +115,10 @@ func UnlikePostHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		fmt.Fprintln(w, "like removed successfully!")
+		if _, err := fmt.Fprintln(w, "like removed successfully!"); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusNoContent)
 	}
 

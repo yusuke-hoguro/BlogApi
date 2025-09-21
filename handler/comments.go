@@ -197,8 +197,10 @@ func DeleteCommentHandler(db *sql.DB) http.HandlerFunc {
 
 		// リクエスト正常終了
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "Comment deleted successfully!")
-
+		if _, err := fmt.Fprintln(w, "Comment deleted successfully!"); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
@@ -264,7 +266,9 @@ func UpdateCommentHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "Comment update successfully!")
-
+		if _, err := fmt.Fprintln(w, "Comment update successfully!"); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
