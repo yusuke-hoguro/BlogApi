@@ -78,6 +78,7 @@ jobs:
         with:
           name: test-logs
           path: logs/test.log
+          if-no-files-found: ignore
 
       - name: Cleanup
         run:  docker compose -f docker-compose.test.yml down -v
