@@ -25,7 +25,7 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:yourpassword@db:5432/blog_test?sslmode=disable
     command: >
-      sh -c "go test ./... -v -coverprofile=coverage/coverage.out -covermode=atomic"
+      sh -c "rm -f coverage/coverage.out && go test ./... -v -coverprofile=coverage/coverage.out -covermode=atomic"
     volumes:
       - ./coverage:/app/coverage
 
