@@ -48,6 +48,8 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
              ${{ runner.os }}-go-
+          # キャッシュ復元失敗でも workflow 続行
+          fail-on-cache-miss: false 
 
       - name: Verify dependencies
         run: go mod tidy && git diff --exit-code go.mod go.sum 
@@ -62,6 +64,7 @@ jobs:
         with:
           name: coverage-report
           path: coverage/coverage.out
+          if-no-files-found: ignore  # coverage.out が存在しなくても警告抑制
     
       # テスト失敗時はコンテナログを取得する
       - name: Save container logs if failed
