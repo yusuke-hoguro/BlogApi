@@ -20,7 +20,6 @@ func main() {
 	if err != nil {
 		log.Fatal("DB接続失敗:", err)
 	}
-	defer db.DB.Close()
 
 	// ポート取得
 	port := os.Getenv("PORT")
@@ -35,7 +34,9 @@ func main() {
 
 	// サーバー起動
 	if err := http.ListenAndServe(":"+port, handler); err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		os.Exit(1)
 	}
+	defer db.DB.Close()
 	log.Println("Server started at :8080")
 }
