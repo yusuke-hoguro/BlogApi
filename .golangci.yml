@@ -1,0 +1,33 @@
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  enable:
+    - govet           # Go公式の静的解析
+    - errcheck        # エラーハンドリングの漏れを検出
+    - staticcheck     # Goのベストプラクティスに基づく解析
+    - unused          # 使われてない変数や関数を検出
+    - gosimple        # 冗長なコードをシンプルに
+    - gocritic        # より高度なコード改善提案
+    - gofmt           # フォーマットチェック
+    - goimports       # import整列もチェック 
+
+  disable:
+    - depguard        # 特定のパッケージ利用禁止
+
+issues:
+  exclude-rules:
+    - linters:
+        - errcheck
+      text: "Close"   # defer file.Closeのエラーチェックを無視する
+
+  max-same-issues: 3
+  max-issues-per-linter: 10
+  exclude-use-default: false
+
+output:
+  formats:
+    - format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
