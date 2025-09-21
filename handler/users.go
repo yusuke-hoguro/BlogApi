@@ -142,7 +142,7 @@ func GenerateJWT(userID int) (string, error) {
 	// payloadの生成
 	claims := &jwt.MapClaims{
 		"user_id": userID,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(), //トークンの有効時間(24時間後)
+		"exp":     time.Now().Add(24 * time.Hour).Unix(), // トークンの有効時間(24時間後)
 	}
 
 	// JWTを生成する

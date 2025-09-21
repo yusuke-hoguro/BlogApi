@@ -65,7 +65,7 @@ func GetLikesHandler(db *sql.DB) http.HandlerFunc {
 		}
 		defer rows.Close()
 
-		//「いいね」を押してくれたユーザーIDを保管する
+		// 「いいね」を押してくれたユーザーIDを保管する
 		var userIDs []int
 		for rows.Next() {
 			var userID int

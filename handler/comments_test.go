@@ -16,22 +16,22 @@ import (
 
 // コメント投稿用APIのテスト
 func TestPostCommentHandle(t *testing.T) {
-	//テスト用DBのセットアップを開始する
+	// テスト用DBのセットアップを開始する
 	db := testutils.SetupTestDB(t)
 	defer db.Close()
 
-	//テスト用サーバーのセットアップ
+	// テスト用サーバーのセットアップ
 	server := httptest.NewServer(testutils.SetupTestServer(db))
 	defer server.Close()
 
-	//テスト用のJWTトークン発行
+	// テスト用のJWTトークン発行
 	token, err := handler.GenerateJWT(3)
 	if err != nil {
 		t.Fatal("JWTの生成に失敗", err)
 		return
 	}
 
-	//コメント投稿用のJSONデータ作成
+	// コメント投稿用のJSONデータ作成
 	commentJSON := `{"content":"テストコメント"}`
 	postID := 3
 	url := fmt.Sprintf("%s/posts/%d/comments", server.URL, postID)
@@ -42,7 +42,7 @@ func TestPostCommentHandle(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", token)
 
-	//リクエスト送信
+	// リクエスト送信
 	client := server.Client()
 	resp, err := client.Do(req)
 	if err != nil {
@@ -50,12 +50,12 @@ func TestPostCommentHandle(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	//ステータスコード確認
+	// ステータスコード確認
 	if resp.StatusCode != http.StatusCreated {
 		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusCreated, resp.StatusCode)
 	}
 
-	//ログに表示
+	// ログに表示
 	body, _ := io.ReadAll(resp.Body)
 	t.Logf("レスポンス: %s", string(body))
 
@@ -121,22 +121,22 @@ func TestPostCommentHandleValidation(t *testing.T) {
 
 // コメント削除用APIのテストを実施する
 func TestDeleteCommentHandler(t *testing.T) {
-	//テスト用DBのセットアップを開始する
+	// テスト用DBのセットアップを開始する
 	db := testutils.SetupTestDB(t)
 	defer db.Close()
 
-	//テスト用サーバーのセットアップ
+	// テスト用サーバーのセットアップ
 	server := httptest.NewServer(testutils.SetupTestServer(db))
 	defer server.Close()
 
-	//テスト用のJWTトークン発行
+	// テスト用のJWTトークン発行
 	token, err := handler.GenerateJWT(2)
 	if err != nil {
 		t.Fatal("JWTの生成に失敗", err)
 		return
 	}
 
-	//コメント削除用のJSONデータ作成
+	// コメント削除用のJSONデータ作成
 	commentID := 2
 	url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
@@ -145,7 +145,7 @@ func TestDeleteCommentHandler(t *testing.T) {
 	}
 	req.Header.Set("Authorization", token)
 
-	//リクエスト送信
+	// リクエスト送信
 	client := server.Client()
 	resp, err := client.Do(req)
 	if err != nil {
@@ -153,12 +153,12 @@ func TestDeleteCommentHandler(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	//ステータスコード確認
+	// ステータスコード確認
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusOK, resp.StatusCode)
 	}
 
-	//ログに表示
+	// ログに表示
 	body, _ := io.ReadAll(resp.Body)
 	t.Logf("レスポンス: %s", string(body))
 
@@ -166,22 +166,22 @@ func TestDeleteCommentHandler(t *testing.T) {
 
 // コメント削除用APIで他人のコメント削除拒否テストを実施する
 func TestDeleteCommentHandlerUnauthorized(t *testing.T) {
-	//テスト用DBのセットアップを開始する
+	// テスト用DBのセットアップを開始する
 	db := testutils.SetupTestDB(t)
 	defer db.Close()
 
-	//テスト用サーバーのセットアップ
+	// テスト用サーバーのセットアップ
 	server := httptest.NewServer(testutils.SetupTestServer(db))
 	defer server.Close()
 
-	//コメント投稿した人以外のユーザーIDを設定する
+	// コメント投稿した人以外のユーザーIDを設定する
 	token, err := handler.GenerateJWT(99)
 	if err != nil {
 		t.Fatal("JWTの生成に失敗", err)
 		return
 	}
 
-	//コメント削除用のJSONデータ作成
+	// コメント削除用のJSONデータ作成
 	commentID := 2
 	url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
@@ -190,7 +190,7 @@ func TestDeleteCommentHandlerUnauthorized(t *testing.T) {
 	}
 	req.Header.Set("Authorization", token)
 
-	//リクエスト送信
+	// リクエスト送信
 	client := server.Client()
 	resp, err := client.Do(req)
 	if err != nil {
@@ -198,12 +198,12 @@ func TestDeleteCommentHandlerUnauthorized(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	//ステータスコード確認
+	// ステータスコード確認
 	if resp.StatusCode != http.StatusForbidden {
 		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusForbidden, resp.StatusCode)
 	}
 
-	//ログに表示
+	// ログに表示
 	body, _ := io.ReadAll(resp.Body)
 	t.Logf("レスポンス: %s", string(body))
 
@@ -256,15 +256,15 @@ func TestDeleteCommentHandlerNotFound(t *testing.T) {
 
 // コメント削除用API JWTトークンが無い場合のテストを実施する
 func TestDeleteCommentHandlerNoAuthorization(t *testing.T) {
-	//テスト用DBのセットアップを開始する
+	// テスト用DBのセットアップを開始する
 	db := testutils.SetupTestDB(t)
 	defer db.Close()
 
-	//テスト用サーバーのセットアップ
+	// テスト用サーバーのセットアップ
 	server := httptest.NewServer(testutils.SetupTestServer(db))
 	defer server.Close()
 
-	//コメントIDを指定してJSONデータ作成
+	// コメントIDを指定してJSONデータ作成
 	commentID := 2
 	url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
@@ -272,7 +272,7 @@ func TestDeleteCommentHandlerNoAuthorization(t *testing.T) {
 		t.Fatal("リクエスト生成失敗:", err)
 	}
 
-	//リクエスト送信
+	// リクエスト送信
 	client := server.Client()
 	resp, err := client.Do(req)
 	if err != nil {
@@ -280,11 +280,11 @@ func TestDeleteCommentHandlerNoAuthorization(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	//ステータスコード確認
+	// ステータスコード確認
 	if resp.StatusCode != http.StatusUnauthorized {
 		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusUnauthorized, resp.StatusCode)
 	}
-	//ログに表示
+	// ログに表示
 	body, _ := io.ReadAll(resp.Body)
 	t.Logf("レスポンス: %s", string(body))
 
@@ -292,18 +292,18 @@ func TestDeleteCommentHandlerNoAuthorization(t *testing.T) {
 
 // コメント削除用API  無効なトークンを送信した場合のテスト
 func TestDeleteCommentHandlerInvalidToken(t *testing.T) {
-	//テスト用DBのセットアップを開始する
+	// テスト用DBのセットアップを開始する
 	db := testutils.SetupTestDB(t)
 	defer db.Close()
 
-	//テスト用サーバーのセットアップ
+	// テスト用サーバーのセットアップ
 	server := httptest.NewServer(testutils.SetupTestServer(db))
 	defer server.Close()
 
 	// 改ざんされたトークンを用意
 	invalidToken := "Bearer invalid.jwt.token"
 
-	//コメントIDを指定してJSONデータ作成
+	// コメントIDを指定してJSONデータ作成
 	commentID := 2
 	url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
@@ -312,7 +312,7 @@ func TestDeleteCommentHandlerInvalidToken(t *testing.T) {
 	}
 	req.Header.Set("Authorization", invalidToken)
 
-	//リクエスト送信
+	// リクエスト送信
 	client := server.Client()
 	resp, err := client.Do(req)
 	if err != nil {
@@ -320,11 +320,11 @@ func TestDeleteCommentHandlerInvalidToken(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	//ステータスコード確認
+	// ステータスコード確認
 	if resp.StatusCode != http.StatusUnauthorized {
 		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusUnauthorized, resp.StatusCode)
 	}
-	//ログに表示
+	// ログに表示
 	body, _ := io.ReadAll(resp.Body)
 	t.Logf("レスポンス: %s", string(body))
 }
@@ -409,7 +409,7 @@ func TestGetCommentsByPostIDHandlerMultiple(t *testing.T) {
 		t.Fatal("リクエスト生成失敗:", err)
 	}
 
-	//リクエスト送信
+	// リクエスト送信
 	client := server.Client()
 	resp, err := client.Do(req)
 	if err != nil {
@@ -417,12 +417,12 @@ func TestGetCommentsByPostIDHandlerMultiple(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	//ステータスコード確認
+	// ステータスコード確認
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusOK, resp.StatusCode)
 	}
 
-	//ログに表示
+	// ログに表示
 	body, _ := io.ReadAll(resp.Body)
 	var comments []models.Comment
 	if err := json.Unmarshal(body, &comments); err != nil {
@@ -614,7 +614,7 @@ func TestUpdateCommentHandler(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", token)
 
-	//リクエスト送信
+	// リクエスト送信
 	client := server.Client()
 	resp, err := client.Do(req)
 	if err != nil {
@@ -622,12 +622,12 @@ func TestUpdateCommentHandler(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	//ステータスコード確認
+	// ステータスコード確認
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusOK, resp.StatusCode)
 	}
 
-	//ログに表示
+	// ログに表示
 	body, _ := io.ReadAll(resp.Body)
 	t.Logf("レスポンス: %s", string(body))
 
@@ -663,7 +663,7 @@ func TestUpdateCommentHandlerNotFound(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", token)
 
-	//リクエスト送信
+	// リクエスト送信
 	client := server.Client()
 	resp, err := client.Do(req)
 	if err != nil {
@@ -671,12 +671,12 @@ func TestUpdateCommentHandlerNotFound(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	//ステータスコード確認
+	// ステータスコード確認
 	if resp.StatusCode != http.StatusNotFound {
 		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusNotFound, resp.StatusCode)
 	}
 
-	//ログに表示
+	// ログに表示
 	body, _ := io.ReadAll(resp.Body)
 	t.Logf("レスポンス: %s", string(body))
 
@@ -712,7 +712,7 @@ func TestUpdateCommentHandlerEmptyContent(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", token)
 
-	//リクエスト送信
+	// リクエスト送信
 	client := server.Client()
 	resp, err := client.Do(req)
 	if err != nil {
@@ -720,12 +720,12 @@ func TestUpdateCommentHandlerEmptyContent(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	//ステータスコード確認
+	// ステータスコード確認
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusBadRequest, resp.StatusCode)
 	}
 
-	//ログに表示
+	// ログに表示
 	body, _ := io.ReadAll(resp.Body)
 	t.Logf("レスポンス: %s", string(body))
 
@@ -753,7 +753,7 @@ func TestUpdateCommentHandlerNoAuthorization(t *testing.T) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	//リクエスト送信
+	// リクエスト送信
 	client := server.Client()
 	resp, err := client.Do(req)
 	if err != nil {
@@ -761,12 +761,12 @@ func TestUpdateCommentHandlerNoAuthorization(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	//ステータスコード確認
+	// ステータスコード確認
 	if resp.StatusCode != http.StatusUnauthorized {
 		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusUnauthorized, resp.StatusCode)
 	}
 
-	//ログに表示
+	// ログに表示
 	body, _ := io.ReadAll(resp.Body)
 	t.Logf("レスポンス: %s", string(body))
 
@@ -802,7 +802,7 @@ func TestUpdateCommentHandlerForbidden(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", token)
 
-	//リクエスト送信
+	// リクエスト送信
 	client := server.Client()
 	resp, err := client.Do(req)
 	if err != nil {
@@ -810,12 +810,12 @@ func TestUpdateCommentHandlerForbidden(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	//ステータスコード確認
+	// ステータスコード確認
 	if resp.StatusCode != http.StatusForbidden {
 		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusForbidden, resp.StatusCode)
 	}
 
-	//ログに表示
+	// ログに表示
 	body, _ := io.ReadAll(resp.Body)
 	t.Logf("レスポンス: %s", string(body))
 
