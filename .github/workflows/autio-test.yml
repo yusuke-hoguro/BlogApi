@@ -1,0 +1,88 @@
+name: CI Auto Test 
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]  
+  # 毎日午前3：00に実行する(JST 03:00 = UTC 18:00)
+  schedule:
+    - cron: "0 18 * * *"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with: 
+          go-version: 1.24
+
+      # Go言語のコードを分析
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout=5m
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ランナー環境にリポジトリのコードをチェックアウトする
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set Up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+             ${{ runner.os }}-go-
+          # キャッシュ復元失敗でも workflow 続行
+          fail-on-cache-miss: false 
+
+      - name: Verify dependencies
+        run: go mod tidy && git diff --exit-code go.mod go.sum 
+
+      # Docker Composeでビルドとテスト実行
+      - name: Build and run tests (docker-compose)
+        run: docker compose -f docker-compose.test.yml up --build --abort-on-container-exit || exit 1
+
+      # カバレッジ対応
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/coverage.out
+          if-no-files-found: ignore  # coverage.out が存在しなくても警告抑制
+    
+      # テスト失敗時はコンテナログを取得する
+      - name: Save container logs if failed
+        if: failure()
+        run: |
+          mkdir -p logs
+          docker compose -f docker-compose.test.yml logs > logs/test.log || true
+          cat logs/test.log
+
+      # テスト失敗時はログをartifactにUP
+      - name: Upload test logs
+        if: always()
+        uses: actions/Upload-artifact@v4
+        with:
+          name: test-logs
+          path: logs/test.log
+          if-no-files-found: ignore
+
+      - name: Cleanup
+        run:  docker compose -f docker-compose.test.yml down -v
+

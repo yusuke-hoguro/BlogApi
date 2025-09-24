@@ -2,7 +2,7 @@ package testutils
 
 import (
 	"database/sql"
-	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -18,7 +18,9 @@ import (
 // 初期化処理
 func init() {
 	// 環境変数の読み込みを実施
-	godotenv.Load("../.env")
+	if err := godotenv.Load("../.env"); err != nil {
+		log.Printf("warning: could not load .env file: %v", err)
+	}
 }
 
 // テスト用のDBを設定する
@@ -26,19 +28,18 @@ func SetupTestDB(t *testing.T) *sql.DB {
 	// ヘルパー関数定義（呼び出し元のエラーを表示する）
 	t.Helper()
 	// DB接続設定
-	dbHost := "localhost"
-	dbPort := os.Getenv("DB_TEST_PORT")
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_TEST_NAME")
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		// ローカル開発用のデフォルト値
+		dbURL = "postgres://postgres:yourpassword@localhost:5433/blog_test?sslmode=disable"
+	}
 
-	// Data Souce Nameの設定
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", dbHost, dbPort, dbUser, dbPassword, dbName)
-	db, err := sql.Open("postgres", dsn)
+	// DB接続
+	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		t.Fatalf("DB接続失敗: %v", err)
 	}
-	//テスト用のSQLを読み込んで実行する
+	// テスト用のSQLを読み込んで実行する
 	loadTestSQL(t, db, getTestdataPath("init_test.sql"))
 
 	return db
@@ -63,17 +64,17 @@ func loadTestSQL(t *testing.T, db *sql.DB, filepath string) {
 // テスト用のサーバーを設定する
 func SetupTestServer(db *sql.DB) http.Handler {
 	r := mux.NewRouter()
-	r.HandleFunc("/posts", handler.GetAllPostsHandler(db)).Methods("GET")                                           //全投稿取得用
-	r.HandleFunc("/posts/{id}", handler.GetPostsByIDHandler(db)).Methods("GET")                                     //個別投稿取得用
-	r.HandleFunc("/posts", middleware.AuthMiddleware(handler.CreatePostHandler(db))).Methods("POST")                //個別投稿作成用
-	r.HandleFunc("/posts/{id}", middleware.AuthMiddleware(handler.UpdatePostHandler(db))).Methods("PUT")            //個別投稿更新用
-	r.HandleFunc("/posts/{id}", middleware.AuthMiddleware(handler.DeletePostHandler(db))).Methods("DELETE")         //個別投稿削除用
-	r.HandleFunc("/posts/{id}/comments", middleware.AuthMiddleware(handler.PostCommentHandler(db))).Methods("POST") //コメント投稿
-	r.HandleFunc("/posts/{id}/comments", handler.GetCommentsByPostIDHandler(db)).Methods("GET")                     //投稿のコメント取得
-	r.HandleFunc("/comments/{id}", middleware.AuthMiddleware(handler.DeleteCommentHandler(db))).Methods("DELETE")   //コメントIDで削除
-	r.HandleFunc("/comments/{id}", middleware.AuthMiddleware(handler.UpdateCommentHandler(db))).Methods("PUT")      //コメントを更新する
-	r.HandleFunc("/posts/{id}/like", middleware.AuthMiddleware(handler.LikePostHandler(db))).Methods("POST")        //投稿にいいねをつける
-	r.HandleFunc("/posts/{id}/likes", handler.GetLikesHandler(db)).Methods("GET")                                   //投稿のいいねを取得する
+	r.HandleFunc("/posts", handler.GetAllPostsHandler(db)).Methods("GET")                                           // 全投稿取得用
+	r.HandleFunc("/posts/{id}", handler.GetPostsByIDHandler(db)).Methods("GET")                                     // 個別投稿取得用
+	r.HandleFunc("/posts", middleware.AuthMiddleware(handler.CreatePostHandler(db))).Methods("POST")                // 個別投稿作成用
+	r.HandleFunc("/posts/{id}", middleware.AuthMiddleware(handler.UpdatePostHandler(db))).Methods("PUT")            // 個別投稿更新用
+	r.HandleFunc("/posts/{id}", middleware.AuthMiddleware(handler.DeletePostHandler(db))).Methods("DELETE")         // 個別投稿削除用
+	r.HandleFunc("/posts/{id}/comments", middleware.AuthMiddleware(handler.PostCommentHandler(db))).Methods("POST") // コメント投稿
+	r.HandleFunc("/posts/{id}/comments", handler.GetCommentsByPostIDHandler(db)).Methods("GET")                     // 投稿のコメント取得
+	r.HandleFunc("/comments/{id}", middleware.AuthMiddleware(handler.DeleteCommentHandler(db))).Methods("DELETE")   // コメントIDで削除
+	r.HandleFunc("/comments/{id}", middleware.AuthMiddleware(handler.UpdateCommentHandler(db))).Methods("PUT")      // コメントを更新する
+	r.HandleFunc("/posts/{id}/like", middleware.AuthMiddleware(handler.LikePostHandler(db))).Methods("POST")        // 投稿にいいねをつける
+	r.HandleFunc("/posts/{id}/likes", handler.GetLikesHandler(db)).Methods("GET")                                   // 投稿のいいねを取得する
 	return r
 }
 

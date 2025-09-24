@@ -59,8 +59,10 @@ func GetCommentsByPostIDHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(comments)
-
+		if err := json.NewEncoder(w).Encode(comments); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
@@ -89,8 +91,10 @@ func GetCommentsByIDHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(comment)
-
+		if err := json.NewEncoder(w).Encode(comment); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
@@ -140,7 +144,10 @@ func PostCommentHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Comment created"})
+		if err := json.NewEncoder(w).Encode(map[string]string{"message": "Comment created"}); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
 	}
 }
@@ -190,8 +197,10 @@ func DeleteCommentHandler(db *sql.DB) http.HandlerFunc {
 
 		// リクエスト正常終了
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "Comment deleted successfully!")
-
+		if _, err := fmt.Fprintln(w, "Comment deleted successfully!"); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
@@ -257,7 +266,9 @@ func UpdateCommentHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "Comment update successfully!")
-
+		if _, err := fmt.Fprintln(w, "Comment update successfully!"); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }

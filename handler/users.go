@@ -62,7 +62,10 @@ func SignupHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(userData)
+		if err := json.NewEncoder(w).Encode(userData); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
@@ -127,7 +130,10 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 
 		// レスポンス
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"token": token})
+		if err := json.NewEncoder(w).Encode(map[string]string{"token": token}); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
@@ -136,7 +142,7 @@ func GenerateJWT(userID int) (string, error) {
 	// payloadの生成
 	claims := &jwt.MapClaims{
 		"user_id": userID,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(), //トークンの有効時間(24時間後)
+		"exp":     time.Now().Add(24 * time.Hour).Unix(), // トークンの有効時間(24時間後)
 	}
 
 	// JWTを生成する

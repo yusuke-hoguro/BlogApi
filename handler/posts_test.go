@@ -16,11 +16,11 @@ import (
 
 // 全投稿を取得するAPIのテスト
 func TestGetAllPostsHandler(t *testing.T) {
-	//テスト用DBのセットアップを開始する
+	// テスト用DBのセットアップを開始する
 	db := testutils.SetupTestDB(t)
 	defer db.Close()
 
-	//テスト用のサーバーを作成する
+	// テスト用のサーバーを作成する
 	server := httptest.NewServer(testutils.SetupTestServer(db))
 	defer server.Close()
 
@@ -51,28 +51,26 @@ func TestGetAllPostsHandler(t *testing.T) {
 		t.Logf("取得した投稿データ: \n%s", postsJSON)
 	}
 
-	// Todo: Getした内容がただしかを比較する処理を追加
-
 }
 
 // 投稿作成用APIのテスト
 func TestCreatePostHandler(t *testing.T) {
-	//テスト用DBのセットアップを開始する
+	// テスト用DBのセットアップを開始する
 	db := testutils.SetupTestDB(t)
 	defer db.Close()
 
-	//テスト用のサーバーを作成する
+	// テスト用のサーバーを作成する
 	server := httptest.NewServer(testutils.SetupTestServer(db))
 	defer server.Close()
 
-	//JWTトークンを発行
+	// JWTトークンを発行
 	token, err := handler.GenerateJWT(3)
 	if err != nil {
 		t.Fatal("JWTの生成に失敗:", err)
 		return
 	}
 
-	//JSONデータを構築
+	// JSONデータを構築
 	postJSON := `{"title": "テスト投稿", "content": "これはテスト用です"}`
 	req, err := http.NewRequest(http.MethodPost, server.URL+"/posts", strings.NewReader(postJSON))
 	if err != nil {
@@ -98,15 +96,15 @@ func TestCreatePostHandler(t *testing.T) {
 
 // 投稿作成用API 無効なトークンを送信した場合のテストを実施する
 func TestCreatePostHandlerUnauthorized(t *testing.T) {
-	//テスト用DBのセットアップを開始する
+	// テスト用DBのセットアップを開始する
 	db := testutils.SetupTestDB(t)
 	defer db.Close()
 
-	//テスト用のサーバーを作成する
+	// テスト用のサーバーを作成する
 	server := httptest.NewServer(testutils.SetupTestServer(db))
 	defer server.Close()
 
-	//JSONデータを構築
+	// JSONデータを構築
 	postJSON := `{"title": "テスト投稿", "content": "これはテスト用です"}`
 	req, err := http.NewRequest(http.MethodPost, server.URL+"/posts", strings.NewReader(postJSON))
 	if err != nil {
@@ -131,18 +129,18 @@ func TestCreatePostHandlerUnauthorized(t *testing.T) {
 
 // 投稿作成用API JWTトークンが無い場合のテストを実施する
 func TestCreatePostHandlerInvalidToken(t *testing.T) {
-	//テスト用DBのセットアップを開始する
+	// テスト用DBのセットアップを開始する
 	db := testutils.SetupTestDB(t)
 	defer db.Close()
 
-	//テスト用のサーバーを作成する
+	// テスト用のサーバーを作成する
 	server := httptest.NewServer(testutils.SetupTestServer(db))
 	defer server.Close()
 
 	// 無効なJWTトークン（文字列を壊す）
 	token := "Bearer invalid.token.here"
 
-	//JSONデータを構築
+	// JSONデータを構築
 	postJSON := `{"title": "テスト投稿", "content": "これはテスト用です"}`
 	req, err := http.NewRequest(http.MethodPost, server.URL+"/posts", strings.NewReader(postJSON))
 	if err != nil {
@@ -168,22 +166,22 @@ func TestCreatePostHandlerInvalidToken(t *testing.T) {
 
 // 投稿作成用API 不正なリクエストのテストを実施する
 func TestCreatePostHandlerInvalidJSON(t *testing.T) {
-	//テスト用DBのセットアップを開始する
+	// テスト用DBのセットアップを開始する
 	db := testutils.SetupTestDB(t)
 	defer db.Close()
 
-	//テスト用のサーバーを作成する
+	// テスト用のサーバーを作成する
 	server := httptest.NewServer(testutils.SetupTestServer(db))
 	defer server.Close()
 
-	//JWTトークンを発行
+	// JWTトークンを発行
 	token, err := handler.GenerateJWT(3)
 	if err != nil {
 		t.Fatal("JWTの生成に失敗:", err)
 		return
 	}
 
-	//不正なJSONデータを作成
+	// 不正なJSONデータを作成
 	postJSON := `{"title": "テスト投稿", "content":}`
 	req, err := http.NewRequest(http.MethodPost, server.URL+"/posts", strings.NewReader(postJSON))
 	if err != nil {
@@ -209,22 +207,22 @@ func TestCreatePostHandlerInvalidJSON(t *testing.T) {
 
 // 投稿作成用API タイトルが空のテストを実施する
 func TestCreatePostHandlerMissingTitle(t *testing.T) {
-	//テスト用DBのセットアップを開始する
+	// テスト用DBのセットアップを開始する
 	db := testutils.SetupTestDB(t)
 	defer db.Close()
 
-	//テスト用のサーバーを作成する
+	// テスト用のサーバーを作成する
 	server := httptest.NewServer(testutils.SetupTestServer(db))
 	defer server.Close()
 
-	//JWTトークンを発行
+	// JWTトークンを発行
 	token, err := handler.GenerateJWT(3)
 	if err != nil {
 		t.Fatal("JWTの生成に失敗:", err)
 		return
 	}
 
-	//タイトルが空のJSONデータを作成
+	// タイトルが空のJSONデータを作成
 	postJSON := `{"title": "", "content": "これはテスト用です"}`
 	req, err := http.NewRequest(http.MethodPost, server.URL+"/posts", strings.NewReader(postJSON))
 	if err != nil {
@@ -250,15 +248,15 @@ func TestCreatePostHandlerMissingTitle(t *testing.T) {
 
 // 投稿作成用API バリデーション確認用のテストを実施する
 func TestCreatePostHandlerValidation(t *testing.T) {
-	//テスト用DBのセットアップを開始する
+	// テスト用DBのセットアップを開始する
 	db := testutils.SetupTestDB(t)
 	defer db.Close()
 
-	//テスト用のサーバーを作成する
+	// テスト用のサーバーを作成する
 	server := httptest.NewServer(testutils.SetupTestServer(db))
 	defer server.Close()
 
-	//JWTトークンを発行
+	// JWTトークンを発行
 	token, err := handler.GenerateJWT(3)
 	if err != nil {
 		t.Fatal("JWTの生成に失敗:", err)
@@ -842,15 +840,15 @@ func TestDeletePostHandlerInvalidToken(t *testing.T) {
 
 // 投稿取得用APIのテスト
 func TestGetPostsByIDHandler(t *testing.T) {
-	//テスト用DBのセットアップを開始する
+	// テスト用DBのセットアップを開始する
 	db := testutils.SetupTestDB(t)
 	defer db.Close()
 
-	//テスト用のサーバーを作成する
+	// テスト用のサーバーを作成する
 	server := httptest.NewServer(testutils.SetupTestServer(db))
 	defer server.Close()
 
-	//投稿IDを指定してJSONデータ作成
+	// 投稿IDを指定してJSONデータ作成
 	postID := 1
 	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -876,15 +874,15 @@ func TestGetPostsByIDHandler(t *testing.T) {
 
 // 投稿取得用API 存在しない投稿IDのテストを実施
 func TestGetPostsByIDHandlerNotFound(t *testing.T) {
-	//テスト用DBのセットアップを開始する
+	// テスト用DBのセットアップを開始する
 	db := testutils.SetupTestDB(t)
 	defer db.Close()
 
-	//テスト用のサーバーを作成する
+	// テスト用のサーバーを作成する
 	server := httptest.NewServer(testutils.SetupTestServer(db))
 	defer server.Close()
 
-	//存在しない投稿IDを指定してJSONデータ作成
+	// 存在しない投稿IDを指定してJSONデータ作成
 	postID := 9999
 	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -910,15 +908,15 @@ func TestGetPostsByIDHandlerNotFound(t *testing.T) {
 
 // 投稿取得用API IDが数値でないテストを実施
 func TestGetPostsByIDHandlerInvalidID(t *testing.T) {
-	//テスト用DBのセットアップを開始する
+	// テスト用DBのセットアップを開始する
 	db := testutils.SetupTestDB(t)
 	defer db.Close()
 
-	//テスト用のサーバーを作成する
+	// テスト用のサーバーを作成する
 	server := httptest.NewServer(testutils.SetupTestServer(db))
 	defer server.Close()
 
-	//数値以外のIDを指定してJSONデータ作成
+	// 数値以外のIDを指定してJSONデータ作成
 	url := fmt.Sprintf("%s/posts/aaa", server.URL)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {

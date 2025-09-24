@@ -38,9 +38,11 @@ func LikePostHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		fmt.Fprintln(w, "Post liked successfully")
+		if _, err := fmt.Fprintln(w, "Post liked successfully"); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
-
 }
 
 // 指定した投稿の「いいね」数とユーザーを取得する
@@ -63,7 +65,7 @@ func GetLikesHandler(db *sql.DB) http.HandlerFunc {
 		}
 		defer rows.Close()
 
-		//「いいね」を押してくれたユーザーIDを保管する
+		// 「いいね」を押してくれたユーザーIDを保管する
 		var userIDs []int
 		for rows.Next() {
 			var userID int
@@ -81,7 +83,10 @@ func GetLikesHandler(db *sql.DB) http.HandlerFunc {
 			UserIDs:   userIDs,
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
@@ -110,7 +115,10 @@ func UnlikePostHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		fmt.Fprintln(w, "like removed successfully!")
+		if _, err := fmt.Fprintln(w, "like removed successfully!"); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusNoContent)
 	}
 
