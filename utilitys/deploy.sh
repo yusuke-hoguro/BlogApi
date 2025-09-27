@@ -2,7 +2,7 @@
 set -e
 
 echo "=== Starting deployment ==="
-cd ~/blog-api
+cd ~/BlogApi
 # 最新コードを取得
 git pull origin main
 # Docker 再起動
