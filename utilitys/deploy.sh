@@ -3,6 +3,8 @@ set -e
 
 echo "=== Starting deployment ==="
 cd ~/BlogApi
+git fetch origin
+git checkout -f main
 # 最新コードを取得
 git pull origin main
 # Docker 再起動
