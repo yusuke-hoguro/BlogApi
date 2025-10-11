@@ -147,7 +147,6 @@ HTTPS対応のためにNginxをリバースプロキシとして利用する方�
     ```yml
     volumes:
         - ./certbot/www:/var/www/certbot
-    }
     ```
     1. 証明書取得コマンドを実行
     ```bash
