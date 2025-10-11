@@ -67,6 +67,121 @@ pgAdmin も利用可能です。（http://localhost:5050）
 
 ---
 
+## EC2 デプロイ（ポートフォリオ用）
+
+ブログAPIをAWS EC2上にデプロイし、DuckDNS と Nginx を使って HTTPS 化する手順を記載します。
+
+### 前提
+
+- AWSアカウントを保有している必要があります。
+- EC2 インスタンス（Ubuntu 22.04推奨）を作成する必要があります。
+- セキュリティグループで 80/tcp と 443/tcp を開放してください。
+- Docker, docker-compose がAWS EC2上にインストールをしておいてください。
+- DuckDNS で取得したサブドメインを持っている必要があります。（例: `blog-api.duckdns.org`）
+
+### ディレクトリ構成（EC2用例）
+
+```text
+~/BlogApi
+├── docker-compose.yml        # 本番用Docker Compose
+├── nginx/
+│   └── conf.d/
+│       └── blogapi.conf      # Nginxリバースプロキシ設定
+└── certbot/
+    ├── conf/                 # 証明書保存用
+    └── www/                  # Let's Encrypt認証用
+```
+
+### 環境変数
+
+EC2でも `.env` をルートに配置します。
+
+```env
+DB_USER=postgres
+DB_PASSWORD=yourpassword
+DB_NAME=blog
+DB_PORT=5432
+DB_HOST=db
+JWT_SECRET=your_jwt_secret
+APP_PORT=8080
+DATABASE_URL=postgres://postgres:yourpassword@db:5432/blog?sslmode=disable
+DUCKDNS_DOMAIN=blog-api.duckdns.org
+```
+
+### Docker Compose 起動
+
+```bash
+docker compose up --build -d
+```
+
+- `app` コンテナで Go API が動作します。
+- `db` コンテナで PostgreSQL が動作します。
+- `nginx` コンテナで HTTPS リバースプロキシが動作
+- `certbot` コンテナで HTTPS リバースプロキシが動作
+
+### Nginx + HTTPS 設定例
+
+`nginx/conf.d/blogapi.conf`:
+
+```nginx
+# HTTP から HTTPS へのリダイレクト
+server {
+    listen 80;
+    server_name blog-api.duckdns.org;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# HTTPS
+server {
+    listen 443 ssl;
+    server_name blog-api.duckdns.org;
+
+    ssl_certificate /etc/letsencrypt/live/blog-api.duckdns.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/blog-api.duckdns.org/privkey.pem;
+
+    location / {
+        proxy_pass http://app:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+### Certbot（Let's Encrypt）証明書取得
+
+```bash
+sudo certbot certonly --webroot \
+  -w ./certbot/www \
+  -d blog-api.duckdns.org \
+  --email <メールアドレス> --agree-tos --non-interactive
+```
+
+
+### 動作確認
+
+```bash
+curl -I https://blog-api.duckdns.org/posts
+```
+
+- ブラウザでもアクセス可能
+
+### 注意点
+
+-  本番用パスワードや JWT シークレットは絶対に公開しないこと。
+-  DuckDNS の更新は自動化スクリプトで定期更新を実施すること。
+-  EC2 再起動後も `docker compose up -d` で復旧可能です。
+
+---
+
+
 ## テスト実行方法(Docker環境)
 
 毎回クリーンなDBでテストをするため、`down -v` を利用します。

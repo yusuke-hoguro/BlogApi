@@ -1,0 +1,4 @@
+certbot/
+nginx/
+logs/
+blog-api-frontend/
