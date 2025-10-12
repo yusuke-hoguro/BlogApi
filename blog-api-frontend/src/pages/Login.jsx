@@ -21,7 +21,7 @@ export default function Login(){
         setError('');
         setLoading(true);
         try{
-            const res = await client.post('/login',{ username, password });
+            const res = await client.post('/api/login',{ username, password });
             // 取得したトークンを保存する
             localStorage.setItem('token', res.data.token);
             // ログイン成功時はトップページへ

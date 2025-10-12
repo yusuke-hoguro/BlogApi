@@ -21,7 +21,7 @@ const (
 func GetPostsByIDHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// IDを抽出する
-		idStr := strings.TrimPrefix(r.URL.Path, "/posts/")
+		idStr := strings.TrimPrefix(r.URL.Path, "/api/posts/")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
 			http.Error(w, "Invalid ID", http.StatusBadRequest)
@@ -120,7 +120,7 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// URLからIDを取得する
-		idStr := strings.TrimPrefix(r.URL.Path, "/posts/")
+		idStr := strings.TrimPrefix(r.URL.Path, "/api/posts/")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
 			http.Error(w, "Invalid post ID", http.StatusBadRequest)
@@ -208,7 +208,7 @@ func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// URLからIDを取得する
-		idStr := strings.TrimPrefix(r.URL.Path, "/posts/")
+		idStr := strings.TrimPrefix(r.URL.Path, "/api/posts/")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
 			http.Error(w, "Invalid post ID", http.StatusBadRequest)

@@ -19,7 +19,7 @@ export default function PostCreate() {
     try {
       const token = localStorage.getItem("token");
       await client.post(
-        "/posts",
+        "/api/posts",
         { title, content },
         { headers: { Authorization: token } }
       );

@@ -34,7 +34,7 @@ func TestPostCommentHandle(t *testing.T) {
 	// コメント投稿用のJSONデータ作成
 	commentJSON := `{"content":"テストコメント"}`
 	postID := 3
-	url := fmt.Sprintf("%s/posts/%d/comments", server.URL, postID)
+	url := fmt.Sprintf("%s/api/posts/%d/comments", server.URL, postID)
 	req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(commentJSON))
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
@@ -94,7 +94,7 @@ func TestPostCommentHandleValidation(t *testing.T) {
 	for _, tt := range tests {
 		// サブテストを作成（第1引数：サブテストの名前 第2引数：サブテストの処理）
 		t.Run(tt.name, func(t *testing.T) {
-			url := fmt.Sprintf("%s/posts/%d/comments", server.URL, postID)
+			url := fmt.Sprintf("%s/api/posts/%d/comments", server.URL, postID)
 			req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(tt.body))
 			if err != nil {
 				t.Fatal("リクエスト生成エラー:", err)
@@ -138,7 +138,7 @@ func TestDeleteCommentHandler(t *testing.T) {
 
 	// コメント削除用のJSONデータ作成
 	commentID := 2
-	url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
+	url := fmt.Sprintf("%s/api/comments/%d", server.URL, commentID)
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
@@ -183,7 +183,7 @@ func TestDeleteCommentHandlerUnauthorized(t *testing.T) {
 
 	// コメント削除用のJSONデータ作成
 	commentID := 2
-	url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
+	url := fmt.Sprintf("%s/api/comments/%d", server.URL, commentID)
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
@@ -228,7 +228,7 @@ func TestDeleteCommentHandlerNotFound(t *testing.T) {
 
 	// 存在しないコメントIDを指定してJSONデータ作成
 	commentID := 9999
-	url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
+	url := fmt.Sprintf("%s/api/comments/%d", server.URL, commentID)
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
@@ -266,7 +266,7 @@ func TestDeleteCommentHandlerNoAuthorization(t *testing.T) {
 
 	// コメントIDを指定してJSONデータ作成
 	commentID := 2
-	url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
+	url := fmt.Sprintf("%s/api/comments/%d", server.URL, commentID)
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
@@ -305,7 +305,7 @@ func TestDeleteCommentHandlerInvalidToken(t *testing.T) {
 
 	// コメントIDを指定してJSONデータ作成
 	commentID := 2
-	url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
+	url := fmt.Sprintf("%s/api/comments/%d", server.URL, commentID)
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
@@ -343,7 +343,7 @@ func TestGetCommentsByPostIDHandler(t *testing.T) {
 	postID := 2
 
 	// リクエストの作成
-	url := fmt.Sprintf("%s/posts/%d/comments", server.URL, postID)
+	url := fmt.Sprintf("%s/api/posts/%d/comments", server.URL, postID)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
@@ -403,7 +403,7 @@ func TestGetCommentsByPostIDHandlerMultiple(t *testing.T) {
 	postID := 1
 
 	// リクエストの作成
-	url := fmt.Sprintf("%s/posts/%d/comments", server.URL, postID)
+	url := fmt.Sprintf("%s/api/posts/%d/comments", server.URL, postID)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
@@ -464,7 +464,7 @@ func TestGetCommentsByPostIDHandlerEmpty(t *testing.T) {
 	postID := 3
 
 	// リクエストの作成
-	url := fmt.Sprintf("%s/posts/%d/comments", server.URL, postID)
+	url := fmt.Sprintf("%s/api/posts/%d/comments", server.URL, postID)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
@@ -509,7 +509,7 @@ func TestGetCommentsByPostIDHandlerPostNotFound(t *testing.T) {
 	postID := 9999
 
 	// リクエストの作成
-	url := fmt.Sprintf("%s/posts/%d/comments", server.URL, postID)
+	url := fmt.Sprintf("%s/api/posts/%d/comments", server.URL, postID)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
@@ -554,7 +554,7 @@ func TestGetCommentsByPostIDHandlerInvalidID(t *testing.T) {
 	defer server.Close()
 
 	// リクエストの作成
-	url := fmt.Sprintf("%s/posts/ddd/comments", server.URL)
+	url := fmt.Sprintf("%s/api/posts/ddd/comments", server.URL)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
@@ -606,7 +606,7 @@ func TestUpdateCommentHandler(t *testing.T) {
 	updateJSON := `{"content":"更新されたコメント内容"}`
 
 	// リクエストを作成する
-	url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
+	url := fmt.Sprintf("%s/api/comments/%d", server.URL, commentID)
 	req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(updateJSON))
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
@@ -655,7 +655,7 @@ func TestUpdateCommentHandlerNotFound(t *testing.T) {
 	updateJSON := `{"content":"更新されたコメント内容"}`
 
 	// リクエストを作成する
-	url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
+	url := fmt.Sprintf("%s/api/comments/%d", server.URL, commentID)
 	req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(updateJSON))
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
@@ -704,7 +704,7 @@ func TestUpdateCommentHandlerEmptyContent(t *testing.T) {
 	updateJSON := `{"content":""}`
 
 	// リクエストを作成する
-	url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
+	url := fmt.Sprintf("%s/api/comments/%d", server.URL, commentID)
 	req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(updateJSON))
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
@@ -746,7 +746,7 @@ func TestUpdateCommentHandlerNoAuthorization(t *testing.T) {
 	updateJSON := `{"content":""}`
 
 	// リクエストを作成する
-	url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
+	url := fmt.Sprintf("%s/api/comments/%d", server.URL, commentID)
 	req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(updateJSON))
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
@@ -794,7 +794,7 @@ func TestUpdateCommentHandlerForbidden(t *testing.T) {
 	updateJSON := `{"content":"他人のコメントを不正に更新しようとする"}`
 
 	// リクエストを作成する
-	url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
+	url := fmt.Sprintf("%s/api/comments/%d", server.URL, commentID)
 	req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(updateJSON))
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
@@ -855,7 +855,7 @@ func TestUpdateCommentHandlerValidation(t *testing.T) {
 	for _, tt := range tests {
 		// サブテストを作成（第1引数：サブテストの名前 第2引数：サブテストの処理）
 		t.Run(tt.name, func(t *testing.T) {
-			url := fmt.Sprintf("%s/comments/%d", server.URL, commentID)
+			url := fmt.Sprintf("%s/api/comments/%d", server.URL, commentID)
 			req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(tt.body))
 			if err != nil {
 				t.Fatal("リクエスト生成エラー:", err)

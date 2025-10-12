@@ -168,7 +168,7 @@ sudo certbot certonly --webroot \
 ### 動作確認
 
 ```bash
-curl -I https://blog-api.duckdns.org/posts
+curl -I https://blog-api.duckdns.org/api/posts
 ```
 
 - ブラウザでもアクセス可能

@@ -33,7 +33,7 @@ func TestLikePostHandler(t *testing.T) {
 
 	// いいね設定用
 	postID := 1
-	url := fmt.Sprintf("%s/posts/%d/like", server.URL, postID)
+	url := fmt.Sprintf("%s/api/posts/%d/like", server.URL, postID)
 
 	// 同じリクエストを送信して重複登録されないことを確認する
 	for i := 1; i <= 2; i++ {
@@ -85,7 +85,7 @@ func TestGetLikesHandler(t *testing.T) {
 
 	// いいねを取得する投稿
 	postID := 1
-	url := fmt.Sprintf("%s/posts/%d/likes", server.URL, postID)
+	url := fmt.Sprintf("%s/api/posts/%d/likes", server.URL, postID)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
