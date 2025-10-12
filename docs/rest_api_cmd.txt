@@ -3,13 +3,15 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTAwNTI4NjQsInVzZXJfaWQiOjN9.QZ
 
 ■新規ユーザー追加(signup)
 curl -X POST -H "Content-Type: application/json" -d '{"username":"testuser3","password":"11111111"}' http://localhost:8080/api/signup
+curl -X POST -H "Content-Type: application/json" -d '{"username":"testuser2","password":"validpassword"}' http://localhost:8080/api/signup
 
 ■ログイン
 curl -X POST -H "Content-Type: application/json" -d '{"username":"testuser2", "password":"validpassword"}' http://localhost:8080/api/login
+curl -X POST -H "Content-Type: application/json" -d '{"username":"testuser3", "password":"11111111"}' http://localhost:8080/api/login
 
 ■記事投稿
 curl -X POST \
-  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTEwMjQ1NTEsInVzZXJfaWQiOjN9.pzvTj7Ovjfd22q2EJM_sedQNDHK_APLuhOxDSApMiJQ" \
+  -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjAzNDM5MTgsInVzZXJfaWQiOjJ9.Kgy25q_pv6sFZ_czO_N2Wi4l-_89WtYRBhN0lkFErvE" \
   -H "Content-Type: application/json" \
   -d '{"title": "Hello", "content": "JWT test"}' \
   http://localhost:8080/api/posts
