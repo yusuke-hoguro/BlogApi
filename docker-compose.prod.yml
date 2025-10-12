@@ -55,6 +55,7 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
+      - ./blog-api-frontend/dist:/usr/share/nginx/html
     depends_on:
       - app
 
