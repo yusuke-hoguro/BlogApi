@@ -8,7 +8,7 @@ export default function PostList(){
     const [errorMsg, setErrorMsg] = useState('');
 
     useEffect(() => {
-        client.get('/posts')
+        client.get('/api/posts')
             .then(response => {
                 setPosts(response.data)
             })

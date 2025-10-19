@@ -7,6 +7,13 @@ git fetch origin
 git checkout -f main
 # 最新コードを取得
 git pull origin main
+
+# フロントエンドのビルドを実施
+cd blog-api-frontend
+npm install
+npm run build
+cd ..
+
 # Docker 再起動
 docker compose -f docker-compose.prod.yml down
 docker compose -f docker-compose.prod.yml up -d --build

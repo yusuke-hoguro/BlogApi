@@ -12,6 +12,19 @@ services:
       - .:/app # 開発用にコードを同期させる
     command: ["go", "run", "main.go"] #開発用にgo runを一時的に使用する  
 
+  frontend:
+    build: 
+      context: ./blog-api-frontend
+      dockerfile: Dockerfile
+      args:
+        BUILD_ENV: development
+    container_name: blog_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - app
+    volumes:
+      - ./nginx/conf.d/blogapi.dev.conf:/etc/nginx/conf.d/default.conf
   db:
     image: postgres:15
     container_name: postgres

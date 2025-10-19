@@ -25,7 +25,7 @@ func TestGetAllPostsHandler(t *testing.T) {
 	defer server.Close()
 
 	// HTTP Getリクエストの送信
-	resp, err := http.Get(server.URL + "/posts")
+	resp, err := http.Get(server.URL + "/api/posts")
 	if err != nil {
 		t.Fatalf("HTTPリクエスト失敗: %v", err)
 	}
@@ -72,7 +72,7 @@ func TestCreatePostHandler(t *testing.T) {
 
 	// JSONデータを構築
 	postJSON := `{"title": "テスト投稿", "content": "これはテスト用です"}`
-	req, err := http.NewRequest(http.MethodPost, server.URL+"/posts", strings.NewReader(postJSON))
+	req, err := http.NewRequest(http.MethodPost, server.URL+"/api/posts", strings.NewReader(postJSON))
 	if err != nil {
 		t.Fatal("リクエスト生成エラー:", err)
 	}
@@ -106,7 +106,7 @@ func TestCreatePostHandlerUnauthorized(t *testing.T) {
 
 	// JSONデータを構築
 	postJSON := `{"title": "テスト投稿", "content": "これはテスト用です"}`
-	req, err := http.NewRequest(http.MethodPost, server.URL+"/posts", strings.NewReader(postJSON))
+	req, err := http.NewRequest(http.MethodPost, server.URL+"/api/posts", strings.NewReader(postJSON))
 	if err != nil {
 		t.Fatal("リクエスト生成エラー:", err)
 	}
@@ -142,7 +142,7 @@ func TestCreatePostHandlerInvalidToken(t *testing.T) {
 
 	// JSONデータを構築
 	postJSON := `{"title": "テスト投稿", "content": "これはテスト用です"}`
-	req, err := http.NewRequest(http.MethodPost, server.URL+"/posts", strings.NewReader(postJSON))
+	req, err := http.NewRequest(http.MethodPost, server.URL+"/api/posts", strings.NewReader(postJSON))
 	if err != nil {
 		t.Fatal("リクエスト生成エラー:", err)
 	}
@@ -183,7 +183,7 @@ func TestCreatePostHandlerInvalidJSON(t *testing.T) {
 
 	// 不正なJSONデータを作成
 	postJSON := `{"title": "テスト投稿", "content":}`
-	req, err := http.NewRequest(http.MethodPost, server.URL+"/posts", strings.NewReader(postJSON))
+	req, err := http.NewRequest(http.MethodPost, server.URL+"/api/posts", strings.NewReader(postJSON))
 	if err != nil {
 		t.Fatal("リクエスト生成エラー:", err)
 	}
@@ -224,7 +224,7 @@ func TestCreatePostHandlerMissingTitle(t *testing.T) {
 
 	// タイトルが空のJSONデータを作成
 	postJSON := `{"title": "", "content": "これはテスト用です"}`
-	req, err := http.NewRequest(http.MethodPost, server.URL+"/posts", strings.NewReader(postJSON))
+	req, err := http.NewRequest(http.MethodPost, server.URL+"/api/posts", strings.NewReader(postJSON))
 	if err != nil {
 		t.Fatal("リクエスト生成エラー:", err)
 	}
@@ -298,7 +298,7 @@ func TestCreatePostHandlerValidation(t *testing.T) {
 	for _, tt := range tests {
 		// サブテストを作成（第1引数：サブテストの名前 第2引数：サブテストの処理）
 		t.Run(tt.name, func(t *testing.T) {
-			req, err := http.NewRequest(http.MethodPost, server.URL+"/posts", strings.NewReader(tt.body))
+			req, err := http.NewRequest(http.MethodPost, server.URL+"/api/posts", strings.NewReader(tt.body))
 			if err != nil {
 				t.Fatal("リクエスト生成エラー:", err)
 			}
@@ -342,7 +342,7 @@ func TestUpdatePostHandler(t *testing.T) {
 	// 更新用データのJSON
 	updateJSON := `{"title": "更新されたタイトル", "content": "更新された内容"}`
 	postID := 1
-	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
+	url := fmt.Sprintf("%s/api/posts/%d", server.URL, postID)
 	req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(updateJSON))
 	if err != nil {
 		t.Fatal("リクエスト生成エラー:", err)
@@ -389,7 +389,7 @@ func TestUpdatePostHandlerNotFound(t *testing.T) {
 	postID := 9999
 
 	// リクエストを作成する
-	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
+	url := fmt.Sprintf("%s/api/posts/%d", server.URL, postID)
 	req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(updateJSON))
 	if err != nil {
 		t.Fatal("リクエスト生成エラー:", err)
@@ -436,7 +436,7 @@ func TestUpdatePostHandlerForbidden(t *testing.T) {
 	postID := 1
 
 	// リクエストを作成する
-	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
+	url := fmt.Sprintf("%s/api/posts/%d", server.URL, postID)
 	req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(updateJSON))
 	if err != nil {
 		t.Fatal("リクエスト生成エラー:", err)
@@ -476,7 +476,7 @@ func TestUpdatePostHandlerNoAuthorization(t *testing.T) {
 	postID := 1
 
 	// リクエストを作成する
-	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
+	url := fmt.Sprintf("%s/api/posts/%d", server.URL, postID)
 	req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(updateJSON))
 	if err != nil {
 		t.Fatal("リクエスト生成エラー:", err)
@@ -518,7 +518,7 @@ func TestUpdatePostHandlerInvalidToken(t *testing.T) {
 	postID := 1
 
 	// リクエストを作成する
-	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
+	url := fmt.Sprintf("%s/api/posts/%d", server.URL, postID)
 	req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(updateJSON))
 	if err != nil {
 		t.Fatal("リクエスト生成エラー:", err)
@@ -563,7 +563,7 @@ func TestUpdatePostHandlerValidation(t *testing.T) {
 	// 更新用データのJSON
 	updateJSON := `{"title": "更新されたタイトル", "content": "更新された内容"}`
 	postID := 1
-	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
+	url := fmt.Sprintf("%s/api/posts/%d", server.URL, postID)
 	req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(updateJSON))
 	if err != nil {
 		t.Fatal("リクエスト生成エラー:", err)
@@ -595,7 +595,7 @@ func TestUpdatePostHandlerValidation(t *testing.T) {
 	for _, tt := range tests {
 		// サブテストを作成（第1引数：サブテストの名前 第2引数：サブテストの処理）
 		t.Run(tt.name, func(t *testing.T) {
-			req, err := http.NewRequest(http.MethodPut, server.URL+"/posts/1", strings.NewReader(tt.body))
+			req, err := http.NewRequest(http.MethodPut, server.URL+"/api/posts/1", strings.NewReader(tt.body))
 			if err != nil {
 				t.Fatal("リクエスト生成エラー:", err)
 			}
@@ -636,7 +636,7 @@ func TestDeletePostHandler(t *testing.T) {
 
 	// 削除対象のIDからURLを作成
 	postID := 2
-	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
+	url := fmt.Sprintf("%s/api/posts/%d", server.URL, postID)
 
 	// リクエストの作成
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
@@ -682,7 +682,7 @@ func TestDeletePostHandlerForbidden(t *testing.T) {
 
 	// 削除対象のIDからURLを作成
 	postID := 2
-	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
+	url := fmt.Sprintf("%s/api/posts/%d", server.URL, postID)
 
 	// リクエストの作成
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
@@ -728,7 +728,7 @@ func TestDeletePostHandlerNotFound(t *testing.T) {
 
 	// 削除対象のIDからURLを作成
 	postID := 9999
-	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
+	url := fmt.Sprintf("%s/api/posts/%d", server.URL, postID)
 
 	// リクエストの作成
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
@@ -768,7 +768,7 @@ func TestDeletePostHandlerNoAuthorization(t *testing.T) {
 
 	// 削除対象のIDからURLを作成
 	postID := 2
-	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
+	url := fmt.Sprintf("%s/api/posts/%d", server.URL, postID)
 
 	// リクエストの作成
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
@@ -810,7 +810,7 @@ func TestDeletePostHandlerInvalidToken(t *testing.T) {
 
 	// 削除対象のIDからURLを作成
 	postID := 2
-	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
+	url := fmt.Sprintf("%s/api/posts/%d", server.URL, postID)
 
 	// リクエストの作成
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
@@ -850,7 +850,7 @@ func TestGetPostsByIDHandler(t *testing.T) {
 
 	// 投稿IDを指定してJSONデータ作成
 	postID := 1
-	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
+	url := fmt.Sprintf("%s/api/posts/%d", server.URL, postID)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
@@ -884,7 +884,7 @@ func TestGetPostsByIDHandlerNotFound(t *testing.T) {
 
 	// 存在しない投稿IDを指定してJSONデータ作成
 	postID := 9999
-	url := fmt.Sprintf("%s/posts/%d", server.URL, postID)
+	url := fmt.Sprintf("%s/api/posts/%d", server.URL, postID)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
@@ -917,7 +917,7 @@ func TestGetPostsByIDHandlerInvalidID(t *testing.T) {
 	defer server.Close()
 
 	// 数値以外のIDを指定してJSONデータ作成
-	url := fmt.Sprintf("%s/posts/aaa", server.URL)
+	url := fmt.Sprintf("%s/api/posts/aaa", server.URL)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)

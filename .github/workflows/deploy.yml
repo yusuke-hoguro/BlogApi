@@ -5,6 +5,7 @@ on:
     workflows: ["CI Auto Test"]
     types:
       - completed
+  workflow_dispatch:
 
 jobs:
     deploy:
