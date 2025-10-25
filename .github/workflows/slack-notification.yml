@@ -1,0 +1,38 @@
+name: Slack Notification
+
+on:
+  workflow_call:
+    inputs:
+      status:
+        required: true
+        type: string
+      source:
+        required: true
+        type: string
+      branch:
+        required: true
+        type: string
+      run_id:
+        required: true
+        type: string
+    secrets:
+      SLACK_WEBHOOK_URL:
+        required: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Slack
+        uses: slackapi/slack-github-action@v2
+        with:
+            webhook-type: incoming-webhook
+            payload: |
+                {
+                "text": "${{ inputs.status == 'success' && '✅' || '❌' }} *${{ inputs.source }}*\n\
+                ステータス: ${{ inputs.status }}\n\
+                ブランチ: ${{ inputs.branch }}\n\
+                <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ inputs.run_id }}|Actionsの詳細を見る>"
+                }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
