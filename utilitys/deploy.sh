@@ -18,3 +18,8 @@ cd ..
 docker compose -f docker-compose.prod.yml down
 docker compose -f docker-compose.prod.yml up -d --build
 echo "=== Deployment finished ==="
+
+# Docker環境のクリーン（容量問題で暫定追加）
+echo "=== Cleaning Docker environment ==="
+docker system prune -af || true
+echo "=== Cleaned ==="

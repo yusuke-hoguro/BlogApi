@@ -86,3 +86,16 @@ jobs:
 
       - name: Cleanup
         run:  docker compose -f docker-compose.test.yml down -v
+
+  notify:
+    needs: [lint, test]
+    if: always()
+    uses: ./.github/workflows/slack-notification.yml
+    with:
+      status: ${{ (needs.lint.result == 'success' && needs.test.result == 'success') && 'success' || 'failure' }}
+      source: "CI Auto Test"
+      branch: ${{ github.ref_name }}
+      run_id: ${{ github.run_id }}
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
