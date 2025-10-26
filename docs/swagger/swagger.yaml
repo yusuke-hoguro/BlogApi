@@ -1,0 +1,38 @@
+basePath: /
+definitions:
+  models.Post:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+      user_id:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is a sample blog API built with Go net/http.
+  title: Blog API
+  version: "1.0"
+paths:
+  /posts:
+    get:
+      description: Get list of all posts
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Post'
+            type: array
+      summary: Get all posts
+      tags:
+      - posts
+swagger: "2.0"

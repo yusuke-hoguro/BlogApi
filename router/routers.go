@@ -3,13 +3,18 @@ package router
 import (
 	"database/sql"
 
+	_ "github.com/yusuke-hoguro/BlogApi/docs/swagger" // swag init で生成されたdocsパッケージをimport
+
 	"github.com/gorilla/mux"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"github.com/yusuke-hoguro/BlogApi/handler"
 	"github.com/yusuke-hoguro/BlogApi/middleware"
 )
 
 // ハンドラー関数の設定を行う
 func RegisterRoutes(r *mux.Router, db *sql.DB) {
+	// Swagger UI
+	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 	// 投稿関係の処理
 	r.HandleFunc("/api/posts", handler.GetAllPostsHandler(db)).Methods("GET")                                   // 全投稿取得用
 	r.HandleFunc("/api/posts/{id}", handler.GetPostsByIDHandler(db)).Methods("GET")                             // 個別投稿取得用
