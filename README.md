@@ -222,7 +222,7 @@ docker compose -f docker-compose.test.yml logs goapp
 
 ## 今後の改善予定
 
-- 課題や改善については[TODO List](docs/TODO_LIST.md)を参照
+- 課題や改善については[TODO List](docs/issue/TODO_LIST.md)を参照
 
 ---
 
