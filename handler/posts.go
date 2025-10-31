@@ -18,6 +18,14 @@ const (
 )
 
 // 記事一覧取得用のハンドラー関数
+// GetPostsByIDHandler godoc
+// @Summary 投稿をIDで取得する
+// @Description 指定したIDの投稿を返す
+// @Tags post
+// @Produce json
+// @Param id path int true "PostID"
+// @Success 200 {object} models.Post
+// @Failure 400 {object}
 func GetPostsByIDHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// IDを抽出する
@@ -294,6 +302,13 @@ func GetMyPostsHandler(db *sql.DB) http.HandlerFunc {
 }
 
 // 全投稿を取得する
+// GetAllPostsHandler godoc
+// @Summary Get all posts
+// @Description Get list of all posts
+// @Tags posts
+// @Produce json
+// @Success 200 {array} models.Post
+// @Router /api/posts [get]
 func GetAllPostsHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// 全投稿を取得する
