@@ -18,7 +18,7 @@ func LikePostHandler(db *sql.DB) http.HandlerFunc {
 		// 認証情報からユーザーIDを取得
 		userID, ok := r.Context().Value(middleware.UserIDKey).(int)
 		if !ok {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			respondError(w, "Unauthorized", http.StatusUnauthorized)
 		}
 
 		// URIからpostのIDを取得
@@ -26,20 +26,20 @@ func LikePostHandler(db *sql.DB) http.HandlerFunc {
 		postIDStr := vars["id"]
 		postID, err := strconv.Atoi(postIDStr)
 		if err != nil {
-			http.Error(w, "Invalid post ID", http.StatusBadRequest)
+			respondError(w, "Invalid post ID", http.StatusBadRequest)
 			return
 		}
 
 		// 「いいね」を登録する
 		_, err = db.Exec("INSERT INTO likes (user_id, post_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", userID, postID)
 		if err != nil {
-			http.Error(w, "Failed to like post", http.StatusInternalServerError)
+			respondError(w, "Failed to like post", http.StatusInternalServerError)
 			return
 		}
 
 		w.WriteHeader(http.StatusCreated)
 		if _, err := fmt.Fprintln(w, "Post liked successfully"); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			respondError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	}
@@ -53,14 +53,14 @@ func GetLikesHandler(db *sql.DB) http.HandlerFunc {
 		postIDStr := vars["id"]
 		postID, err := strconv.Atoi(postIDStr)
 		if err != nil {
-			http.Error(w, "Invalid post ID", http.StatusBadRequest)
+			respondError(w, "Invalid post ID", http.StatusBadRequest)
 			return
 		}
 
 		// 「いいね」の数とユーザー一覧を取得する
 		rows, err := db.Query("SELECT user_id FROM likes WHERE post_id = $1", postID)
 		if err != nil {
-			http.Error(w, "Failed to fetch likes", http.StatusInternalServerError)
+			respondError(w, "Failed to fetch likes", http.StatusInternalServerError)
 			return
 		}
 		defer rows.Close()
@@ -70,7 +70,7 @@ func GetLikesHandler(db *sql.DB) http.HandlerFunc {
 		for rows.Next() {
 			var userID int
 			if err := rows.Scan(&userID); err != nil {
-				http.Error(w, "Failed to scan row", http.StatusInternalServerError)
+				respondError(w, "Failed to scan row", http.StatusInternalServerError)
 				return
 			}
 			userIDs = append(userIDs, userID)
@@ -84,7 +84,7 @@ func GetLikesHandler(db *sql.DB) http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(resp); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			respondError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	}
@@ -96,7 +96,7 @@ func UnlikePostHandler(db *sql.DB) http.HandlerFunc {
 		// 認証情報からユーザーIDを取得
 		userID, ok := r.Context().Value(middleware.UserIDKey).(int)
 		if !ok {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			respondError(w, "Unauthorized", http.StatusUnauthorized)
 		}
 
 		// URIからpostのIDを取得
@@ -104,19 +104,19 @@ func UnlikePostHandler(db *sql.DB) http.HandlerFunc {
 		postIDStr := vars["id"]
 		postID, err := strconv.Atoi(postIDStr)
 		if err != nil {
-			http.Error(w, "Invalid post ID", http.StatusBadRequest)
+			respondError(w, "Invalid post ID", http.StatusBadRequest)
 			return
 		}
 
 		// 「いいね」を削除する
 		_, err = db.Exec("DELETE FROM likes WHERE user_id = $1 AND post_id = $2", userID, postID)
 		if err != nil {
-			http.Error(w, "Failed to remove like", http.StatusInternalServerError)
+			respondError(w, "Failed to remove like", http.StatusInternalServerError)
 			return
 		}
 
 		if _, err := fmt.Fprintln(w, "like removed successfully!"); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			respondError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
