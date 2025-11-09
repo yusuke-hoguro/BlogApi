@@ -17,15 +17,17 @@ const (
 	MaxContentLength = 1000
 )
 
-// 記事一覧取得用のハンドラー関数
 // GetPostsByIDHandler godoc
 // @Summary 投稿をIDで取得する
 // @Description 指定したIDの投稿を返す
-// @Tags post
+// @Tags posts
 // @Produce json
 // @Param id path int true "PostID"
 // @Success 200 {object} models.Post
-// @Failure 400 {object}
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 404 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /api/posts/{id} [get]
 func GetPostsByIDHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// IDを抽出する
@@ -56,7 +58,19 @@ func GetPostsByIDHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// 記事作成用のハンドラー関数
+// CreatePostHandler godoc
+// @Summary 新しい投稿を作成する
+// @Description 送られてきた構造体のデータから新規投稿を作成する
+// @Tags posts
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer Token"
+// @Param post body models.Post true "投稿内容"
+// @Success 201 {object} models.Post
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /api/posts [post]
 func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// JWTからユーザーIDを取得する
@@ -117,7 +131,22 @@ func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// 記事更新のハンドラー関数
+// UpdatePostHandler godoc
+// @Summary 投稿の内容を更新する
+// @Description 送られてきた構造体のデータから投稿を更新する
+// @Tags posts
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer Token"
+// @Param id path int true "投稿ID"
+// @Param post body models.Post true "投稿内容"
+// @Success 200 {object} models.Post
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 403 {object} models.ErrorResponse
+// @Failure 404 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /api/posts/{id} [put]
 func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// JWTからユーザーIDを取得する
@@ -197,15 +226,31 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		if _, err := fmt.Fprintln(w, "Post update successfully!"); err != nil {
+		if err := json.NewEncoder(w).Encode(post); err != nil {
 			respondError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	}
 }
 
-// 記事削除のハンドラー関数
+// DeletePostHandler godoc
+// @Summary 投稿を削除する
+// @Description 送られてきたIDの投稿を削除する
+// @Tags posts
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer Token"
+// @Param id path int true "投稿ID"
+// @Success 204 "No Content"
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 403 {object} models.ErrorResponse
+// @Failure 404 {object} models.ErrorResponse
+// @Failure 405 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /api/posts/{id} [put]
 func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// JWTからリクエストをなげたユーザーIDを取得
@@ -265,7 +310,18 @@ func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// ユーザー自身の投稿のみを取得する
+// GetMyPostsHandler godoc
+// @Summary ユーザー自身の投稿を取得する
+// @Description リクエストを投げたユーザーが作成した投稿を取得する
+// @Tags posts
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer Token"
+// @Success 200 {array} models.Post
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 404 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /api/myposts [get]
 func GetMyPostsHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// JWTからリクエストをなげたユーザーIDを取得
@@ -301,13 +357,14 @@ func GetMyPostsHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// 全投稿を取得する
 // GetAllPostsHandler godoc
-// @Summary Get all posts
-// @Description Get list of all posts
+// @Summary すべての投稿を取得する
+// @Description DBから全投稿を取得して返却する
 // @Tags posts
 // @Produce json
 // @Success 200 {array} models.Post
+// @Failure 404 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts [get]
 func GetAllPostsHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
