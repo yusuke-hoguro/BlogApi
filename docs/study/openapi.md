@@ -75,7 +75,7 @@
     // @Tags グループ名
     // @Accept json (エンドポイントが受け取るリクエストの MIME タイプ)
     // @Produce json (エンドポイントが返すレスポンスの MIME タイプ) 
-    // @Param パラメータ名 in (path|query|body) 型 必須説明 例: @Param <name> <in> <type> <required> "<description>"
+    // @Param パラメータ名 in (path|query|body) 型 必須 説明 例: @Param <name> <in> <type> <required> "<description>"
     // @Success ステータスコード {object|array} モデル名 例: @Success <code> {object|array} <model(struct)>
     // @Failure ステータスコード {object} エラーレスポンスモデル　例: @Failure 401 {object} ErrorResponse
     // @Router パス [メソッド]　例: @Router /posts/{id} [get]
