@@ -18,6 +18,20 @@ definitions:
       user_id:
         type: integer
     type: object
+  models.TokenResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  models.User:
+    properties:
+      id:
+        type: integer
+      password:
+        type: string
+      username:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -25,10 +39,46 @@ info:
   title: Blog API
   version: "1.0"
 paths:
-  /api/myposts:
-    get:
+  /api/login:
+    post:
       consumes:
       - application/json
+      description: 送られてきたユーザー情報でログインする
+      parameters:
+      - description: ユーザー情報
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.TokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "405":
+          description: Method Not Allowed
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: ログインする
+      tags:
+      - users
+  /api/myposts:
+    get:
       description: リクエストを投げたユーザーが作成した投稿を取得する
       parameters:
       - description: Bearer Token
@@ -199,4 +249,38 @@ paths:
       summary: 投稿を削除する
       tags:
       - posts
+  /api/signup:
+    post:
+      consumes:
+      - application/json
+      description: 送られてきたユーザー情報を使ってユーザー登録を実施する
+      parameters:
+      - description: ユーザー情報
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "405":
+          description: Method Not Allowed
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 新規ユーザー登録を実施する
+      tags:
+      - users
 swagger: "2.0"

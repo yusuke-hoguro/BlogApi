@@ -12,7 +12,23 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// ユーザー登録用のハンドラー関数
+// SignupHandler godoc
+// @Summary 新規ユーザー登録を実施する
+// @Description 送られてきたユーザー情報を使ってユーザー登録を実施する
+// @Description
+// @Description **エラー条件:**
+// @Description - 無効なユーザー情報、ユーザー名が空、パスワードが8文字未満 → 400 Bad Request
+// @Description - 許可されていないメソッド → 405 MethodNotAllowed
+// @Description - データ更新/取得失敗、パスワードのハッシュ化失敗、レスポンス書き込み失敗 → 500 ServerError
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param post body models.User true "ユーザー情報"
+// @Success 201 {object} models.User
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 405 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /api/signup [post]
 func SignupHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Postであるかをチェックする
@@ -63,7 +79,25 @@ func SignupHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// ログイン機能用用のハンドラー関数
+// LoginHandler godoc
+// @Summary ログインする
+// @Description 送られてきたユーザー情報でログインする
+// @Description
+// @Description **エラー条件:**
+// @Description - 無効なユーザー情報、ユーザー名が空、パスワードが8文字未満 → 400 Bad Request
+// @Description - ユーザー名かパスワードが不正 → 401 Unauthorized
+// @Description - 許可されていないメソッド → 405 MethodNotAllowed
+// @Description - データ更新/取得失敗、JWT生成失敗、レスポンス書き込み失敗 → 500 ServerError
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param post body models.User true "ユーザー情報"
+// @Success 200 {object} models.TokenResponse
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 405 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /api/login [post]
 func LoginHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Postであるかをチェックする
@@ -73,24 +107,21 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// GOの構造体にデコード
-		var creds struct {
-			Username string `json:"username"`
-			Password string `json:"password"`
-		}
-		err := json.NewDecoder(r.Body).Decode(&creds)
+		var userData models.User
+		err := json.NewDecoder(r.Body).Decode(&userData)
 		if err != nil {
 			respondError(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
 
 		// ユーザー名が空の場合はエラーとする
-		if creds.Username == "" {
+		if userData.Username == "" {
 			respondError(w, "Username is required", http.StatusBadRequest)
 			return
 		}
 
 		// パスワードが空の場合、エラーとする
-		if creds.Password == "" {
+		if userData.Password == "" {
 			respondError(w, "Password is required", http.StatusBadRequest)
 			return
 		}
@@ -98,7 +129,7 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 		// ユーザーをDBから検索
 		var id int
 		var hashedPassword string
-		err = db.QueryRow("SELECT id, password FROM users WHERE username = $1", creds.Username).Scan(&id, &hashedPassword)
+		err = db.QueryRow("SELECT id, password FROM users WHERE username = $1", userData.Username).Scan(&id, &hashedPassword)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				respondError(w, "Invalid username or password", http.StatusUnauthorized)
@@ -109,7 +140,7 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// パスワード照合
-		err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(creds.Password))
+		err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(userData.Password))
 		if err != nil {
 			respondError(w, "Invalid username or password", http.StatusUnauthorized)
 			return
@@ -124,7 +155,7 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 
 		// レスポンス
 		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(map[string]string{"token": token}); err != nil {
+		if err := json.NewEncoder(w).Encode(models.TokenResponse{Token: token}); err != nil {
 			respondError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
