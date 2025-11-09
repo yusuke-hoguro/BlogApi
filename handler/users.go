@@ -8,15 +8,9 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/yusuke-hoguro/BlogApi/middleware"
+	"github.com/yusuke-hoguro/BlogApi/models"
 	"golang.org/x/crypto/bcrypt"
 )
-
-// User登録用の構造体
-type User struct {
-	ID       int    `json:"id"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
 
 // ユーザー登録用のハンドラー関数
 func SignupHandler(db *sql.DB) http.HandlerFunc {
@@ -28,7 +22,7 @@ func SignupHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// GOの構造体にデコード
-		var userData User
+		var userData models.User
 		err := json.NewDecoder(r.Body).Decode(&userData)
 		if err != nil {
 			respondError(w, "Invalid request body", http.StatusBadRequest)
