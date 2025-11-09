@@ -23,8 +23,8 @@ func RegisterRoutes(r *mux.Router, db *sql.DB) {
 	r.HandleFunc("/api/posts/{id}", middleware.AuthMiddleware(handler.DeletePostHandler(db))).Methods("DELETE") // 個別投稿削除用
 	r.HandleFunc("/api/myposts", middleware.AuthMiddleware(handler.GetMyPostsHandler(db))).Methods("GET")       // 自身の投稿のみ取得
 	// ユーザー認証系
-	r.HandleFunc("/api/signup", handler.SignupHandler(db)) // ユーザー登録用
-	r.HandleFunc("/api/login", handler.LoginHandler(db))   // ログイン用
+	r.HandleFunc("/api/signup", handler.SignupHandler(db)).Methods("POST") // ユーザー登録用
+	r.HandleFunc("/api/login", handler.LoginHandler(db)).Methods("POST")   // ログイン用
 	// コメント関係
 	r.HandleFunc("/api/posts/{id}/comments", handler.GetCommentsByPostIDHandler(db)).Methods("GET")                     // 投稿のコメント取得
 	r.HandleFunc("/api/posts/{id}/comments", middleware.AuthMiddleware(handler.PostCommentHandler(db))).Methods("POST") // 投稿のコメント投稿

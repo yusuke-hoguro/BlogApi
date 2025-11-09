@@ -314,7 +314,6 @@ func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 // @Summary ユーザー自身の投稿を取得する
 // @Description リクエストを投げたユーザーが作成した投稿を取得する
 // @Tags posts
-// @Accept json
 // @Produce json
 // @Param Authorization header string true "Bearer Token"
 // @Success 200 {array} models.Post
