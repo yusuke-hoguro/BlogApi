@@ -18,6 +18,17 @@ definitions:
       message:
         type: string
     type: object
+  models.LikesResponse:
+    properties:
+      like_count:
+        type: integer
+      post_id:
+        type: integer
+      user_ids:
+        items:
+          type: integer
+        type: array
+    type: object
   models.Post:
     properties:
       content:
@@ -191,7 +202,14 @@ paths:
     post:
       consumes:
       - application/json
-      description: 送られてきたユーザー情報でログインする
+      description: |-
+        送られてきたユーザー情報でログインする
+
+        **エラー条件:**
+        - 無効なユーザー情報、ユーザー名が空、パスワードが8文字未満 → 400 Bad Request
+        - ユーザー名かパスワードが不正 → 401 Unauthorized
+        - 許可されていないメソッド → 405 MethodNotAllowed
+        - データ更新/取得失敗、JWT生成失敗、レスポンス書き込み失敗 → 500 ServerError
       parameters:
       - description: ユーザー情報
         in: body
@@ -480,11 +498,122 @@ paths:
       summary: 指定した投稿にコメントを追加する
       tags:
       - comments
+  /api/posts/{id}/like:
+    delete:
+      description: |-
+        指定したIDの投稿についている「いいね」を削除する
+
+        **エラー条件:**
+        - 無効なID → 400 Bad Request
+        - リクエスト認証エラー → 401 Unauthorized
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: 投稿ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 投稿の「いいね」を削除する
+      tags:
+      - comments
+    post:
+      description: |-
+        指定したIDの投稿に「いいね」をつける
+
+        **エラー条件:**
+        - 無効なID → 400 Bad Request
+        - リクエスト認証エラー → 401 Unauthorized
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: 投稿ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Post liked successfully
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 投稿に「いいね」をつける
+      tags:
+      - comments
+  /api/posts/{id}/likes:
+    get:
+      description: |-
+        指定したIDの投稿についている「いいね」を取得する
+
+        **エラー条件:**
+        - 無効なID → 400 Bad Request
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: 投稿ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.LikesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 投稿の「いいね」を取得する
+      tags:
+      - comments
   /api/signup:
     post:
       consumes:
       - application/json
-      description: 送られてきたユーザー情報を使ってユーザー登録を実施する
+      description: |-
+        送られてきたユーザー情報を使ってユーザー登録を実施する
+
+        **エラー条件:**
+        - 無効なユーザー情報、ユーザー名が空、パスワードが8文字未満 → 400 Bad Request
+        - 許可されていないメソッド → 405 MethodNotAllowed
+        - データ更新/取得失敗、パスワードのハッシュ化失敗、レスポンス書き込み失敗 → 500 ServerError
       parameters:
       - description: ユーザー情報
         in: body

@@ -12,7 +12,22 @@ import (
 	"github.com/yusuke-hoguro/BlogApi/models"
 )
 
-// 指定した投稿に「いいね」をつける
+// LikePostHandler godoc
+// @Summary 投稿に「いいね」をつける
+// @Description 指定したIDの投稿に「いいね」をつける
+// @Description
+// @Description **エラー条件:**
+// @Description - 無効なID → 400 Bad Request
+// @Description - リクエスト認証エラー → 401 Unauthorized
+// @Description - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+// @Tags comments
+// @Produce json
+// @Param id path int true "投稿ID"
+// @Success 201 {string} string "Post liked successfully"
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /api/posts/{id}/like [post]
 func LikePostHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// 認証情報からユーザーIDを取得
@@ -45,7 +60,20 @@ func LikePostHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// 指定した投稿の「いいね」数とユーザーを取得する
+// GetLikesHandler godoc
+// @Summary 投稿の「いいね」を取得する
+// @Description 指定したIDの投稿についている「いいね」を取得する
+// @Description
+// @Description **エラー条件:**
+// @Description - 無効なID → 400 Bad Request
+// @Description - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+// @Tags comments
+// @Produce json
+// @Param id path int true "投稿ID"
+// @Success 200 {object} models.LikesResponse
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /api/posts/{id}/likes [get]
 func GetLikesHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// URIからpostのIDを取得
@@ -90,7 +118,22 @@ func GetLikesHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// 指定した投稿の「いいね」を削除する
+// UnlikePostHandler godoc
+// @Summary 投稿の「いいね」を削除する
+// @Description 指定したIDの投稿についている「いいね」を削除する
+// @Description
+// @Description **エラー条件:**
+// @Description - 無効なID → 400 Bad Request
+// @Description - リクエスト認証エラー → 401 Unauthorized
+// @Description - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+// @Tags comments
+// @Produce json
+// @Param id path int true "投稿ID"
+// @Success 204 {string} string "No Content"
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /api/posts/{id}/like [delete]
 func UnlikePostHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// 認証情報からユーザーIDを取得
