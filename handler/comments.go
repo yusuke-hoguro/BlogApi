@@ -17,7 +17,20 @@ const (
 	MaxCommentLength = 500
 )
 
-// 投稿のコメント取得用ハンドラー関数
+// GetCommentsByPostIDHandler godoc
+// @Summary 投稿のコメントを取得する
+// @Description 指定した投稿のコメントをすべて取得する
+// @Description
+// @Description **エラー条件:**
+// @Description - 無効なID → 400 Bad Request
+// @Description - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+// @Tags comments
+// @Produce json
+// @Param id path int true "投稿ID"
+// @Success 200 {array} models.Comment
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /api/posts/{id}/comments [get]
 func GetCommentsByPostIDHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// URIからpostのIDを取得
@@ -67,9 +80,24 @@ func GetCommentsByPostIDHandler(db *sql.DB) http.HandlerFunc {
 }
 
 // 投稿のコメント取得用ハンドラー関数
+// GetCommentsByIDHandler godoc
+// @Summary 指定したコメントを取得する
+// @Description コメントIDを指定してコメントを取得する
+// @Description
+// @Description **エラー条件:**
+// @Description - 無効なID → 400 Bad Request
+// @Description - コメントが存在しない → 404 Not Found
+// @Description - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+// @Tags comments
+// @Produce json
+// @Param id path int true "コメントID"
+// @Success 200 {object} models.Comment
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /api/comments/{id} [get]
 func GetCommentsByIDHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// URIからpostのIDを取得
+		// URIからコメントのIDを取得
 		vars := mux.Vars(r)
 		IDStr := vars["id"]
 		ID, err := strconv.Atoi(IDStr)
@@ -83,7 +111,7 @@ func GetCommentsByIDHandler(db *sql.DB) http.HandlerFunc {
 		err = db.QueryRow("SELECT id, post_id, user_id, content, created_at FROM comments WHERE id = $1", ID).Scan(&comment.ID, &comment.PostID, &comment.UserID, &comment.Content, &comment.CreatedAt)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				respondError(w, "Comment Not Found", http.StatusInternalServerError)
+				respondError(w, "Comment Not Found", http.StatusNotFound)
 			} else {
 				respondError(w, "Database error", http.StatusInternalServerError)
 			}
@@ -98,7 +126,25 @@ func GetCommentsByIDHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// コメント投稿用のハンドラー関数
+// GetCommentsByIDHandler godoc
+// @Summary 指定した投稿にコメントを追加する
+// @Description 指定された投稿に送られてきたコメントを追加する
+// @Description
+// @Description **エラー条件:**
+// @Description - 無効な投稿ID、無効なコメント内容、コメントが空、コメントが500文字以上 → 400 Bad Request
+// @Description - リクエスト認証エラー → 401 Unauthorized
+// @Description - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+// @Tags comments
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer Token"
+// @Param id path int true "投稿ID"
+// @Param post body models.Comment true "コメント内容"
+// @Success 200 {object} models.Comment
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /api/posts/{id}/comments [post]
 func PostCommentHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// JWTからuser_idを取得
@@ -152,7 +198,25 @@ func PostCommentHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// コメント削除用のハンドラー関数
+// DeleteCommentHandler godoc
+// @Summary 指定したコメントを削除する
+// @Description 送られてきたIDのコメントを削除する
+// @Description
+// @Description **エラー条件:**
+// @Description - 無効なID → 400 Bad Request
+// @Description - リクエスト認証エラー → 401 Unauthorized
+// @Description - 送信者がコメントの所有者でない → 403 Forbidden を返す
+// @Description - コメントが存在しない → 404 Not Found
+// @Description - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+// @Tags comments
+// @Produce json
+// @Param Authorization header string true "Bearer Token"
+// @Param id path int true "コメントID"
+// @Success 200 {object} models.Comment
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /api/comments/{id} [delete]
 func DeleteCommentHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// JWTからuser_idを取得
@@ -204,7 +268,29 @@ func DeleteCommentHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// コメント更新用のハンドラー関数
+// UpdateCommentHandler godoc
+// @Summary コメントの内容を更新する
+// @Description 送られてきたIDのコメントを更新する。
+// @Description
+// @Description **エラー条件:**
+// @Description - 無効なID、空コメント、500文字以上のコメント、コメント未取得 → 400 Bad Request
+// @Description - リクエスト認証エラー → 401 Unauthorized
+// @Description - 送信者がコメントの所有者でない → 403 Forbidden
+// @Description - コメントが存在しない → 404 Not Found
+// @Description - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+// @Tags comments
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer Token"
+// @Param id path int true "コメントID"
+// @Param post body models.Comment true "コメント内容"
+// @Success 200 {object} models.Comment
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 403 {object} models.ErrorResponse
+// @Failure 404 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /api/comments/{id} [put]
 func UpdateCommentHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// JWTからuser_idを取得

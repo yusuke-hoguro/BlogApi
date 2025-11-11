@@ -1,5 +1,18 @@
 basePath: /
 definitions:
+  models.Comment:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      post_id:
+        type: integer
+      user_id:
+        type: integer
+    type: object
   models.ErrorResponse:
     properties:
       message:
@@ -39,6 +52,141 @@ info:
   title: Blog API
   version: "1.0"
 paths:
+  /api/comments/{id}:
+    delete:
+      description: |-
+        送られてきたIDのコメントを削除する
+
+        **エラー条件:**
+        - 無効なID → 400 Bad Request
+        - リクエスト認証エラー → 401 Unauthorized
+        - 送信者がコメントの所有者でない → 403 Forbidden を返す
+        - コメントが存在しない → 404 Not Found
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: コメントID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Comment'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 指定したコメントを削除する
+      tags:
+      - comments
+    get:
+      description: |-
+        コメントIDを指定してコメントを取得する
+
+        **エラー条件:**
+        - 無効なID → 400 Bad Request
+        - コメントが存在しない → 404 Not Found
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: コメントID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Comment'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 指定したコメントを取得する
+      tags:
+      - comments
+    put:
+      consumes:
+      - application/json
+      description: |-
+        送られてきたIDのコメントを更新する。
+
+        **エラー条件:**
+        - 無効なID、空コメント、500文字以上のコメント、コメント未取得 → 400 Bad Request
+        - リクエスト認証エラー → 401 Unauthorized
+        - 送信者がコメントの所有者でない → 403 Forbidden
+        - コメントが存在しない → 404 Not Found
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: コメントID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: コメント内容
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/models.Comment'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Comment'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: コメントの内容を更新する
+      tags:
+      - comments
   /api/login:
     post:
       consumes:
@@ -249,6 +397,89 @@ paths:
       summary: 投稿を削除する
       tags:
       - posts
+  /api/posts/{id}/comments:
+    get:
+      description: |-
+        指定した投稿のコメントをすべて取得する
+
+        **エラー条件:**
+        - 無効なID → 400 Bad Request
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: 投稿ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Comment'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 投稿のコメントを取得する
+      tags:
+      - comments
+    post:
+      consumes:
+      - application/json
+      description: |-
+        指定された投稿に送られてきたコメントを追加する
+
+        **エラー条件:**
+        - 無効な投稿ID、無効なコメント内容、コメントが空、コメントが500文字以上 → 400 Bad Request
+        - リクエスト認証エラー → 401 Unauthorized
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 投稿ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: コメント内容
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/models.Comment'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Comment'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 指定した投稿にコメントを追加する
+      tags:
+      - comments
   /api/signup:
     post:
       consumes:

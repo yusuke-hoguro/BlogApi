@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-// Post構造体
+// コメント用の構造体
 type Comment struct {
 	ID        int       `json:"id"`
 	PostID    int       `json:"post_id"`
