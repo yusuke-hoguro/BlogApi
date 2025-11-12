@@ -245,7 +245,13 @@ paths:
       - users
   /api/myposts:
     get:
-      description: リクエストを投げたユーザーが作成した投稿を取得する
+      description: |-
+        リクエストを投げたユーザーが作成した投稿を取得する
+
+        **エラー条件:**
+        - リクエスト認証エラー → 401 Unauthorized
+        - 投稿が存在しない → 404 Not Found
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
       parameters:
       - description: Bearer Token
         in: header
@@ -278,7 +284,13 @@ paths:
       - posts
   /api/posts:
     get:
-      description: DBから全投稿を取得して返却する
+      description: |-
+        DBから全投稿を取得して返却する
+        送られてきたIDの投稿を削除する
+
+        **エラー条件:**
+        - 投稿が存在しない → 404 Not Found
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
       produces:
       - application/json
       responses:
@@ -302,7 +314,13 @@ paths:
     post:
       consumes:
       - application/json
-      description: 送られてきた構造体のデータから新規投稿を作成する
+      description: |-
+        送られてきた構造体のデータから新規投稿を作成する
+
+        **エラー条件:**
+        - 無効な投稿内容、タイトルか投稿内容が空、タイトルが100文字以上、投稿内容が1000文字以上 → 400 Bad Request
+        - リクエスト認証エラー → 401 Unauthorized
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
       parameters:
       - description: Bearer Token
         in: header
@@ -339,7 +357,13 @@ paths:
       - posts
   /api/posts/{id}:
     get:
-      description: 指定したIDの投稿を返す
+      description: |-
+        指定したIDの投稿を返す
+
+        **エラー条件:**
+        - 無効なID → 400 Bad Request
+        - 投稿が存在しない → 404 Not Found
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
       parameters:
       - description: PostID
         in: path
@@ -371,7 +395,15 @@ paths:
     put:
       consumes:
       - application/json
-      description: 送られてきたIDの投稿を削除する
+      description: |-
+        送られてきたIDの投稿を削除する
+
+        **エラー条件:**
+        - 無効なID → 400 Bad Request
+        - リクエスト認証エラー → 401 Unauthorized
+        - 送信者が記事の投稿者でない → 403 Forbidden
+        - 投稿が存在しない → 404 Not Found
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
       parameters:
       - description: Bearer Token
         in: header
@@ -402,10 +434,6 @@ paths:
             $ref: '#/definitions/models.ErrorResponse'
         "404":
           description: Not Found
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "405":
-          description: Method Not Allowed
           schema:
             $ref: '#/definitions/models.ErrorResponse'
         "500":

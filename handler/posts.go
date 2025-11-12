@@ -20,6 +20,11 @@ const (
 // GetPostsByIDHandler godoc
 // @Summary 投稿をIDで取得する
 // @Description 指定したIDの投稿を返す
+// @Description
+// @Description **エラー条件:**
+// @Description - 無効なID → 400 Bad Request
+// @Description - 投稿が存在しない → 404 Not Found
+// @Description - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
 // @Tags posts
 // @Produce json
 // @Param id path int true "PostID"
@@ -61,6 +66,11 @@ func GetPostsByIDHandler(db *sql.DB) http.HandlerFunc {
 // CreatePostHandler godoc
 // @Summary 新しい投稿を作成する
 // @Description 送られてきた構造体のデータから新規投稿を作成する
+// @Description
+// @Description **エラー条件:**
+// @Description - 無効な投稿内容、タイトルか投稿内容が空、タイトルが100文字以上、投稿内容が1000文字以上 → 400 Bad Request
+// @Description - リクエスト認証エラー → 401 Unauthorized
+// @Description - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
 // @Tags posts
 // @Accept json
 // @Produce json
@@ -105,7 +115,7 @@ func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// タイトルが1000文字より大きい場合はエラーとする
+		// 投稿内容が1000文字より大きい場合はエラーとする
 		if len(post.Content) > MaxContentLength {
 			respondError(w, "Content must be 1000 characters or less", http.StatusBadRequest)
 			return
@@ -134,6 +144,13 @@ func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 // UpdatePostHandler godoc
 // @Summary 投稿の内容を更新する
 // @Description 送られてきた構造体のデータから投稿を更新する
+// @Description
+// @Description **エラー条件:**
+// @Description - 無効なID、無効な投稿内容、タイトルか投稿内容が空、タイトルが100文字以上、投稿内容が1000文字以上 → 400 Bad Request
+// @Description - リクエスト認証エラー → 401 Unauthorized
+// @Description - 送信者が記事の投稿者でない → 403 Forbidden
+// @Description - 投稿が存在しない → 404 Not Found
+// @Description - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
 // @Tags posts
 // @Accept json
 // @Produce json
@@ -235,9 +252,18 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
+// 明日はここから
+
 // DeletePostHandler godoc
 // @Summary 投稿を削除する
 // @Description 送られてきたIDの投稿を削除する
+// @Description
+// @Description **エラー条件:**
+// @Description - 無効なID → 400 Bad Request
+// @Description - リクエスト認証エラー → 401 Unauthorized
+// @Description - 送信者が記事の投稿者でない → 403 Forbidden
+// @Description - 投稿が存在しない → 404 Not Found
+// @Description - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
 // @Tags posts
 // @Accept json
 // @Produce json
@@ -248,7 +274,6 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 // @Failure 401 {object} models.ErrorResponse
 // @Failure 403 {object} models.ErrorResponse
 // @Failure 404 {object} models.ErrorResponse
-// @Failure 405 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts/{id} [put]
 func DeletePostHandler(db *sql.DB) http.HandlerFunc {
@@ -313,6 +338,11 @@ func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 // GetMyPostsHandler godoc
 // @Summary ユーザー自身の投稿を取得する
 // @Description リクエストを投げたユーザーが作成した投稿を取得する
+// @Description
+// @Description **エラー条件:**
+// @Description - リクエスト認証エラー → 401 Unauthorized
+// @Description - 投稿が存在しない → 404 Not Found
+// @Description - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
 // @Tags posts
 // @Produce json
 // @Param Authorization header string true "Bearer Token"
@@ -359,6 +389,11 @@ func GetMyPostsHandler(db *sql.DB) http.HandlerFunc {
 // GetAllPostsHandler godoc
 // @Summary すべての投稿を取得する
 // @Description DBから全投稿を取得して返却する
+// @Description 送られてきたIDの投稿を削除する
+// @Description
+// @Description **エラー条件:**
+// @Description - 投稿が存在しない → 404 Not Found
+// @Description - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
 // @Tags posts
 // @Produce json
 // @Success 200 {array} models.Post

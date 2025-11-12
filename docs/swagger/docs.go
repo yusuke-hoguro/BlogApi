@@ -244,7 +244,7 @@ const docTemplate = `{
         },
         "/api/myposts": {
             "get": {
-                "description": "リクエストを投げたユーザーが作成した投稿を取得する",
+                "description": "リクエストを投げたユーザーが作成した投稿を取得する\n\n**エラー条件:**\n- リクエスト認証エラー → 401 Unauthorized\n- 投稿が存在しない → 404 Not Found\n- データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError",
                 "produces": [
                     "application/json"
                 ],
@@ -294,7 +294,7 @@ const docTemplate = `{
         },
         "/api/posts": {
             "get": {
-                "description": "DBから全投稿を取得して返却する",
+                "description": "DBから全投稿を取得して返却する\n送られてきたIDの投稿を削除する\n\n**エラー条件:**\n- 投稿が存在しない → 404 Not Found\n- データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError",
                 "produces": [
                     "application/json"
                 ],
@@ -327,7 +327,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "送られてきた構造体のデータから新規投稿を作成する",
+                "description": "送られてきた構造体のデータから新規投稿を作成する\n\n**エラー条件:**\n- 無効な投稿内容、タイトルか投稿内容が空、タイトルが100文字以上、投稿内容が1000文字以上 → 400 Bad Request\n- リクエスト認証エラー → 401 Unauthorized\n- データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError",
                 "consumes": [
                     "application/json"
                 ],
@@ -386,7 +386,7 @@ const docTemplate = `{
         },
         "/api/posts/{id}": {
             "get": {
-                "description": "指定したIDの投稿を返す",
+                "description": "指定したIDの投稿を返す\n\n**エラー条件:**\n- 無効なID → 400 Bad Request\n- 投稿が存在しない → 404 Not Found\n- データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError",
                 "produces": [
                     "application/json"
                 ],
@@ -431,7 +431,7 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "送られてきたIDの投稿を削除する",
+                "description": "送られてきたIDの投稿を削除する\n\n**エラー条件:**\n- 無効なID → 400 Bad Request\n- リクエスト認証エラー → 401 Unauthorized\n- 送信者が記事の投稿者でない → 403 Forbidden\n- 投稿が存在しない → 404 Not Found\n- データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError",
                 "consumes": [
                     "application/json"
                 ],
@@ -482,12 +482,6 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
                         "schema": {
                             "$ref": "#/definitions/models.ErrorResponse"
                         }
