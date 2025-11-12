@@ -785,6 +785,7 @@
     },
     "definitions": {
         "models.Comment": {
+            "description": "コメント用の構造体",
             "type": "object",
             "properties": {
                 "content": {
@@ -805,6 +806,7 @@
             }
         },
         "models.ErrorResponse": {
+            "description": "エラーレスポンス構造体",
             "type": "object",
             "properties": {
                 "message": {
@@ -813,6 +815,7 @@
             }
         },
         "models.LikesResponse": {
+            "description": "いいね取得時のレスポンス構造体",
             "type": "object",
             "properties": {
                 "like_count": {
@@ -830,6 +833,7 @@
             }
         },
         "models.Post": {
+            "description": "ブログ投稿用の構造体",
             "type": "object",
             "properties": {
                 "content": {
@@ -850,6 +854,7 @@
             }
         },
         "models.TokenResponse": {
+            "description": "JWTトークンレスポンス用構造体",
             "type": "object",
             "properties": {
                 "token": {
@@ -858,6 +863,7 @@
             }
         },
         "models.User": {
+            "description": "User登録用の構造体",
             "type": "object",
             "properties": {
                 "id": {

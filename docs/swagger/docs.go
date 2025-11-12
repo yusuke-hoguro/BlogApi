@@ -791,6 +791,7 @@ const docTemplate = `{
     },
     "definitions": {
         "models.Comment": {
+            "description": "コメント用の構造体",
             "type": "object",
             "properties": {
                 "content": {
@@ -811,6 +812,7 @@ const docTemplate = `{
             }
         },
         "models.ErrorResponse": {
+            "description": "エラーレスポンス構造体",
             "type": "object",
             "properties": {
                 "message": {
@@ -819,6 +821,7 @@ const docTemplate = `{
             }
         },
         "models.LikesResponse": {
+            "description": "いいね取得時のレスポンス構造体",
             "type": "object",
             "properties": {
                 "like_count": {
@@ -836,6 +839,7 @@ const docTemplate = `{
             }
         },
         "models.Post": {
+            "description": "ブログ投稿用の構造体",
             "type": "object",
             "properties": {
                 "content": {
@@ -856,6 +860,7 @@ const docTemplate = `{
             }
         },
         "models.TokenResponse": {
+            "description": "JWTトークンレスポンス用構造体",
             "type": "object",
             "properties": {
                 "token": {
@@ -864,6 +869,7 @@ const docTemplate = `{
             }
         },
         "models.User": {
+            "description": "User登録用の構造体",
             "type": "object",
             "properties": {
                 "id": {
