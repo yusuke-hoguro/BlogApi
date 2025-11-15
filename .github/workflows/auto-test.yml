@@ -102,7 +102,7 @@ jobs:
     with:
       pr_branch: ${{ github.head_ref }}
 
-  notify:
+  notify-slack:
     needs: [lint, auto-test, generate-swagger]
     if: always()
     uses: ./.github/workflows/slack-notification.yml
