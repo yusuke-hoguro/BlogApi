@@ -4,18 +4,22 @@ permissions:
   contents: write
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]  
+  workflow_call:
+    inputs:
+      pr_branch:
+        required: true
+        type: string
+  workflow_dispatch:
 
 jobs:
   generate-swagger:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4 
+      - name: Checkout target PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.pr_branch }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -40,6 +44,4 @@ jobs:
           else
             echo "No updates to Swagger docs"
           fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
