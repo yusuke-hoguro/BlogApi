@@ -1,4 +1,8 @@
 name: CI Auto Test 
+
+permissions:
+  contents: write
+
 on:
   push:
     branches: [main, develop]
@@ -29,7 +33,7 @@ jobs:
           version: latest
           args: --timeout=5m
 
-  test:
+  auto-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -86,13 +90,24 @@ jobs:
 
       - name: Cleanup
         run:  docker compose -f docker-compose.test.yml down -v
+  
+  generate-swagger:
+    needs: [lint, auto-test]
+    if: >
+      github.event_name == 'pull_request' &&
+      (github.base_ref == 'main' || github.base_ref == 'develop') &&
+      needs.lint.result == 'success' &&
+      needs.auto-test.result == 'success'
+    uses: ./.github/workflows/generate-swagger.yml
+    with:
+      pr_branch: ${{ github.head_ref }}
 
-  notify:
-    needs: [lint, test]
+  notify-slack:
+    needs: [lint, auto-test, generate-swagger]
     if: always()
     uses: ./.github/workflows/slack-notification.yml
     with:
-      status: ${{ (needs.lint.result == 'success' && needs.test.result == 'success') && 'success' || 'failure' }}
+      status: ${{ (needs.lint.result == 'success' && needs.auto-test.result == 'success' && (github.event_name != 'pull_request' || needs.generate-swagger.result == 'success')) && 'success' || 'failure' }}      
       source: "CI Auto Test"
       branch: ${{ github.ref_name }}
       run_id: ${{ github.run_id }}

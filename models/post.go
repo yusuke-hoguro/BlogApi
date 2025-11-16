@@ -2,7 +2,8 @@ package models
 
 import "time"
 
-// Post構造体
+// Post はブログ投稿を表します。
+// @Description ブログ投稿用の構造体
 type Post struct {
 	ID        int       `json:"id"`
 	Title     string    `json:"title"`

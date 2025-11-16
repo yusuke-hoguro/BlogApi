@@ -1,0 +1,68 @@
+name: Generate Swagger Docs
+
+permissions:
+  contents: write
+
+on:
+  workflow_call:
+    inputs:
+      pr_branch:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: "Swagger を生成する対象ブランチ"
+        required: true
+        default: "develop"
+        type: string
+
+jobs:
+  generate-swagger:
+    runs-on: ubuntu-latest
+
+    outputs:
+      updated: ${{ steps.commit.outputs.updated }}
+
+    steps:
+      - name: Checkout target PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.target_branch || inputs.pr_branch }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24
+
+      - name: Install swag
+        run: go install github.com/swaggo/swag/cmd/swag@latest
+
+      - name: Generate Swagger docs
+        run: swag init -g main.go -o docs/
+      
+      - name: Commit and push docs
+        id: commit
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add docs/
+          if ! git diff --cached --quiet; then
+            git commit -m "Update Swagger docs [skip ci]"
+            git push origin HEAD
+            echo "updated=true" >> $GITHUB_OUTPUT
+          else
+            echo "updated=false" >> $GITHUB_OUTPUT
+          fi
+
+  notify-slack:
+    if: github.event_name == 'workflow_dispatch'
+    needs: [generate-swagger]
+    uses: ./.github/workflows/slack-notification.yml
+    with:
+      status: ${{ 'success' }}
+      source: "Swagger Generation"
+      branch: ${{ github.ref_name }}
+      run_id: ${{ github.run_id }}
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}      

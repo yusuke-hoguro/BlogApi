@@ -1,0 +1,680 @@
+basePath: /
+definitions:
+  models.Comment:
+    description: コメント用の構造体
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      post_id:
+        type: integer
+      user_id:
+        type: integer
+    type: object
+  models.ErrorResponse:
+    description: エラーレスポンス構造体
+    properties:
+      message:
+        type: string
+    type: object
+  models.LikesResponse:
+    description: いいね取得時のレスポンス構造体
+    properties:
+      like_count:
+        type: integer
+      post_id:
+        type: integer
+      user_ids:
+        items:
+          type: integer
+        type: array
+    type: object
+  models.Post:
+    description: ブログ投稿用の構造体
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  models.TokenResponse:
+    description: JWTトークンレスポンス用構造体
+    properties:
+      token:
+        type: string
+    type: object
+  models.User:
+    description: User登録用の構造体
+    properties:
+      id:
+        type: integer
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is a sample blog API built with Go net/http.
+  title: Blog API
+  version: "1.0"
+paths:
+  /api/comments/{id}:
+    delete:
+      description: |-
+        送られてきたIDのコメントを削除する
+
+        **エラー条件:**
+        - 無効なID → 400 Bad Request
+        - リクエスト認証エラー → 401 Unauthorized
+        - 送信者がコメントの所有者でない → 403 Forbidden を返す
+        - コメントが存在しない → 404 Not Found
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: コメントID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Comment'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 指定したコメントを削除する
+      tags:
+      - comments
+    get:
+      description: |-
+        コメントIDを指定してコメントを取得する
+
+        **エラー条件:**
+        - 無効なID → 400 Bad Request
+        - コメントが存在しない → 404 Not Found
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: コメントID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Comment'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 指定したコメントを取得する
+      tags:
+      - comments
+    put:
+      consumes:
+      - application/json
+      description: |-
+        送られてきたIDのコメントを更新する。
+
+        **エラー条件:**
+        - 無効なID、空コメント、500文字以上のコメント、コメント未取得 → 400 Bad Request
+        - リクエスト認証エラー → 401 Unauthorized
+        - 送信者がコメントの所有者でない → 403 Forbidden
+        - コメントが存在しない → 404 Not Found
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: コメントID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: コメント内容
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/models.Comment'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Comment'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: コメントの内容を更新する
+      tags:
+      - comments
+  /api/login:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        送られてきたユーザー情報でログインする
+
+        **エラー条件:**
+        - 無効なユーザー情報、ユーザー名が空、パスワードが8文字未満 → 400 Bad Request
+        - ユーザー名かパスワードが不正 → 401 Unauthorized
+        - 許可されていないメソッド → 405 MethodNotAllowed
+        - データ更新/取得失敗、JWT生成失敗、レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: ユーザー情報
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.TokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "405":
+          description: Method Not Allowed
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: ログインする
+      tags:
+      - users
+  /api/myposts:
+    get:
+      description: |-
+        リクエストを投げたユーザーが作成した投稿を取得する
+
+        **エラー条件:**
+        - リクエスト認証エラー → 401 Unauthorized
+        - 投稿が存在しない → 404 Not Found
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Post'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: ユーザー自身の投稿を取得する
+      tags:
+      - posts
+  /api/posts:
+    get:
+      description: |-
+        DBから全投稿を取得して返却する
+        送られてきたIDの投稿を削除する
+
+        **エラー条件:**
+        - 投稿が存在しない → 404 Not Found
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Post'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: すべての投稿を取得する
+      tags:
+      - posts
+    post:
+      consumes:
+      - application/json
+      description: |-
+        送られてきた構造体のデータから新規投稿を作成する
+
+        **エラー条件:**
+        - 無効な投稿内容、タイトルか投稿内容が空、タイトルが100文字以上、投稿内容が1000文字以上 → 400 Bad Request
+        - リクエスト認証エラー → 401 Unauthorized
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 投稿内容
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/models.Post'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Post'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 新しい投稿を作成する
+      tags:
+      - posts
+  /api/posts/{id}:
+    get:
+      description: |-
+        指定したIDの投稿を返す
+
+        **エラー条件:**
+        - 無効なID → 400 Bad Request
+        - 投稿が存在しない → 404 Not Found
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: PostID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Post'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 投稿をIDで取得する
+      tags:
+      - posts
+    put:
+      consumes:
+      - application/json
+      description: |-
+        送られてきたIDの投稿を削除する
+
+        **エラー条件:**
+        - 無効なID → 400 Bad Request
+        - リクエスト認証エラー → 401 Unauthorized
+        - 送信者が記事の投稿者でない → 403 Forbidden
+        - 投稿が存在しない → 404 Not Found
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 投稿ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 投稿を削除する
+      tags:
+      - posts
+  /api/posts/{id}/comments:
+    get:
+      description: |-
+        指定した投稿のコメントをすべて取得する
+
+        **エラー条件:**
+        - 無効なID → 400 Bad Request
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: 投稿ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Comment'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 投稿のコメントを取得する
+      tags:
+      - comments
+    post:
+      consumes:
+      - application/json
+      description: |-
+        指定された投稿に送られてきたコメントを追加する
+
+        **エラー条件:**
+        - 無効な投稿ID、無効なコメント内容、コメントが空、コメントが500文字以上 → 400 Bad Request
+        - リクエスト認証エラー → 401 Unauthorized
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 投稿ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: コメント内容
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/models.Comment'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Comment'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 指定した投稿にコメントを追加する
+      tags:
+      - comments
+  /api/posts/{id}/like:
+    delete:
+      description: |-
+        指定したIDの投稿についている「いいね」を削除する
+
+        **エラー条件:**
+        - 無効なID → 400 Bad Request
+        - リクエスト認証エラー → 401 Unauthorized
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: 投稿ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 投稿の「いいね」を削除する
+      tags:
+      - comments
+    post:
+      description: |-
+        指定したIDの投稿に「いいね」をつける
+
+        **エラー条件:**
+        - 無効なID → 400 Bad Request
+        - リクエスト認証エラー → 401 Unauthorized
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: 投稿ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Post liked successfully
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 投稿に「いいね」をつける
+      tags:
+      - comments
+  /api/posts/{id}/likes:
+    get:
+      description: |-
+        指定したIDの投稿についている「いいね」を取得する
+
+        **エラー条件:**
+        - 無効なID → 400 Bad Request
+        - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: 投稿ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.LikesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 投稿の「いいね」を取得する
+      tags:
+      - comments
+  /api/signup:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        送られてきたユーザー情報を使ってユーザー登録を実施する
+
+        **エラー条件:**
+        - 無効なユーザー情報、ユーザー名が空、パスワードが8文字未満 → 400 Bad Request
+        - 許可されていないメソッド → 405 MethodNotAllowed
+        - データ更新/取得失敗、パスワードのハッシュ化失敗、レスポンス書き込み失敗 → 500 ServerError
+      parameters:
+      - description: ユーザー情報
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "405":
+          description: Method Not Allowed
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 新規ユーザー登録を実施する
+      tags:
+      - users
+swagger: "2.0"
