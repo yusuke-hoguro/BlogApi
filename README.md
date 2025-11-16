@@ -216,7 +216,7 @@ docker compose -f docker-compose.test.yml logs goapp
 
 ## API仕様
 
-- 詳しくは[API設計書](docs/API_SPEC.md)を参照
+- 詳しくは [API設計書 (Swagger UI)](https://yusuke-hoguro.github.io/BlogApi/) を参照
 
 ---
 
