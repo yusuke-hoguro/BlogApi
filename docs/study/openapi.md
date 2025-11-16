@@ -35,7 +35,8 @@
 5. Swagger Docs生成
 
 - 下記のコマンドを実行してSwagger仕様を自動生成
-- 標準は`docs/`に生成されるが仕様書の混在を防ぐために`docs/swagger`に変更する
+- 標準は`docs/`に生成される
+- 下記で出力指定もできる
 
     ```bash
     swag init -g main.go -o docs/swagger
@@ -44,6 +45,7 @@
 6. Swagger UIをルーターに追加
 
 - 標準は`docs/`に生成されるが仕様書の混在を防ぐために`docs/swagger`に変更する
+- 今回は実施しない
 
     ```go
     import (
@@ -88,4 +90,4 @@
 | No | 概要 | 内容 | 解決方法 |
 |----|-------------|------|------|
 | 1 | routerでのURI設定ミス | `HandleFunc`だとPathの完全一致になっており、`/swagger/index.html`や`/swagger/doc.json`にマッチしない | `PathPrefix`に変更し、接頭辞マッチに変更した。複数ファイルをまとめて使う場合は`PathPrefix`を使用する。|
-| 2 | 仕様書が反映されない | 各Handler関数にコメントを記述したがOpenAPIの仕様書に反映されなかった | 自動で生成を組み込むまでは手動で`swag init -g main.go -o docs/swagger`を実行して再生成する必要がある |
+| 2 | 仕様書が反映されない | 各Handler関数にコメントを記述したがOpenAPIの仕様書に反映されなかった | 自動で生成を組み込むまでは手動で`swag init -g main.go -o docs/`を実行して再生成する必要がある |

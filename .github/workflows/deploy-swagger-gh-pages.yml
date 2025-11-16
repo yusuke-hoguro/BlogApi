@@ -29,12 +29,12 @@ jobs:
         run: go install github.com/swaggo/swag/cmd/swag@latest
 
       - name: Generate Swagger docs
-        run: swag init -g main.go -o docs/swagger        
+        run: swag init -g main.go -o docs/   
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./docs/swagger
+          path: ./docs/
           name: github-pages
 
   swagger-deploy:

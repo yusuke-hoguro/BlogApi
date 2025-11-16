@@ -3,7 +3,7 @@ package router
 import (
 	"database/sql"
 
-	_ "github.com/yusuke-hoguro/BlogApi/docs/swagger" // swag init で生成されたdocsパッケージをimport
+	_ "github.com/yusuke-hoguro/BlogApi/docs" // swag init で生成されたdocsパッケージをimport
 
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
