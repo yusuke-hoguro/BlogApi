@@ -35,14 +35,17 @@ export default function PostList(){
                 {posts.map(post => (
                     <li 
                         key={post.id} 
+                        data-testid="post-item"  // テスト用に追加
                         className="p-4 border rounded shadow bg-white hover:shadow-md transition-shadow break-words" 
                     >
-                        <Link 
-                            to={`/post/${post.id}`} 
-                            className="text-xl font-semibold text-blue-600 hover:underline break-words"
-                        >
-                            {post.title}
-                        </Link>
+                        <h2>
+                            <Link 
+                                to={`/post/${post.id}`} 
+                                className="text-xl font-semibold text-blue-600 hover:underline break-words"
+                            >
+                                {post.title}
+                            </Link>
+                        </h2>
                         <p className="text-gray-700 mt-2 break-words">
                             {post.content?.slice(0, 100)}{post.content?.length > 100 ? '...' : ''}
                         </p>
