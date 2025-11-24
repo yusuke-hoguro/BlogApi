@@ -20,5 +20,7 @@ export async function loginAsTestUser(page: Page) {
     // 第1引数はブラウザ側で実行する関数
     await page.addInitScript(([jwt]) => {
         window.localStorage.setItem('token', jwt);
-    }, [token])   
+    }, [token])
+
+    return token;
 }
