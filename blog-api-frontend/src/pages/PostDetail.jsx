@@ -176,7 +176,7 @@ export default function PostDetail(){
                     <ul className='space-y-4'>
                         {comments.map(comment => (
                             // コメントカード全体
-                            <li key={comment.id} className='border  rounded-lg shadow-sm bg-white p-4 max-w-full mx-auto min-w-0 overflow-x-hidden break-words'>
+                            <li key={comment.id} data-testid="comment-item" className='border  rounded-lg shadow-sm bg-white p-4 max-w-full mx-auto min-w-0 overflow-x-hidden break-words'>
                                 {/* 編集モードか表示モードかを切り替え */}
                                 {editingCommentId === comment.id ? (
                                     <>
