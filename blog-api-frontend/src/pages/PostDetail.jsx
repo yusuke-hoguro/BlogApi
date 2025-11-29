@@ -146,7 +146,9 @@ export default function PostDetail(){
     return(
         <div className="p-4 max-w-3xl mx-auto w-full overflow-x-hidden box-border">
             {/* 戻るリンク &larr;は左向き矢印 */}
-            <Link to="/" className="text-blue-600 hover:underline">&larr; 投稿一覧に戻る</Link>
+            <Link to="/" className="text-blue-600 hover:underline">
+                &larr; 投稿一覧に戻る
+            </Link>
 
             {/* 投稿タイトルと内容 */}
             <h1 data-testid="post-title" className='text-2xl font-bold mt-4'>{post.title}</h1>
@@ -157,12 +159,18 @@ export default function PostDetail(){
             {/* 自分の投稿なら削除ボタンを表示 */}
             {post.user_id === getCurrentUserId() && (
                 <div className="mt-4">
-                <button
-                    onClick={handleDeletePost}
-                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                >
-                    投稿削除
-                </button>
+                    <Link
+                        to={`/post/${post.id}/edit`}
+                        className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors"
+                    >
+                        投稿編集
+                    </Link>
+                    <button
+                        onClick={handleDeletePost}
+                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                    >
+                        投稿削除
+                    </button>
                 </div>
             )}
 
