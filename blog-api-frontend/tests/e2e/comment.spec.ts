@@ -1,12 +1,14 @@
 import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from './utils';
+import { loginAsTestUser, logout } from './utils';
+import { COMMENT_MAX_LENGTH, ASSERTION_TIMEOUT_MS, TEST_COMMENT_LONG, TEST_COMMENT_TOO_LONG } from './constants';
+import { TEST_USERS } from './users';
 
-test.describe('コメント機能', () => {
+test.describe('コメント機能：正常系テスト', () => {
     
     test('UI画面でコメントの作成→表示→編集→削除のテストを実施する', async({ page }) => {
 
         // テストユーザーでログイン
-        await loginAsTestUser(page)
+        await loginAsTestUser(page, TEST_USERS.testuser)
 
         // トップページ（投稿一覧表示）へ遷移する
         await page.goto('http://localhost:3000/');
@@ -34,14 +36,14 @@ test.describe('コメント機能', () => {
         // テキストエリアに新しいコメントを入力する
         const newComment = testComment + ' - 更新';
         const textarea = commentLocator.locator('textarea');
-        await textarea.fill(newComment, { timeout: 5000 });
+        await textarea.fill(newComment, { timeout: ASSERTION_TIMEOUT_MS });
 
         // 保存する
         const saveButton = commentLocator.getByRole('button', { name: '保存' });
         await saveButton.click();
 
         // 更新内容が反映されていることを確認する
-        await expect(commentLocator).toContainText(newComment, { timeout: 5000 })
+        await expect(commentLocator).toContainText(newComment, { timeout: ASSERTION_TIMEOUT_MS })
 
         // 削除ボタンをクリックしてコメントを削除
         const deleteButton = commentLocator.getByRole('button', { name: '削除' });
@@ -53,7 +55,77 @@ test.describe('コメント機能', () => {
         await deleteButton.click();
 
         // UIからも消えていることを確認する
-        await expect(commentLocator).toHaveCount(0, { timeout: 5000 });
+        await expect(commentLocator).toHaveCount(0, { timeout: ASSERTION_TIMEOUT_MS });
     });
 
 });
+
+test.describe('コメント機能：異常系テスト', () => {
+
+    test('空コメント、文字数オーバー、他ユーザーのコメント編集削除不可のテスト', async({ page }) => {
+        // テストユーザーでログイン
+        await loginAsTestUser(page, TEST_USERS.testuser)
+        // トップページ（投稿一覧表示）へ遷移する
+        await page.goto('http://localhost:3000/');
+        // 最初の投稿のリンクを取得してクリックし、詳細ページへ遷移する
+        const firstPost = page.getByTestId('post-item').first().locator('a', { hasText: /./ });
+        await firstPost.click();
+        // コメント入力欄を取得
+        const commentInput = page.getByPlaceholder('コメントを入力');
+        // 送信ボタンを取得
+        const sendButton = page.getByRole('button', { name: 'コメント送信' });
+        // 空コメント設定
+        await commentInput.fill('');
+        // ボタンが disabled であることを確認
+        await expect(sendButton).toBeDisabled();
+        // 500文字の文字列を入力
+        await commentInput.fill(TEST_COMMENT_LONG);
+        // 入力した値が500文字になっていることを確認
+        await expect(commentInput).toHaveValue(TEST_COMMENT_LONG);
+        // 一旦コメント削除
+        await commentInput.fill('');
+        await expect(commentInput).toHaveValue('');
+        // 501文字の文字列を作成
+        await commentInput.fill(TEST_COMMENT_TOO_LONG);
+        // 最大500文字しかはいらないことを確認する
+        await expect(commentInput).toHaveValue(TEST_COMMENT_LONG);
+        // 仮のコメントを投稿する
+        await commentInput.fill(TEST_COMMENT_LONG);
+        // 送信ボタンをクリック
+        await page.getByRole('button', { name: 'コメント送信' }).click();
+        // ログアウト
+        await logout(page);
+        // 違うユーザーでログインする
+        await loginAsTestUser(page, TEST_USERS.otheruser)
+        // トップページ（投稿一覧表示）へ遷移する
+        await page.goto('/');
+        // 最初の投稿のリンクを取得してクリックし、詳細ページへ遷移する
+        const firstPostSecondLogin = page.getByTestId('post-item').first().locator('a', { hasText: /./ });
+        await firstPostSecondLogin.click();
+        // 仮投稿したコメントが画面に存在することを確認する
+        const commentLocator = page.getByTestId('comment-item').filter({ hasText: TEST_COMMENT_LONG });
+        await expect(commentLocator).toBeVisible();
+        // 編集と削除ボタンの取得を実施
+        const editButton = commentLocator.getByRole('button', { name: '編集' });
+        const deleteButton = commentLocator.getByRole('button', { name: '削除' });
+        // 存在しないことを確認する
+        await expect(editButton).toHaveCount(0);
+        await expect(deleteButton).toHaveCount(0);
+        // 後処理で追加したコメントを削除する
+        await loginAsTestUser(page, TEST_USERS.testuser)
+        await page.goto('/');
+        const firstPostLastLogin = page.getByTestId('post-item').first().locator('a', { hasText: /./ });
+        await firstPostLastLogin.click();
+        // 削除ボタンをクリックしてコメントを削除
+        const button = commentLocator.getByRole('button', { name: '削除' });
+        // クリックによってconfirmがでることを想定してイベントハンドラをセットしておく
+        page.once('dialog', async dialog =>{
+            console.log(`Dialog message: ${dialog.message()}`); //デバッグ用ログ
+            await dialog.accept();
+        });
+        await button.click();
+        // UIからも消えていることを確認する
+        await expect(commentLocator).toHaveCount(0, { timeout: ASSERTION_TIMEOUT_MS });
+    });
+});
+    
