@@ -78,8 +78,9 @@ export default function PostEdit() {
             {/* 更新ボタンが押されたらhandleUpdateを実行する */}
             <form onSubmit={handleUpdate} className="space-y-4">
                 <div>
-                    <label className="block font-medium mb-1">タイトル</label>
+                    <label htmlFor="post-title" className="block font-medium mb-1">タイトル</label>
                     <input
+                        id="post-title"
                         type="text"
                         className="w-full border rounded p-2"
                         value={title}
@@ -91,8 +92,9 @@ export default function PostEdit() {
                 </div>
 
                 <div>
-                    <label className="block font-medium mb-1">本文</label>
+                    <label htmlFor="post-content" className="block font-medium mb-1">内容</label>
                     <textarea
+                        id="post-content"
                         className="w-full border rounded p-2 resize-none"
                         rows="8"
                         value={content}

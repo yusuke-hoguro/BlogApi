@@ -111,7 +111,7 @@ export default function PostDetail(){
         try {
             const token = localStorage.getItem("token");
             await client.delete(`/api/posts/${post.id}`, { headers: { Authorization: token } });
-            navigate("/"); // 削除後は投稿一覧に戻る
+            navigate("/", { replace: true }); // 削除後は投稿一覧に戻る
         } catch (error) {
             console.error("投稿削除エラー:", error);
             setErrorMsg("投稿の削除に失敗しました。");
