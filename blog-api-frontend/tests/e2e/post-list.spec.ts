@@ -1,11 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { loginAsTestUser } from './utils';
 import { WAIT_FOR_ELEMENT_TIMEOUT_MS } from './constants';
+import { TEST_USERS } from './users';
 
 // PostListが正しくAPIを叩けて表示できるかを確認する
 test('投稿一覧が表示される', async({ page }) => {
     // テストユーザーでログインする
-    await loginAsTestUser(page)
+    await loginAsTestUser(page, TEST_USERS.testuser)
     await page.goto('http://localhost:3000/');
     // 投稿リストが描画されるまで最大10秒待つ
     await page.waitForSelector('[data-testid="post-item"]', { timeout: WAIT_FOR_ELEMENT_TIMEOUT_MS });

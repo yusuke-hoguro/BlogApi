@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { loginAsTestUser } from './utils';
+import { TEST_USERS } from './users';
 
 test('投稿詳細ページへ遷移でき、詳細が表示される', async ({ page }) => {
     // テストユーザーでログイン
-    await loginAsTestUser(page)
+    await loginAsTestUser(page, TEST_USERS.testuser)
     // トップページ（投稿一覧表示）へ遷移する
     await page.goto('http://localhost:3000/');
     // 最初の投稿のリンクを取得してクリックし、詳細ページへ遷移する

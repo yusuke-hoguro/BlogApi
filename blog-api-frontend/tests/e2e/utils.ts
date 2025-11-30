@@ -1,19 +1,24 @@
 import { Page } from "@playwright/test";
+import { TestUser } from './users';
 
 /*
 * テストユーザーでログインしてTokenを取得する
 * (addInitScriptでLocalStorageにJWTを入れる)
 */ 
-export async function loginAsTestUser(page: Page) {
+export async function loginAsTestUser(page: Page, user: TestUser) {
     // テストユーザーでログインしてTokenを取得する
-    const responce = await page.request.post('http://localhost:8080/api/login', {
+    const response = await page.request.post('http://localhost:8080/api/login', {
         data:{
-            username: "testuser2", 
-            password: "validpassword"
-        }
+            username: user.username, 
+            password: user.password
+        },
     });
 
-    const body = await responce.json();
+    if (!response.ok()) {
+        throw new Error(`ログイン失敗: ${response.status()} ${await response.text()}`);
+    }
+
+    const body = await response.json();
     const token = body.token;
     
     // addInitScriptは第2引数で渡した値をブラウザ側で実行される関数の第1引数として注入
@@ -23,6 +28,17 @@ export async function loginAsTestUser(page: Page) {
     }, [token])
 
     return token;
+}
+
+/**
+ * ログアウト処理
+ * localStorage の token を削除してトップページに遷移する
+ */
+export async function logout(page: Page) {
+    await page.evaluate(() => {
+        localStorage.removeItem('token');
+    });
+    await page.goto('/');
 }
 
 // RESTAPIで投稿を作成する

@@ -1,10 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { loginAsTestUser } from './utils';
 import { WAIT_FOR_ELEMENT_TIMEOUT_MS } from './constants';
+import { TEST_USERS } from './users';
 
 test('トップページが開ける', async ({ page }) => {
   // テストユーザーでログインする
-  await loginAsTestUser(page)
+  await loginAsTestUser(page, TEST_USERS.testuser)
   // トップページにアクセスする
   await page.goto('/');
   // 投稿一覧の見出しが表示されるまで待つ

@@ -1,12 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { loginAsTestUser } from './utils';
 import { ASSERTION_TIMEOUT_MS } from './constants';
+import { TEST_USERS } from './users';
 
 test.describe('投稿機能:正常系テスト', () => {
 
     test('新規投稿作成→編集→削除のテストを実施', async ({ page }) => {
         // テストユーザーでログインする
-        const token = await loginAsTestUser(page);
+        const token = await loginAsTestUser(page, TEST_USERS.testuser);
         // 投稿作成ページへ遷移
         await page.goto('/post/create');
         // 投稿作成ページが開けたかを確認する
