@@ -24,3 +24,33 @@ export async function loginAsTestUser(page: Page) {
 
     return token;
 }
+
+// RESTAPIで投稿を作成する
+export async function createPost(page: Page, token: string, title: string, content: string){
+    // Playwrite環境用のAPI呼び出し
+    const res = await page.request.post('http://localhost:8080/api/posts',{
+        data: { title, content },
+        headers: {
+            Authorization: `${token}`,
+            'Content-Type': 'application/json',
+        },
+    });
+
+    if(!res.ok()){
+        throw new Error(`投稿作成に失敗: ${res.status()}`);
+    }
+    return await res.json();
+}
+
+// RESTAPIで投稿を削除する
+export async function deletePost(page: Page, token: string, postId: number) {
+    const res = await page.request.delete(`http://localhost:8080/api/posts/${postId}`, {
+        headers: {
+            Authorization: `${token}`,
+        },
+    });
+
+    if(!res.ok()){
+        throw new Error(`投稿削除に失敗: ${res.status()}`);
+    }
+}
