@@ -1,21 +1,31 @@
 import { test, expect } from '@playwright/test';
-import { loginAsTestUser, logout } from './utils';
+import { loginAsTestUser, logout , createPost, deletePost } from './utils';
 import { ASSERTION_TIMEOUT_MS, WAIT_FOR_ELEMENT_TIMEOUT_MS } from './constants/config';
 import { TEST_COMMENT, TEST_COMMENT_LONG, TEST_COMMENT_TOO_LONG } from './constants/comments';
 import { BUTTON_SEND_COMMENT, BUTTON_EDIT_COMMENT, BUTTON_SAVE_COMMENT, BUTTON_DELETE_COMMENT } from './constants/buttons';
 import { COMMENT_ITEM_TEST_ID, POST_ITEM_TEST_ID } from './constants/selectors';
 import { TEST_USERS } from './users';
+import { CREAT_POST_TITLE, CREAT_POST_CONTENT } from './constants/posts';
 
 test.describe('コメント機能：正常系テスト', () => {
     
     test('UI画面でコメントの作成→表示→編集→削除のテストを実施する', async({ page }) => {
         // テストユーザーでログイン
-        await loginAsTestUser(page, TEST_USERS.testuser)
+        const token = await loginAsTestUser(page, TEST_USERS.testuser)
         // トップページ（投稿一覧表示）へ遷移する
         await page.goto('/');
-        // 最初の投稿のリンクを取得してクリックし、詳細ページへ遷移する
-        const firstPost = page.getByTestId(POST_ITEM_TEST_ID).first().locator('a', { hasText: /./ });
-        await firstPost.click();
+        // APIを使用してテスト用の投稿を作成する
+        const testTitle = CREAT_POST_TITLE + `${Date.now()}`;
+        const testContent = CREAT_POST_CONTENT
+        const post = await createPost(page, token, testTitle, testContent)
+        // 投稿作成後に一覧をリロード
+        await page.goto('/');
+        // 投稿一覧の中に新規作成した投稿があることを確認する
+        await expect(page.getByTestId(POST_ITEM_TEST_ID).filter({ hasText: testTitle})).toHaveCount(1)
+        // 新規追加した投稿の詳細画面を開く
+        await page.getByRole('link', { name: testTitle }).click();
+        // 新規追加した投稿の詳細画面に遷移できたかをチェック
+        await expect(page.getByRole('heading', { name: testTitle })).toBeVisible();
         // テスト用コメント
         const testComment = TEST_COMMENT + ` ${Date.now()}`;
         // コメント入力
@@ -49,6 +59,14 @@ test.describe('コメント機能：正常系テスト', () => {
         await deleteButton.click();
         // UIからも消えていることを確認する
         await expect(commentLocator).toHaveCount(0, { timeout: ASSERTION_TIMEOUT_MS });
+        // APIを使用して投稿を削除する
+        await deletePost(page, token, post.id)
+        // トップページ（投稿一覧表示）へ遷移する
+        await page.goto('/');
+        // 投稿をすべて取得する
+        const posts = page.getByTestId(POST_ITEM_TEST_ID);
+        // テスト用の投稿が削除されたことを確認する
+        await expect(posts.filter({ hasText: testTitle })).toHaveCount(0);
     });
 
 });
@@ -57,12 +75,21 @@ test.describe('コメント機能：異常系テスト', () => {
 
     test('空コメント、文字数オーバー、他ユーザーのコメント編集削除不可のテスト', async({ page }) => {
         // テストユーザーでログイン
-        await loginAsTestUser(page, TEST_USERS.testuser)
+        const token = await loginAsTestUser(page, TEST_USERS.testuser)
         // トップページ（投稿一覧表示）へ遷移する
         await page.goto('/');
-        // 最初の投稿のリンクを取得してクリックし、詳細ページへ遷移する
-        const firstPost = page.getByTestId(POST_ITEM_TEST_ID).first().locator('a', { hasText: /./ });
-        await firstPost.click();
+        // APIを使用してテスト用の投稿を作成する
+        const testTitle = CREAT_POST_TITLE + `${Date.now()}`;
+        const testContent = CREAT_POST_CONTENT
+        const post = await createPost(page, token, testTitle, testContent)
+        // 投稿作成後に一覧をリロード
+        await page.goto('/');
+        // 投稿一覧の中に新規作成した投稿があることを確認する
+        await expect(page.getByTestId(POST_ITEM_TEST_ID).filter({ hasText: testTitle})).toHaveCount(1)
+        // 新規追加した投稿の詳細画面を開く
+        await page.getByRole('link', { name: testTitle }).click();
+        // 新規追加した投稿の詳細画面に遷移できたかをチェック
+        await expect(page.getByRole('heading', { name: testTitle })).toBeVisible();
         // コメント入力欄を取得
         const commentInput = page.getByPlaceholder('コメントを入力');
         // 送信ボタンを取得
@@ -119,6 +146,14 @@ test.describe('コメント機能：異常系テスト', () => {
         await button.click();
         // UIからも消えていることを確認する
         await expect(commentLocator).toHaveCount(0, { timeout: ASSERTION_TIMEOUT_MS });
+        // APIを使用して投稿を削除する
+        await deletePost(page, token, post.id)
+        // トップページ（投稿一覧表示）へ遷移する
+        await page.goto('/');
+        // 投稿をすべて取得する
+        const posts = page.getByTestId(POST_ITEM_TEST_ID);
+        // テスト用の投稿が削除されたことを確認する
+        await expect(posts.filter({ hasText: testTitle })).toHaveCount(0);
     });
 });
     
