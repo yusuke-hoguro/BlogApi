@@ -119,9 +119,12 @@ test.describe('コメント機能：異常系テスト', () => {
         await loginAsTestUser(page, TEST_USERS.otheruser)
         // トップページ（投稿一覧表示）へ遷移する
         await page.goto('/');
-        // 最初の投稿のリンクを取得してクリックし、詳細ページへ遷移する
-        const firstPostSecondLogin = page.getByTestId(POST_ITEM_TEST_ID).first().locator('a', { hasText: /./ });
-        await firstPostSecondLogin.click();
+        // 投稿一覧の中に新規作成した投稿があることを確認する
+        await expect(page.getByTestId(POST_ITEM_TEST_ID).filter({ hasText: testTitle})).toHaveCount(1)
+        // 新規追加した投稿の詳細画面を開く
+        await page.getByRole('link', { name: testTitle }).click();
+        // 新規追加した投稿の詳細画面に遷移できたかをチェック
+        await expect(page.getByRole('heading', { name: testTitle })).toBeVisible();
         // 仮投稿したコメントが画面に存在することを確認する
         const commentLocator = page.getByTestId(COMMENT_ITEM_TEST_ID).filter({ hasText: TEST_COMMENT_LONG });
         await expect(commentLocator).toBeVisible();
@@ -131,11 +134,17 @@ test.describe('コメント機能：異常系テスト', () => {
         // 存在しないことを確認する
         await expect(editButton).toHaveCount(0);
         await expect(deleteButton).toHaveCount(0);
+        // ログアウト
+        await logout(page);
         // 後処理で追加したコメントを削除する
         await loginAsTestUser(page, TEST_USERS.testuser)
         await page.goto('/');
-        const firstPostLastLogin = page.getByTestId(POST_ITEM_TEST_ID).first().locator('a', { hasText: /./ });
-        await firstPostLastLogin.click();
+        // 投稿一覧の中に新規作成した投稿があることを確認する
+        await expect(page.getByTestId(POST_ITEM_TEST_ID).filter({ hasText: testTitle})).toHaveCount(1)
+        // 新規追加した投稿の詳細画面を開く
+        await page.getByRole('link', { name: testTitle }).click();
+        // 新規追加した投稿の詳細画面に遷移できたかをチェック
+        await expect(page.getByRole('heading', { name: testTitle })).toBeVisible();
         // 削除ボタンをクリックしてコメントを削除
         const button = commentLocator.getByRole('button', { name: BUTTON_DELETE_COMMENT });
         // クリックによってconfirmがでることを想定してイベントハンドラをセットしておく
