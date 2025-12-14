@@ -30,7 +30,10 @@ export default function PostList(){
             >
                 新規投稿作成
             </Link>
-            {errorMsg && <p className="text-red-500 mb-4">{errorMsg}</p>}
+            {/* エラー */}
+            {errorMsg && <p data-testid="post-fetch-error" className="text-red-500 mb-4">{errorMsg}</p>}
+            {/* 空状態 */}
+            {!errorMsg && posts.length === 0 && <p data-testid="post-empty" className="text-gray-500 mb-4">投稿がありません</p>}
             <ul className="space-y-4">
                 {posts.map(post => (
                     <li 
