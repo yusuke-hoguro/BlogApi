@@ -3,7 +3,7 @@ import { loginAsTestUser, createPost, deletePost } from './utils';
 import { WAIT_FOR_ELEMENT_TIMEOUT_MS } from './constants/config';
 import { POST_ITEM_TEST_ID, POST_FETCH_ERROR_TEST_ID, POST_EMPTY_TEST_ID } from './constants/selectors';
 import { TEST_USERS } from './users';
-import { CREAT_POST_TITLE, CREAT_POST_CONTENT } from './constants/posts';
+import { CREATE_POST_TITLE, CREATE_POST_CONTENT } from './constants/posts';
 import { BUTTON_LOGOUT } from './constants/buttons';
 import { PAGE_TITLE_LOGIN } from './constants/pageTitles';
 
@@ -14,8 +14,8 @@ test.describe('投稿一覧表示画面：正常系テスト', () => {
         const token = await loginAsTestUser(page, TEST_USERS.testuser)
         await page.goto('/');
         // APIを使用してテスト用の投稿を作成する
-        const testTitle = CREAT_POST_TITLE + `${Date.now()}`;
-        const testContent = CREAT_POST_CONTENT
+        const testTitle = CREATE_POST_TITLE + `${Date.now()}`;
+        const testContent = CREATE_POST_CONTENT
         const post = await createPost(page, token, testTitle, testContent)
         // 投稿作成後に一覧をリロード
         await page.goto('/');

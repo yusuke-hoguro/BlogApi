@@ -4,7 +4,7 @@ import { ASSERTION_TIMEOUT_MS } from './constants/config';
 import { TEST_USERS } from './users';
 import { POST_ITEM_TEST_ID, POST_TITLE_TEST_ID, POST_CONTENT_TEST_ID } from './constants/selectors';
 import { PAGE_TITLE_POST_LIST, PAGE_TITLE_POST_CREATE } from './constants/pageTitles';
-import { CREAT_POST_TITLE, CREAT_POST_CONTENT, UPDATE_POST_TITLE, UPDATE_POST_CONTEXT } from './constants/posts';
+import { CREATE_POST_TITLE, CREATE_POST_CONTENT, UPDATE_POST_TITLE, UPDATE_POST_CONTEXT } from './constants/posts';
 import { BUTTON_UPDATE_POST, BUTTON_CREATE_POST, BUTTON_DELETE_POST } from './constants/buttons';
 import { LABEL_EDIT_POST, LABEL_POST_CREATE_TITLE, LABEL_POST_CREATE_CONTEXT } from './constants/label';
 
@@ -18,8 +18,8 @@ test.describe('投稿機能:正常系テスト', () => {
         // 投稿作成ページが開けたかを確認する
         await expect(page.getByRole('heading', { name: PAGE_TITLE_POST_CREATE })).toBeVisible();
         // 新規投稿の作成を実施する
-        const title = CREAT_POST_TITLE + `${Date.now()}`;
-        const content = CREAT_POST_CONTENT;
+        const title = CREATE_POST_TITLE + `${Date.now()}`;
+        const content = CREATE_POST_CONTENT;
         await page.getByLabel(LABEL_POST_CREATE_TITLE).fill(title);
         await page.getByLabel(LABEL_POST_CREATE_CONTEXT).fill(content);
         await page.getByRole('button', { name: BUTTON_CREATE_POST }).click();

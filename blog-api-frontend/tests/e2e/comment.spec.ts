@@ -5,7 +5,7 @@ import { TEST_COMMENT, TEST_COMMENT_LONG, TEST_COMMENT_TOO_LONG } from './consta
 import { BUTTON_SEND_COMMENT, BUTTON_EDIT_COMMENT, BUTTON_SAVE_COMMENT, BUTTON_DELETE_COMMENT } from './constants/buttons';
 import { COMMENT_ITEM_TEST_ID, POST_ITEM_TEST_ID } from './constants/selectors';
 import { TEST_USERS } from './users';
-import { CREAT_POST_TITLE, CREAT_POST_CONTENT } from './constants/posts';
+import { CREATE_POST_TITLE, CREATE_POST_CONTENT } from './constants/posts';
 
 test.describe('コメント機能：正常系テスト', () => {
     
@@ -15,8 +15,8 @@ test.describe('コメント機能：正常系テスト', () => {
         // トップページ（投稿一覧表示）へ遷移する
         await page.goto('/');
         // APIを使用してテスト用の投稿を作成する
-        const testTitle = CREAT_POST_TITLE + `${Date.now()}`;
-        const testContent = CREAT_POST_CONTENT
+        const testTitle = CREATE_POST_TITLE + `${Date.now()}`;
+        const testContent = CREATE_POST_CONTENT
         const post = await createPost(page, token, testTitle, testContent)
         // 投稿作成後に一覧をリロード
         await page.goto('/');
@@ -79,8 +79,8 @@ test.describe('コメント機能：異常系テスト', () => {
         // トップページ（投稿一覧表示）へ遷移する
         await page.goto('/');
         // APIを使用してテスト用の投稿を作成する
-        const testTitle = CREAT_POST_TITLE + `${Date.now()}`;
-        const testContent = CREAT_POST_CONTENT
+        const testTitle = CREATE_POST_TITLE + `${Date.now()}`;
+        const testContent = CREATE_POST_CONTENT
         const post = await createPost(page, token, testTitle, testContent)
         // 投稿作成後に一覧をリロード
         await page.goto('/');
