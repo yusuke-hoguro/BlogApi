@@ -18,12 +18,15 @@ export async function loginAsTestUser(page: Page, user: TestUser) {
         throw new Error(`ログイン失敗: ${response.status()} ${await response.text()}`);
     }
 
-    const body = await response.json();
-    const token = body.token;
+    const { token } = await response.json();
+
+    // localStorageに書き込み可能なページに遷移したことを確認してから実施する（blankに書き込もうとしてエラーになるのを防ぐ）
+    await page.goto('http://localhost:3000/');
+    await page.waitForLoadState('domcontentloaded');
     
-    // addInitScriptは第2引数で渡した値をブラウザ側で実行される関数の第1引数として注入
-    // 第1引数はブラウザ側で実行する関数
-    await page.addInitScript(([jwt]) => {
+    // addInitScriptを使うとページ遷移のたびに必ずtokenをセットするので使用禁止
+    // evaluateで1回だけtokenを書き込む
+    await page.evaluate(([jwt]) => {
         window.localStorage.setItem('token', jwt);
     }, [token])
 
