@@ -52,12 +52,7 @@ export default function PostDetail(){
             const token = localStorage.getItem('token');
             const response = await client.post(
                 `/api/posts/${id}/comments`,
-                { content: newComment },
-                {
-                    headers:{
-                        Authorization: token
-                    }
-                }
+                { content: newComment }
             );
             console.log('投稿APIレスポンス:', response);
             setNewComment('');
@@ -80,9 +75,7 @@ export default function PostDetail(){
 
         try{
             const token = localStorage.getItem("token");
-            await client.delete(`/api/comments/${commentId}`, {
-                headers: { Authorization: token },
-            });
+            await client.delete(`/api/comments/${commentId}`);
             // 削除後にコメント一覧を再取得
             await fetchPostAndComments();
         } catch (error) {
@@ -110,7 +103,7 @@ export default function PostDetail(){
 
         try {
             const token = localStorage.getItem("token");
-            await client.delete(`/api/posts/${post.id}`, { headers: { Authorization: token } });
+            await client.delete(`/api/posts/${post.id}`);
             navigate("/", { replace: true }); // 削除後は投稿一覧に戻る
         } catch (error) {
             console.error("投稿削除エラー:", error);
@@ -126,8 +119,7 @@ export default function PostDetail(){
             const token = localStorage.getItem("token");
             await client.put(
                 `/api/comments/${commentId}`,
-                { content: editingContent },
-                { headers: { Authorization: token } }
+                { content: editingContent }
             );
             // 編集終了のためリセットする
             setEditingCommentId(null);

@@ -45,12 +45,7 @@ export default function PostEdit() {
             // 投稿更新用のAPIを送信
             await client.put(
                 `/api/posts/${id}`,
-                { title, content },
-                {
-                    headers: {
-                        Authorization: token,
-                    },
-                } 
+                { title, content }
             );
             // 更新が成功したので詳細ページに遷移
             navigate(`/post/${id}`);

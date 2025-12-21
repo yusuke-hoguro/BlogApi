@@ -20,8 +20,7 @@ export default function PostCreate() {
       const token = localStorage.getItem("token");
       await client.post(
         "/api/posts",
-        { title, content },
-        { headers: { Authorization: token } }
+        { title, content }
       );
       navigate("/"); // 投稿一覧へ戻る
     } catch (error) {
