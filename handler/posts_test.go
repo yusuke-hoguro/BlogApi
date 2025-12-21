@@ -77,7 +77,7 @@ func TestCreatePostHandler(t *testing.T) {
 		t.Fatal("リクエスト生成エラー:", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	client := server.Client()
 	resp, err := client.Do(req)
@@ -147,7 +147,7 @@ func TestCreatePostHandlerInvalidToken(t *testing.T) {
 		t.Fatal("リクエスト生成エラー:", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	client := server.Client()
 	resp, err := client.Do(req)
@@ -188,7 +188,7 @@ func TestCreatePostHandlerInvalidJSON(t *testing.T) {
 		t.Fatal("リクエスト生成エラー:", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	client := server.Client()
 	resp, err := client.Do(req)
@@ -229,7 +229,7 @@ func TestCreatePostHandlerMissingTitle(t *testing.T) {
 		t.Fatal("リクエスト生成エラー:", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	client := server.Client()
 	resp, err := client.Do(req)
@@ -303,7 +303,7 @@ func TestCreatePostHandlerValidation(t *testing.T) {
 				t.Fatal("リクエスト生成エラー:", err)
 			}
 			req.Header.Set("Content-Type", "application/json")
-			req.Header.Set("Authorization", token)
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			client := server.Client()
 			resp, err := client.Do(req)
@@ -348,7 +348,7 @@ func TestUpdatePostHandler(t *testing.T) {
 		t.Fatal("リクエスト生成エラー:", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	// HTTPリクエストを実行
 	client := server.Client()
@@ -395,7 +395,7 @@ func TestUpdatePostHandlerNotFound(t *testing.T) {
 		t.Fatal("リクエスト生成エラー:", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	// HTTPリクエストを実行
 	client := server.Client()
@@ -442,7 +442,7 @@ func TestUpdatePostHandlerForbidden(t *testing.T) {
 		t.Fatal("リクエスト生成エラー:", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	// HTTPリクエストを実行
 	client := server.Client()
@@ -569,7 +569,7 @@ func TestUpdatePostHandlerValidation(t *testing.T) {
 		t.Fatal("リクエスト生成エラー:", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	// HTTPリクエストを実行
 	client := server.Client()
@@ -600,7 +600,7 @@ func TestUpdatePostHandlerValidation(t *testing.T) {
 				t.Fatal("リクエスト生成エラー:", err)
 			}
 			req.Header.Set("Content-Type", "application/json")
-			req.Header.Set("Authorization", token)
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			resp, err := client.Do(req)
 			if err != nil {
@@ -643,7 +643,7 @@ func TestDeletePostHandler(t *testing.T) {
 	if err != nil {
 		t.Fatal("リクエスト生成エラー:", err)
 	}
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	// リクエスト実行
 	client := server.Client()
@@ -689,7 +689,7 @@ func TestDeletePostHandlerForbidden(t *testing.T) {
 	if err != nil {
 		t.Fatal("リクエスト生成エラー:", err)
 	}
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	// リクエスト実行
 	client := server.Client()
@@ -735,7 +735,7 @@ func TestDeletePostHandlerNotFound(t *testing.T) {
 	if err != nil {
 		t.Fatal("リクエスト生成エラー:", err)
 	}
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	// リクエスト実行
 	client := server.Client()

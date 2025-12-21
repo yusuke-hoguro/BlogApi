@@ -50,7 +50,7 @@ export async function createPost(page: Page, token: string, title: string, conte
     const res = await page.request.post('http://localhost:8080/api/posts',{
         data: { title, content },
         headers: {
-            Authorization: `${token}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
         },
     });
@@ -65,7 +65,7 @@ export async function createPost(page: Page, token: string, title: string, conte
 export async function deletePost(page: Page, token: string, postId: number) {
     const res = await page.request.delete(`http://localhost:8080/api/posts/${postId}`, {
         headers: {
-            Authorization: `${token}`,
+            Authorization: `Bearer ${token}`,
         },
     });
 
