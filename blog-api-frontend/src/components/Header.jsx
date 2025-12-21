@@ -8,7 +8,7 @@ export default function Header(){
     function handleLogout(){
         // Webブラウザに保存してあるトークンを削除
         localStorage.removeItem("token");
-        navigate("/login");
+        navigate("/login", { replace: true });
     }
 
     // トークンを取得
