@@ -123,7 +123,7 @@ test.describe('投稿詳細表示画面：異常系テスト', () => {
         await page.getByRole('link', { name: testTitle }).click();
         // テスト用に追加した投稿の詳細画面に遷移できたかをチェック
         await expect(page.getByRole('heading', { name: testTitle })).toBeVisible();
-        // 削除ボタンをクリックしてコメントを削除
+        // 削除ボタンをクリックして投稿を削除
         const button = page.getByRole('button', { name: BUTTON_DELETE_POST });
         // クリックによってconfirmがでることを想定してイベントハンドラをセットしておく
         page.once('dialog', async dialog =>{
