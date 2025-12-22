@@ -82,7 +82,7 @@ jobs:
       # テスト失敗時はログをartifactにUP
       - name: Upload test logs
         if: always()
-        uses: actions/Upload-artifact@v4
+        uses: actions/upload-artifact@v4
         with:
           name: test-logs
           path: logs/test.log
