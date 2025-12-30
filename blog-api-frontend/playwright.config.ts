@@ -7,8 +7,9 @@ export default defineConfig({
         baseURL: 'http://localhost:3000',
     },
     webServer: {
-        command: 'npm run dev',
-        port: 3000,
+        command: 'docker compose -f ../docker-compose.yml up --build frontend',
+        url: 'http://localhost:3000',
         reuseExistingServer: true,
+        timeout: 120_000,
     },
 });
