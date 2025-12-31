@@ -41,7 +41,7 @@ func TestLikePostHandler(t *testing.T) {
 		if err != nil {
 			t.Fatalf("[%d回目]リクエスト生成失敗: %v", i, err)
 		}
-		req.Header.Set("Authorization", token)
+		req.Header.Set("Authorization", "Bearer "+token)
 
 		// リクエスト送信
 		client := server.Client()

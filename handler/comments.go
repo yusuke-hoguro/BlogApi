@@ -182,15 +182,24 @@ func PostCommentHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// コメントを挿入する
-		query := `INSERT INTO comments (post_id, user_id, content) VALUES ($1, $2, $3)`
-		_, err = db.Exec(query, postID, userID, comment.Content)
+		query := `INSERT INTO comments (post_id, user_id, content) 
+				VALUES ($1, $2, $3)
+				RETURNING id, post_id, user_id, content, created_at`
+
+		err = db.QueryRow(query, postID, userID, comment.Content).Scan(
+			&comment.ID,
+			&comment.PostID,
+			&comment.UserID,
+			&comment.Content,
+			&comment.CreatedAt,
+		)
 		if err != nil {
 			respondError(w, "Failed to insert comment", http.StatusInternalServerError)
 			return
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(w).Encode(map[string]string{"message": "Comment created"}); err != nil {
+		if err := json.NewEncoder(w).Encode(comment); err != nil {
 			respondError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

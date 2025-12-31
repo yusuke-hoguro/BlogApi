@@ -52,12 +52,7 @@ export default function PostDetail(){
             const token = localStorage.getItem('token');
             const response = await client.post(
                 `/api/posts/${id}/comments`,
-                { content: newComment },
-                {
-                    headers:{
-                        Authorization: token
-                    }
-                }
+                { content: newComment }
             );
             console.log('投稿APIレスポンス:', response);
             setNewComment('');
@@ -80,9 +75,7 @@ export default function PostDetail(){
 
         try{
             const token = localStorage.getItem("token");
-            await client.delete(`/api/comments/${commentId}`, {
-                headers: { Authorization: token },
-            });
+            await client.delete(`/api/comments/${commentId}`);
             // 削除後にコメント一覧を再取得
             await fetchPostAndComments();
         } catch (error) {
@@ -110,8 +103,8 @@ export default function PostDetail(){
 
         try {
             const token = localStorage.getItem("token");
-            await client.delete(`/api/posts/${post.id}`, { headers: { Authorization: token } });
-            navigate("/"); // 削除後は投稿一覧に戻る
+            await client.delete(`/api/posts/${post.id}`);
+            navigate("/", { replace: true }); // 削除後は投稿一覧に戻る
         } catch (error) {
             console.error("投稿削除エラー:", error);
             setErrorMsg("投稿の削除に失敗しました。");
@@ -126,8 +119,7 @@ export default function PostDetail(){
             const token = localStorage.getItem("token");
             await client.put(
                 `/api/comments/${commentId}`,
-                { content: editingContent },
-                { headers: { Authorization: token } }
+                { content: editingContent }
             );
             // 編集終了のためリセットする
             setEditingCommentId(null);
@@ -146,23 +138,31 @@ export default function PostDetail(){
     return(
         <div className="p-4 max-w-3xl mx-auto w-full overflow-x-hidden box-border">
             {/* 戻るリンク &larr;は左向き矢印 */}
-            <Link to="/" className="text-blue-600 hover:underline">&larr; 投稿一覧に戻る</Link>
+            <Link to="/" className="text-blue-600 hover:underline">
+                &larr; 投稿一覧に戻る
+            </Link>
 
             {/* 投稿タイトルと内容 */}
-            <h1 className='text-2xl font-bold mt-4'>{post.title}</h1>
+            <h1 data-testid="post-title" className='text-2xl font-bold mt-4'>{post.title}</h1>
             {/* mt:margin-top whitespace-pre-wrap:改行や連続スペースをそのまま表示しつつ、必要に応じで自動で折り返す */}
-            <p className='mt-2 text-gray-800 whitespace-pre-wrap break-all max-w-full'>{post.content}</p>
+            <p data-testid="post-content" className='mt-2 text-gray-800 whitespace-pre-wrap break-all max-w-full'>{post.content}</p>
 
 
             {/* 自分の投稿なら削除ボタンを表示 */}
             {post.user_id === getCurrentUserId() && (
                 <div className="mt-4">
-                <button
-                    onClick={handleDeletePost}
-                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                >
-                    投稿削除
-                </button>
+                    <Link
+                        to={`/post/${post.id}/edit`}
+                        className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors"
+                    >
+                        投稿編集
+                    </Link>
+                    <button
+                        onClick={handleDeletePost}
+                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                    >
+                        投稿削除
+                    </button>
                 </div>
             )}
 
@@ -176,7 +176,7 @@ export default function PostDetail(){
                     <ul className='space-y-4'>
                         {comments.map(comment => (
                             // コメントカード全体
-                            <li key={comment.id} className='border  rounded-lg shadow-sm bg-white p-4 max-w-full mx-auto min-w-0 overflow-x-hidden break-words'>
+                            <li key={comment.id} data-testid="comment-item" className='border  rounded-lg shadow-sm bg-white p-4 max-w-full mx-auto min-w-0 overflow-x-hidden break-words'>
                                 {/* 編集モードか表示モードかを切り替え */}
                                 {editingCommentId === comment.id ? (
                                     <>

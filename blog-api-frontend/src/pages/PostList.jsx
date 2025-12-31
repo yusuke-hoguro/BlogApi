@@ -30,19 +30,25 @@ export default function PostList(){
             >
                 新規投稿作成
             </Link>
-            {errorMsg && <p className="text-red-500 mb-4">{errorMsg}</p>}
+            {/* エラー */}
+            {errorMsg && <p data-testid="post-fetch-error" className="text-red-500 mb-4">{errorMsg}</p>}
+            {/* 空状態 */}
+            {!errorMsg && posts.length === 0 && <p data-testid="post-empty" className="text-gray-500 mb-4">投稿がありません</p>}
             <ul className="space-y-4">
                 {posts.map(post => (
                     <li 
                         key={post.id} 
+                        data-testid="post-item"  // テスト用に追加
                         className="p-4 border rounded shadow bg-white hover:shadow-md transition-shadow break-words" 
                     >
-                        <Link 
-                            to={`/post/${post.id}`} 
-                            className="text-xl font-semibold text-blue-600 hover:underline break-words"
-                        >
-                            {post.title}
-                        </Link>
+                        <h2>
+                            <Link 
+                                to={`/post/${post.id}`} 
+                                className="text-xl font-semibold text-blue-600 hover:underline break-words"
+                            >
+                                {post.title}
+                            </Link>
+                        </h2>
                         <p className="text-gray-700 mt-2 break-words">
                             {post.content?.slice(0, 100)}{post.content?.length > 100 ? '...' : ''}
                         </p>

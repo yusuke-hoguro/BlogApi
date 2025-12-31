@@ -40,7 +40,7 @@ func TestPostCommentHandle(t *testing.T) {
 		t.Fatal("リクエスト生成失敗:", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	// リクエスト送信
 	client := server.Client()
@@ -100,7 +100,7 @@ func TestPostCommentHandleValidation(t *testing.T) {
 				t.Fatal("リクエスト生成エラー:", err)
 			}
 			req.Header.Set("Content-Type", "application/json")
-			req.Header.Set("Authorization", token)
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			client := server.Client()
 			resp, err := client.Do(req)
@@ -143,7 +143,7 @@ func TestDeleteCommentHandler(t *testing.T) {
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
 	}
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	// リクエスト送信
 	client := server.Client()
@@ -188,7 +188,7 @@ func TestDeleteCommentHandlerUnauthorized(t *testing.T) {
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
 	}
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	// リクエスト送信
 	client := server.Client()
@@ -233,7 +233,7 @@ func TestDeleteCommentHandlerNotFound(t *testing.T) {
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)
 	}
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	// リクエスト送信
 	client := server.Client()
@@ -612,7 +612,7 @@ func TestUpdateCommentHandler(t *testing.T) {
 		t.Fatal("リクエスト生成失敗:", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	// リクエスト送信
 	client := server.Client()
@@ -661,7 +661,7 @@ func TestUpdateCommentHandlerNotFound(t *testing.T) {
 		t.Fatal("リクエスト生成失敗:", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	// リクエスト送信
 	client := server.Client()
@@ -710,7 +710,7 @@ func TestUpdateCommentHandlerEmptyContent(t *testing.T) {
 		t.Fatal("リクエスト生成失敗:", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	// リクエスト送信
 	client := server.Client()
@@ -800,7 +800,7 @@ func TestUpdateCommentHandlerForbidden(t *testing.T) {
 		t.Fatal("リクエスト生成失敗:", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	// リクエスト送信
 	client := server.Client()
@@ -861,7 +861,7 @@ func TestUpdateCommentHandlerValidation(t *testing.T) {
 				t.Fatal("リクエスト生成エラー:", err)
 			}
 			req.Header.Set("Content-Type", "application/json")
-			req.Header.Set("Authorization", token)
+			req.Header.Set("Authorization", "Bearer "+token)
 
 			client := server.Client()
 			resp, err := client.Do(req)

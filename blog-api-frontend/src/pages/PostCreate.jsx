@@ -20,8 +20,7 @@ export default function PostCreate() {
       const token = localStorage.getItem("token");
       await client.post(
         "/api/posts",
-        { title, content },
-        { headers: { Authorization: token } }
+        { title, content }
       );
       navigate("/"); // 投稿一覧へ戻る
     } catch (error) {
@@ -39,9 +38,11 @@ export default function PostCreate() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block font-medium mb-1">タイトル</label>
+          <label className="block font-medium mb-1" htmlFor="titleInput">タイトル</label>
           <input
+            id="titleInput"
             type="text"
+            placeholder="タイトル"
             className="w-full border rounded p-2"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -51,8 +52,9 @@ export default function PostCreate() {
         </div>
 
         <div>
-          <label className="block font-medium mb-1">内容</label>
+          <label className="block font-medium mb-1" htmlFor="contentInput">内容</label>
           <textarea
+            id="contentInput"
             className="w-full border rounded p-2 resize-none"
             rows={6}
             value={content}

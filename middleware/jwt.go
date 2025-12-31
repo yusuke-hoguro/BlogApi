@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/golang-jwt/jwt"
 )
@@ -18,12 +19,21 @@ var JwtKey = []byte("your_secret_key")
 // JWTの検証を実施するミドルウェア
 func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
 		// リクエストヘッダーの確認
-		tokenStr := r.Header.Get("Authorization")
-		if tokenStr == "" {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
 			http.Error(w, "Missing token", http.StatusUnauthorized)
 			return
 		}
+
+		// Bearer形式のtokenを分解する
+		parts := strings.SplitN(authHeader, " ", 2)
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			http.Error(w, "Invalid Authorization header format", http.StatusUnauthorized)
+			return
+		}
+		tokenStr := parts[1]
 
 		// JWTの解析
 		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
