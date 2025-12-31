@@ -23,11 +23,16 @@ client.interceptors.response.use(
   res => res,
   err => {
     const status = err.response?.status;
+    const requestURL = err.config?.url;
+    const isLoginRequest = requestURL?.includes('/api/login');
+    const hasToken = !!localStorage.getItem('token');
     switch (status) {
       case 401:
-        console.warn('認証エラーにより、ログアウト');
-        localStorage.removeItem('token');
-        window.location.href = '/login';
+        if (!isLoginRequest && hasToken) {
+          console.warn('認証エラーにより、ログアウト');
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+        }
         break;
       case 403:
         console.warn('権限がありません');
