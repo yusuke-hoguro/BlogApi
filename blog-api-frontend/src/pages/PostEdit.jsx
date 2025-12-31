@@ -95,7 +95,7 @@ export default function PostEdit() {
                         value={content}
                         disabled={saving}
                         onChange={(e) => setContent(e.target.value)}
-                        maxLength={5000}
+                        maxLength={1000}
                         required
                     />
                 </div>
