@@ -23,14 +23,17 @@ client.interceptors.response.use(
   res => res,
   err => {
     const status = err.response?.status;
-    if(status === 401) {
-      console.warn('認証エラーにより、ログアウト');
-      localStorage.removeItem('token');
-      window.location.href = '/login';
-    }
-
-    if(status === 403) {
-      console.warn('権限がありません');
+    switch (status) {
+      case 401:
+        console.warn('認証エラーにより、ログアウト');
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+        break;
+      case 403:
+        console.warn('権限がありません');
+        break;
+      default:
+        break;
     }
     
     return Promise.reject(err)
