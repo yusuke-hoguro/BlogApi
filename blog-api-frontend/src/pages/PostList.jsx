@@ -10,7 +10,9 @@ export default function PostList(){
     useEffect(() => {
         client.get('/api/posts')
             .then(response => {
-                setPosts(response.data)
+                const data = response.data;
+                // 投稿が配列であることを確認。配列でない場合は空配列を設定。（違うデータを設定すると例外で画面が真っ白になる）
+                setPosts(Array.isArray(data) ? data : []);
             })
             .catch(error => {
                 console.error('投稿取得エラー:', error);
