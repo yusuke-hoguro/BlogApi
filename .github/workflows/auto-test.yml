@@ -1,4 +1,5 @@
 name: CI Auto Test 
+run-name: CI Auto Test (${{ github.ref_name }})
 
 permissions:
   contents: write
