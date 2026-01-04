@@ -4,6 +4,6 @@ export interface TestUser{
 }
 
 export const TEST_USERS: Record<string, TestUser> = {
-    testuser: { username: 'testuser2', password: 'validpassword'},
-    otheruser: { username: 'testuser3', password: '11111111'},
+    testuser: { username: 'e2e_test', password: 'e2e_password'},
+    otheruser: { username: 'e2e_test2', password: 'e2e_password2'},
 }
