@@ -8,7 +8,17 @@
     "jsx": "react-jsx",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    // baseUrlとpathsを追加してimportpathを簡略化
+    "baseUrl": ".",
+    "paths": {
+      "@e2e/*": ["tests/e2e/*"]
+    }
   },
-  "include": ["src", "vite-env.d.ts"]
+  "include": [
+    "src", 
+    "vite-env.d.ts",
+    "tests/e2e/**/*.ts",
+    "playwright.config.ts"
+  ]
 }

@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from './utils';
-import { WAIT_FOR_ELEMENT_TIMEOUT_MS } from './constants/config';
-import { PAGE_TITLE_POST_LIST, APP_TITLE } from './constants/pageTitles';
-import { TEST_USERS } from './users';
+import { loginAsTestUser } from '../utils/utils';
+import { WAIT_FOR_ELEMENT_TIMEOUT_MS } from '../constants/config';
+import { PAGE_TITLE_POST_LIST, APP_TITLE } from '../constants/pageTitles';
+import { TEST_USERS } from '../fixtures/users';
 
 test('トップページが開ける', async ({ page }) => {
   // テストユーザーでログインする

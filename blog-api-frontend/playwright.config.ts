@@ -1,3 +1,4 @@
+import 'tsconfig-paths/register.js';
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -14,4 +15,6 @@ export default defineConfig({
         reuseExistingServer: true,
         timeout: 120_000,
     },
+    // テスト開始時に初期設定を実行する
+    //globalSetup: './tests/e2e/setup/global-setup',
 });

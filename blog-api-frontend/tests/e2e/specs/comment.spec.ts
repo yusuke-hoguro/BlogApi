@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { loginAsTestUser, logout , createPost, deletePost } from './utils';
-import { ASSERTION_TIMEOUT_MS, WAIT_FOR_ELEMENT_TIMEOUT_MS } from './constants/config';
-import { TEST_COMMENT, TEST_COMMENT_LONG, TEST_COMMENT_TOO_LONG } from './constants/comments';
-import { BUTTON_SEND_COMMENT, BUTTON_EDIT_COMMENT, BUTTON_SAVE_COMMENT, BUTTON_DELETE_COMMENT } from './constants/buttons';
-import { COMMENT_ITEM_TEST_ID, POST_ITEM_TEST_ID } from './constants/selectors';
-import { TEST_USERS } from './users';
-import { CREATE_POST_TITLE, CREATE_POST_CONTENT } from './constants/posts';
+import { loginAsTestUser, logout , createPost, deletePost } from '../utils/utils';
+import { ASSERTION_TIMEOUT_MS, WAIT_FOR_ELEMENT_TIMEOUT_MS } from '../constants/config';
+import { TEST_COMMENT, TEST_COMMENT_LONG, TEST_COMMENT_TOO_LONG } from '../constants/comments';
+import { BUTTON_SEND_COMMENT, BUTTON_EDIT_COMMENT, BUTTON_SAVE_COMMENT, BUTTON_DELETE_COMMENT } from '../constants/buttons';
+import { COMMENT_ITEM_TEST_ID, POST_ITEM_TEST_ID } from '../constants/selectors';
+import { TEST_USERS } from '../fixtures/users';
+import { CREATE_POST_TITLE, CREATE_POST_CONTENT } from '../constants/posts';
 
 test.describe('コメント機能：正常系テスト', () => {
     

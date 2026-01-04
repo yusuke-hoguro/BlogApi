@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { TEST_USERS } from './users';
-import { loginAsTestUser, createPost } from './utils';
-import { BUTTON_LOGOUT, BUTTON_DELETE_POST, BUTTON_CREATE_POST } from './constants/buttons';
-import { CREATE_POST_TITLE, CREATE_POST_CONTENT } from './constants/posts';
-import { POST_ITEM_TEST_ID, } from './constants/selectors';
-import { PAGE_TITLE_POST_LIST, PAGE_TITLE_POST_CREATE } from './constants/pageTitles';
-import { LABEL_POST_CREATE_TITLE, LABEL_POST_CREATE_CONTEXT } from './constants/label';
+import { TEST_USERS } from '@e2e/fixtures/users';
+import { loginAsTestUser, createPost } from '@e2e/utils/utils';
+import { BUTTON_LOGOUT, BUTTON_DELETE_POST, BUTTON_CREATE_POST } from '@e2e/constants/buttons';
+import { CREATE_POST_TITLE, CREATE_POST_CONTENT } from '@e2e/constants/posts';
+import { POST_ITEM_TEST_ID, } from '@e2e/constants/selectors';
+import { PAGE_TITLE_POST_LIST, PAGE_TITLE_POST_CREATE } from '@e2e/constants/pageTitles';
+import { LABEL_POST_CREATE_TITLE, LABEL_POST_CREATE_CONTEXT } from '@e2e/constants/label';
 
 
 test.describe('認証・認可のテスト', () => {
