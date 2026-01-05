@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { loginAsTestUser, createPost, deletePost, logout } from '../utils/utils';
-import { TEST_USERS } from '../fixtures/users';
-import { POST_ITEM_TEST_ID, POST_TITLE_TEST_ID, POST_CONTENT_TEST_ID } from '../constants/selectors';
-import { CREATE_POST_TITLE, CREATE_POST_CONTENT } from '../constants/posts';
-import { BUTTON_DELETE_POST } from '../constants/buttons';
-import { PAGE_TITLE_POST_LIST } from '../constants/pageTitles';
-import { LABEL_EDIT_POST } from '../constants/label';
+import { loginAsTestUser, createPost, deletePost, logout } from '@e2e/utils/utils';
+import { TEST_USERS } from '@e2e/fixtures/users';
+import { POST_ITEM_TEST_ID, POST_TITLE_TEST_ID, POST_CONTENT_TEST_ID } from '@e2e/constants/selectors';
+import { CREATE_POST_TITLE, CREATE_POST_CONTENT } from '@e2e/constants/posts';
+import { BUTTON_DELETE_POST } from '@e2e/constants/buttons';
+import { PAGE_TITLE_POST_LIST } from '@e2e/constants/pageTitles';
+import { LABEL_EDIT_POST } from '@e2e/constants/label';
 
 
 test.describe('投稿詳細表示画面：正常系テスト', () => {

@@ -1,13 +1,13 @@
 import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '../utils/utils';
-import { ASSERTION_TIMEOUT_MS, WAIT_FOR_ELEMENT_TIMEOUT_MS } from '../constants/config';
-import { TEST_USERS } from '../fixtures/users';
-import { POST_ITEM_TEST_ID, POST_TITLE_TEST_ID, POST_CONTENT_TEST_ID, COMMENT_ITEM_TEST_ID } from '../constants/selectors';
-import { PAGE_TITLE_POST_LIST, PAGE_TITLE_POST_CREATE } from '../constants/pageTitles';
-import { CREATE_POST_TITLE, CREATE_POST_CONTENT, UPDATE_POST_TITLE, UPDATE_POST_CONTEXT } from '../constants/posts';
-import { BUTTON_UPDATE_POST, BUTTON_CREATE_POST, BUTTON_DELETE_POST, BUTTON_SEND_COMMENT, BUTTON_EDIT_COMMENT, BUTTON_SAVE_COMMENT, BUTTON_DELETE_COMMENT } from '../constants/buttons';
-import { LABEL_EDIT_POST, LABEL_POST_CREATE_TITLE, LABEL_POST_CREATE_CONTEXT } from '../constants/label';
-import { TEST_COMMENT } from '../constants/comments';
+import { loginAsTestUser } from '@e2e/utils/utils';
+import { ASSERTION_TIMEOUT_MS, WAIT_FOR_ELEMENT_TIMEOUT_MS } from '@e2e/constants/config';
+import { TEST_USERS } from '@e2e/fixtures/users';
+import { POST_ITEM_TEST_ID, POST_TITLE_TEST_ID, POST_CONTENT_TEST_ID, COMMENT_ITEM_TEST_ID } from '@e2e/constants/selectors';
+import { PAGE_TITLE_POST_LIST, PAGE_TITLE_POST_CREATE } from '@e2e/constants/pageTitles';
+import { CREATE_POST_TITLE, CREATE_POST_CONTENT, UPDATE_POST_TITLE, UPDATE_POST_CONTEXT } from '@e2e/constants/posts';
+import { BUTTON_UPDATE_POST, BUTTON_CREATE_POST, BUTTON_DELETE_POST, BUTTON_SEND_COMMENT, BUTTON_EDIT_COMMENT, BUTTON_SAVE_COMMENT, BUTTON_DELETE_COMMENT } from '@e2e/constants/buttons';
+import { LABEL_EDIT_POST, LABEL_POST_CREATE_TITLE, LABEL_POST_CREATE_CONTEXT } from '@e2e/constants/label';
+import { TEST_COMMENT } from '@e2e/constants/comments';
 
 test.describe('全体機能テスト:正常系', () => {
 
