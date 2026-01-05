@@ -13,7 +13,8 @@
     "baseUrl": ".",
     "paths": {
       "@e2e/*": ["tests/e2e/*"]
-    }
+    },
+    "types": ["node"]
   },
   "include": [
     "src", 

@@ -61,12 +61,6 @@ jobs:
               run: |
                 wait-on http://localhost:3000 --timeout 120000
 
-            # テストユーザーをシードする
-            - name: Seed test users
-              run: |
-                chmod +x ./utilitys/e2e-test/seed-test-users.sh
-                ./utilitys/e2e-test/seed-test-users.sh
-
             # Playwrightのテストを実行する
             - name: Run playwright tests
               working-directory: blog-api-frontend

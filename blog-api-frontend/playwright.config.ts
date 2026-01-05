@@ -16,5 +16,5 @@ export default defineConfig({
         timeout: 120_000,
     },
     // テスト開始時に初期設定を実行する
-    //globalSetup: './tests/e2e/setup/global-setup',
+    globalSetup: './tests/e2e/setup/global-setup',
 });
