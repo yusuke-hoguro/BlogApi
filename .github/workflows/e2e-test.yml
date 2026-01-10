@@ -1,5 +1,5 @@
 name: E2E TEST with Playwright
-run-name: E2E TEST with Playwright (${{ github.ref_name }})
+run-name: "E2E TEST with Playwright (Branch: ${{ github.ref_name }})"
 
 on:
   pull_request:

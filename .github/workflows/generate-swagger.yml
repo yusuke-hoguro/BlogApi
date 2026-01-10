@@ -1,5 +1,5 @@
 name: Generate Swagger Docs
-run-name: Generate Swagger Docs (${{ github.ref_name }})
+run-name: "Generate Swagger Docs (Branch: ${{ github.ref_name }})"
 
 permissions:
   contents: write

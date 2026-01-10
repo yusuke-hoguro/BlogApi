@@ -1,5 +1,5 @@
 name: CD Deploy
-run-name: CD Deploy (${{ github.ref_name }})
+run-name: "CD Deploy (Branch: ${{ github.ref_name }})"
 
 on:
   workflow_run:
