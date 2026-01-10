@@ -2,97 +2,97 @@ name: E2E TEST with Playwright
 run-name: E2E TEST with Playwright (${{ github.ref_name }})
 
 on:
-    pull_request:
-        branches: [main, develop]
-        paths:
-            - "blog-api-frontend/**"
-            - "docker-compose.yml"
-            - "nginx/**"
-            - ".github/workflows/e2e.yml"
-    push:
-        branches: [main, develop]
-        paths:
-            - "blog-api-frontend/**"
-            - "docker-compose.yml"
-            - "nginx/**"
-            - ".github/workflows/e2e.yml"
-    # 毎日午前3：00に実行する(JST 03:00 = UTC 18:00)
-    schedule:
-      - cron: "0 18 * * *"
-    workflow_dispatch:
+  pull_request:
+      branches: [main, develop]
+      paths:
+          - "blog-api-frontend/**"
+          - "docker-compose.yml"
+          - "nginx/**"
+          - ".github/workflows/e2e.yml"
+  push:
+      branches: [main, develop]
+      paths:
+          - "blog-api-frontend/**"
+          - "docker-compose.yml"
+          - "nginx/**"
+          - ".github/workflows/e2e.yml"
+  # 毎日午前3：00に実行する(JST 03:00 = UTC 18:00)
+  schedule:
+    - cron: "0 18 * * *"
+  workflow_dispatch:
 
 jobs:
-    e2e-test:
-        runs-on: ubuntu-latest
+  e2e-test:
+      runs-on: ubuntu-latest
 
-        steps:
-            # ソースコードをランナーにコピー
-            - name: Checkout repository
-              uses: actions/checkout@v4
+      steps:
+          # ソースコードをランナーにコピー
+          - name: Checkout repository
+            uses: actions/checkout@v4
 
-            # Node.jsのセットアップ（package-lock.json の内容でnpmキャッシュを使うか判断）
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                node-version: 22
-                cache: "npm"
-                cache-dependency-path: blog-api-frontend/package-lock.json
+          # Node.jsのセットアップ（package-lock.json の内容でnpmキャッシュを使うか判断）
+          - name: Setup Node.js
+            uses: actions/setup-node@v4
+            with:
+              node-version: 22
+              cache: "npm"
+              cache-dependency-path: blog-api-frontend/package-lock.json
+          
+          # 依存するライブラリをインストールする
+          - name: Install frontend dependencies
+            working-directory: blog-api-frontend
+            run: npm ci
+
+          # Playwrightのブラウザとライブラリをインストールする(--with-depsdeでOS側の依存ライブラリを検出してインストール)
+          - name: Install playwright browsers
+            working-directory: blog-api-frontend
+            run: npx playwright install --with-deps
+
+          # BlogAPIを起動する
+          - name: Start BlogApi
+            run: docker compose up -d --build
+
+          # wait-onをグローバルにインストール
+          - name: Install wait-on
+            run: npm install -g wait-on
+
+          # BlogAPIの起動を待機する
+          - name: Wait for BlogAPI to start
+            run: |
+              wait-on http://localhost:3000 --timeout 120000
+
+          # Playwrightのテストを実行する
+          - name: Run playwright tests
+            working-directory: blog-api-frontend
+            run: npx playwright test
+
+          # テスト失敗時に結果をアップする(if-no-files-foundでファイルがなくてもエラーにしない)
+          - name: Upload Playwrite Report
+            if: failure()
+            uses: actions/upload-artifact@v4
+            with:
+              name: playwright-report
+              path: blog-api-frontend/playwright-report
+              if-no-files-found: ignore
+          
+          # テストエラーの場合はdockerログを採取してUPする(この処理は失敗しても成功扱いにする)
+          - name: Save docker logs if failed
+            if: failure()
+            run: |
+              mkdir -p logs
+              docker compose logs > logs/blogapi_e2e.log || true
+              cat logs/logs/blogapi_e2e.log
+
+          # dockerのログをUPする（無くてもエラーとしない）
+          - name: Upload e2e logs
+            if: always()
+            uses: actions/upload-artifact@v4
+            with:
+              name: e2e-logs
+              path: logs/e2e.log
+              if-no-files-found: ignore
+
+          - name: Cleanup
+            if: always()
+            run: docker compose down -v
             
-            # 依存するライブラリをインストールする
-            - name: Install frontend dependencies
-              working-directory: blog-api-frontend
-              run: npm ci
-
-            # Playwrightのブラウザとライブラリをインストールする(--with-depsdeでOS側の依存ライブラリを検出してインストール)
-            - name: Install playwright browsers
-              working-directory: blog-api-frontend
-              run: npx playwright install --with-deps
-
-            # BlogAPIを起動する
-            - name: Start BlogApi
-              run: docker compose up -d --build
-
-            # wait-onをグローバルにインストール
-            - name: Install wait-on
-              run: npm install -g wait-on
-
-            # BlogAPIの起動を待機する
-            - name: Wait for BlogAPI to start
-              run: |
-                wait-on http://localhost:3000 --timeout 120000
-
-            # Playwrightのテストを実行する
-            - name: Run playwright tests
-              working-directory: blog-api-frontend
-              run: npx playwright test
-
-            # テスト失敗時に結果をアップする(if-no-files-foundでファイルがなくてもエラーにしない)
-            - name: Upload Playwrite Report
-              if: failure()
-              uses: actions/upload-artifact@v4
-              with:
-                name: playwright-report
-                path: blog-api-frontend/playwright-report
-                if-no-files-found: ignore
-            
-            # テストエラーの場合はdockerログを採取してUPする(この処理は失敗しても成功扱いにする)
-            - name: Save docker logs if failed
-              if: failure()
-              run: |
-                mkdir -p logs
-                docker compose logs > logs/blogapi_e2e.log || true
-                cat logs/logs/blogapi_e2e.log
-
-            # dockerのログをUPする（無くてもエラーとしない）
-            - name: Upload e2e logs
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                name: e2e-logs
-                path: logs/e2e.log
-                if-no-files-found: ignore
-
-            - name: Cleanup
-              if: always()
-              run: docker compose down -v
-                
