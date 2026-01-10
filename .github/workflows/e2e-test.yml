@@ -8,14 +8,14 @@ on:
           - "blog-api-frontend/**"
           - "docker-compose.yml"
           - "nginx/**"
-          - ".github/workflows/e2e.yml"
+          - ".github/workflows/e2e-test.yml"
   push:
       branches: [main, develop]
       paths:
           - "blog-api-frontend/**"
           - "docker-compose.yml"
           - "nginx/**"
-          - ".github/workflows/e2e.yml"
+          - ".github/workflows/e2e-test.yml"
   # 毎日午前3：00に実行する(JST 03:00 = UTC 18:00)
   schedule:
     - cron: "0 18 * * *"
@@ -31,7 +31,7 @@ jobs:
             uses: actions/checkout@v4
 
           # Node.jsのセットアップ（package-lock.json の内容でnpmキャッシュを使うか判断）
-          - name: Setup Node.js
+          - name: Setup node.js
             uses: actions/setup-node@v4
             with:
               node-version: 22
@@ -52,14 +52,11 @@ jobs:
           - name: Start BlogApi
             run: docker compose up -d --build
 
-          # wait-onをグローバルにインストール
-          - name: Install wait-on
-            run: npm install -g wait-on
-
           # BlogAPIの起動を待機する
           - name: Wait for BlogAPI to start
             run: |
-              wait-on http://localhost:3000 --timeout 120000
+              npx wait-on http://localhost:3000 --timeout 120000
+              npx wait-on http://localhost:8080/api/posts --timeout 120000
 
           # Playwrightのテストを実行する
           - name: Run playwright tests
@@ -67,7 +64,7 @@ jobs:
             run: npx playwright test
 
           # テスト失敗時に結果をアップする(if-no-files-foundでファイルがなくてもエラーにしない)
-          - name: Upload Playwrite Report
+          - name: Upload playwright report
             if: failure()
             uses: actions/upload-artifact@v4
             with:
@@ -81,7 +78,7 @@ jobs:
             run: |
               mkdir -p logs
               docker compose logs > logs/blogapi_e2e.log || true
-              cat logs/logs/blogapi_e2e.log
+              cat logs/blogapi_e2e.log
 
           # dockerのログをUPする（無くてもエラーとしない）
           - name: Upload e2e logs
@@ -89,10 +86,21 @@ jobs:
             uses: actions/upload-artifact@v4
             with:
               name: e2e-logs
-              path: logs/e2e.log
+              path: logs/blogapi_e2e.log
               if-no-files-found: ignore
 
           - name: Cleanup
             if: always()
             run: docker compose down -v
             
+  notify-slack:
+    needs: [e2e-test]
+    if: always()
+    uses: ./.github/workflows/slack-notification.yml
+    with:
+      status: ${{ needs.e2e-test.result == 'success'  && 'success' || 'failure' }}      
+      source: E2E TEST with Playwright
+      branch: ${{ github.ref_name }}
+      run_id: ${{ github.run_id }}
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
