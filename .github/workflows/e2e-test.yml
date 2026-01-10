@@ -56,7 +56,7 @@ jobs:
           - name: Wait for BlogAPI to start
             run: |
               npx wait-on http://localhost:3000 --timeout 120000
-              npx wait-on http://localhost:8080/api/posts --timeout 120000
+              npx wait-on http://localhost:8080/api/healthz --timeout 120000
 
           # Playwrightのテストを実行する
           - name: Run playwright tests
