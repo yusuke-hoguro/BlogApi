@@ -1,5 +1,5 @@
-name: E2E TEST with Playwright
-run-name: "E2E TEST with Playwright (Branch: ${{ github.ref_name }})"
+name: E2E Tests (Playwright)
+run-name: "E2E Tests - Playwright (Branch: ${{ github.ref_name }})"
 
 on:
   pull_request:
@@ -99,7 +99,7 @@ jobs:
     uses: ./.github/workflows/slack-notification.yml
     with:
       status: ${{ needs.e2e-test.result == 'success'  && 'success' || 'failure' }}      
-      source: E2E TEST with Playwright
+      source: E2E Tests (Playwright)
       branch: ${{ github.ref_name }}
       run_id: ${{ github.run_id }}
     secrets:

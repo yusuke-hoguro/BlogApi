@@ -1,9 +1,9 @@
-name: CD Deploy
-run-name: "CD Deploy (Branch: ${{ github.ref_name }})"
+name: Deploy to AWS
+run-name: "Deploy to AWS (Branch: ${{ github.ref_name }})"
 
 on:
   workflow_run:
-    workflows: ["CI Auto Test"]
+    workflows: ["Backend Tests", "E2E Tests (Playwright)"]
     types:
       - completed
   workflow_dispatch:
@@ -30,7 +30,7 @@ jobs:
     uses: ./.github/workflows/slack-notification.yml
     with:
       status: ${{ needs.deploy.result == 'success' && 'success' || 'failure' }}
-      source: "CD Deploy"
+      source: "Deploy to AWS"
       branch: ${{ github.ref_name }}
       run_id: ${{ github.run_id }}
     secrets:
