@@ -1,0 +1,99 @@
+name: E2E Tests (Playwright)
+run-name: "E2E Tests - Playwright (Branch: ${{ github.event.workflow_run.head_branch || github.ref_name }})"
+
+on:
+  workflow_run:
+    workflows: ["Backend Tests"]
+    types:
+      - completed
+  # 毎日午前3：00に実行する(JST 03:00 = UTC 18:00)
+  schedule:
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+
+jobs:
+  e2e-test:
+    if: |
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+
+    steps:
+      # ソースコードをランナーにコピー
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Node.jsのセットアップ（package-lock.json の内容でnpmキャッシュを使うか判断）
+      - name: Setup node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: blog-api-frontend/package-lock.json
+      
+      # 依存するライブラリをインストールする
+      - name: Install frontend dependencies
+        working-directory: blog-api-frontend
+        run: npm ci
+
+      # Playwrightのブラウザとライブラリをインストールする(--with-depsdeでOS側の依存ライブラリを検出してインストール)
+      - name: Install playwright browsers
+        working-directory: blog-api-frontend
+        run: npx playwright install --with-deps
+
+      # BlogAPIを起動する
+      - name: Start BlogApi
+        run: docker compose up -d --build
+
+      # BlogAPIの起動を待機する
+      - name: Wait for BlogAPI to start
+        run: |
+          npx wait-on http://localhost:3000 --timeout 120000
+          npx wait-on http://localhost:8080/api/healthz --timeout 120000
+
+      # Playwrightのテストを実行する
+      - name: Run playwright tests
+        working-directory: blog-api-frontend
+        run: npx playwright test
+
+      # テスト失敗時に結果をアップする(if-no-files-foundでファイルがなくてもエラーにしない)
+      - name: Upload playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: blog-api-frontend/playwright-report
+          if-no-files-found: ignore
+      
+      # テストエラーの場合はdockerログを採取してUPする(この処理は失敗しても成功扱いにする)
+      - name: Save docker logs if failed
+        if: failure()
+        run: |
+          mkdir -p logs
+          docker compose logs > logs/blogapi_e2e.log || true
+          cat logs/blogapi_e2e.log
+
+      # dockerのログをUPする（無くてもエラーとしない）
+      - name: Upload e2e logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-logs
+          path: logs/blogapi_e2e.log
+          if-no-files-found: ignore
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v
+            
+  notify-slack:
+    needs: [e2e-test]
+    if: always()
+    uses: ./.github/workflows/slack-notification.yml
+    with:
+      status: ${{ needs.e2e-test.result == 'success'  && 'success' || 'failure' }}      
+      source: E2E Tests (Playwright)
+      branch: ${{ github.event.workflow_run.head_branch || github.ref_name }}
+      run_id: ${{ github.run_id }}
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

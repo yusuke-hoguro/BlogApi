@@ -410,7 +410,9 @@ func GetAllPostsHandler(db *sql.DB) http.HandlerFunc {
 		}
 		defer rows.Close()
 
-		var posts []models.Post
+		// nilをJSON化しないようにスライスを初期化する
+		posts := []models.Post{}
+
 		for rows.Next() {
 			var post models.Post
 			if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt); err != nil {

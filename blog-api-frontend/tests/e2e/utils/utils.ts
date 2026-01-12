@@ -1,5 +1,5 @@
 import { Page } from "@playwright/test";
-import { TestUser } from './users';
+import { TestUser } from '../fixtures/users';
 
 /*
 * テストユーザーでログインしてTokenを取得する

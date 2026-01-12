@@ -2,8 +2,8 @@
 FROM node:20 AS build
 WORKDIR /app
 ARG BUILD_ENV=production
-COPY package*.json ./
-RUN npm install
+COPY package.json package-lock.json ./
+RUN npm ci
 # 環境ごとのenvファイルをコピー
 COPY . .
 RUN npm run build -- --mode ${BUILD_ENV}

@@ -1,36 +1,42 @@
-name: CD Deploy
+name: Deploy to AWS
+run-name: "Deploy to AWS (Branch: ${{ github.ref_name }})"
+
+concurrency:
+  group: deploy-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
 
 on:
   workflow_run:
-    workflows: ["CI Auto Test"]
+    workflows: ["E2E Tests (Playwright)"]
     types:
       - completed
   workflow_dispatch:
 
 jobs:
-    deploy:
-        if: |
-            github.event.workflow_run.conclusion == 'success' &&
-            github.event.workflow_run.head_branch == 'main'
-        runs-on: ubuntu-latest
-        steps:
-            - name: Deploy to EC2
-              uses: appleboy/ssh-action@v1.0.3
-              with:
-                host: ${{ secrets.EC2_HOST }}
-                username: ${{ secrets.EC2_USER }}
-                key: ${{ secrets.EC2_SSH_KEY }}
-                script: |
-                  bash ~/BlogApi/utilitys/deploy.sh
+  deploy:
+      if: |
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.head_branch == 'main' &&
+          github.event.workflow_run.event == 'push'
+      runs-on: ubuntu-latest
+      steps:
+          - name: Deploy to EC2
+            uses: appleboy/ssh-action@v1.0.3
+            with:
+              host: ${{ secrets.EC2_HOST }}
+              username: ${{ secrets.EC2_USER }}
+              key: ${{ secrets.EC2_SSH_KEY }}
+              script: |
+                bash ~/BlogApi/utilitys/deploy/deploy.sh
 
-    notify:
-      needs: [deploy]
-      if: always()
-      uses: ./.github/workflows/slack-notification.yml
-      with:
-        status: ${{ needs.deploy.result == 'success' && 'success' || 'failure' }}
-        source: "CD Deploy"
-        branch: ${{ github.ref_name }}
-        run_id: ${{ github.run_id }}
-      secrets:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  notify:
+    needs: [deploy]
+    if: always()
+    uses: ./.github/workflows/slack-notification.yml
+    with:
+      status: ${{ needs.deploy.result == 'success' && 'success' || 'failure' }}
+      source: "Deploy to AWS"
+      branch: ${{ github.event.workflow_run.head_branch || github.ref_name }}
+      run_id: ${{ github.run_id }}
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

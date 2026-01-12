@@ -6,6 +6,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -19,12 +20,20 @@ import (
 )
 
 func main() {
+	if err := runServer(); err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+}
+
+func runServer() error {
 	// DB接続を実施
 	var err error
 	db.DB, err = db.ConnectDB()
 	if err != nil {
 		log.Fatal("DB接続失敗:", err)
 	}
+	defer db.DB.Close()
 
 	// ポート取得
 	port := os.Getenv("PORT")
@@ -36,12 +45,11 @@ func main() {
 	router.RegisterRoutes(r, db.DB)
 	// CORSミドルウェアを適用
 	handler := middleware.CorsMiddleware(r)
+	log.Println("Server started at :" + port)
 
 	// サーバー起動
 	if err := http.ListenAndServe(":"+port, handler); err != nil {
-		log.Println(err)
-		os.Exit(1)
+		return fmt.Errorf("server error: %w", err)
 	}
-	defer db.DB.Close()
-	log.Println("Server started at :8080")
+	return nil
 }

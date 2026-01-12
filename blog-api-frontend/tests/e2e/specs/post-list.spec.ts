@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { loginAsTestUser, createPost, deletePost } from './utils';
-import { WAIT_FOR_ELEMENT_TIMEOUT_MS } from './constants/config';
-import { POST_ITEM_TEST_ID, POST_FETCH_ERROR_TEST_ID, POST_EMPTY_TEST_ID } from './constants/selectors';
-import { TEST_USERS } from './users';
-import { CREATE_POST_TITLE, CREATE_POST_CONTENT } from './constants/posts';
-import { BUTTON_LOGOUT } from './constants/buttons';
-import { PAGE_TITLE_LOGIN } from './constants/pageTitles';
+import { loginAsTestUser, createPost, deletePost } from '@e2e/utils/utils';
+import { WAIT_FOR_ELEMENT_TIMEOUT_MS } from '@e2e/constants/config';
+import { POST_ITEM_TEST_ID, POST_FETCH_ERROR_TEST_ID, POST_EMPTY_TEST_ID } from '@e2e/constants/selectors';
+import { TEST_USERS } from '@e2e/fixtures/users';
+import { CREATE_POST_TITLE, CREATE_POST_CONTENT } from '@e2e/constants/posts';
+import { BUTTON_LOGOUT } from '@e2e/constants/buttons';
+import { PAGE_TITLE_LOGIN } from '@e2e/constants/pageTitles';
 
 test.describe('投稿一覧表示画面：正常系テスト', () => {
     // PostListが正しくAPIを叩けて表示できるかを確認する

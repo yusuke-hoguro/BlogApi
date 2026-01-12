@@ -1,4 +1,5 @@
-name: CI Auto Test 
+name: Backend Tests
+run-name: "Backend Tests (Branch: ${{ github.head_ref || github.ref_name }})"
 
 permissions:
   contents: write
@@ -46,16 +47,6 @@ jobs:
         with:
           go-version: 1.24
 
-      - name: Cache Go modules
-        uses: actions/cache@v4
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-             ${{ runner.os }}-go-
-          # キャッシュ復元失敗でも workflow 続行
-          fail-on-cache-miss: false 
-
       - name: Verify dependencies
         run: go mod tidy && git diff --exit-code go.mod go.sum 
 
@@ -82,7 +73,7 @@ jobs:
       # テスト失敗時はログをartifactにUP
       - name: Upload test logs
         if: always()
-        uses: actions/Upload-artifact@v4
+        uses: actions/upload-artifact@v4
         with:
           name: test-logs
           path: logs/test.log
@@ -108,8 +99,8 @@ jobs:
     uses: ./.github/workflows/slack-notification.yml
     with:
       status: ${{ (needs.lint.result == 'success' && needs.auto-test.result == 'success' && (github.event_name != 'pull_request' || needs.generate-swagger.result == 'success')) && 'success' || 'failure' }}      
-      source: "CI Auto Test"
-      branch: ${{ github.ref_name }}
+      source: "Backend Tests"
+      branch: ${{ github.head_ref || github.ref_name }}
       run_id: ${{ github.run_id }}
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
