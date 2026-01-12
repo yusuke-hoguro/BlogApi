@@ -1,5 +1,5 @@
 name: Backend Tests
-run-name: "Backend Tests (Branch: ${{ github.ref_name }})"
+run-name: "Backend Tests (Branch: ${{ github.head_ref || github.ref_name }})"
 
 permissions:
   contents: write
@@ -100,7 +100,7 @@ jobs:
     with:
       status: ${{ (needs.lint.result == 'success' && needs.auto-test.result == 'success' && (github.event_name != 'pull_request' || needs.generate-swagger.result == 'success')) && 'success' || 'failure' }}      
       source: "Backend Tests"
-      branch: ${{ github.ref_name }}
+      branch: ${{ github.head_ref || github.ref_name }}
       run_id: ${{ github.run_id }}
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
