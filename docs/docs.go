@@ -184,6 +184,32 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/healthz": {
+            "get": {
+                "description": "BlogAPI が HTTP リクエストを受け付けられる状態か確認します\n\n**エラー条件:**\n- 無効なメソッドタイプ → 405 Method Not Allowed",
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "ヘルスチェック",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/login": {
             "post": {
                 "description": "送られてきたユーザー情報でログインする\n\n**エラー条件:**\n- 無効なユーザー情報、ユーザー名が空、パスワードが8文字未満 → 400 Bad Request\n- ユーザー名かパスワードが不正 → 401 Unauthorized\n- 許可されていないメソッド → 405 MethodNotAllowed\n- データ更新/取得失敗、JWT生成失敗、レスポンス書き込み失敗 → 500 ServerError",

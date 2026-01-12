@@ -204,6 +204,27 @@ paths:
       summary: コメントの内容を更新する
       tags:
       - comments
+  /api/healthz:
+    get:
+      description: |-
+        BlogAPI が HTTP リクエストを受け付けられる状態か確認します
+
+        **エラー条件:**
+        - 無効なメソッドタイプ → 405 Method Not Allowed
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "405":
+          description: Method Not Allowed
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: ヘルスチェック
+      tags:
+      - health
   /api/login:
     post:
       consumes:
