@@ -59,6 +59,8 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             bash ~/BlogApi/utilitys/deploy/deploy.sh
+          command_timeout: 30m
+          timeout: 60s
 
   notify:
     needs: [deploy]
