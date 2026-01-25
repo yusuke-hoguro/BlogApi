@@ -1,4 +1,4 @@
 certbot/
-nginx/
+infra/nginx/
 logs/
 blog-api-frontend/
