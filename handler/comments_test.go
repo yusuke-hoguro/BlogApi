@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/yusuke-hoguro/BlogApi/handler"
-	"github.com/yusuke-hoguro/BlogApi/models"
+	"github.com/yusuke-hoguro/BlogApi/internal/models"
 	"github.com/yusuke-hoguro/BlogApi/testutils"
 )
 

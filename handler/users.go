@@ -8,7 +8,7 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
-	"github.com/yusuke-hoguro/BlogApi/models"
+	"github.com/yusuke-hoguro/BlogApi/internal/models"
 	"golang.org/x/crypto/bcrypt"
 )
 

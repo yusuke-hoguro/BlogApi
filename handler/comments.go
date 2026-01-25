@@ -10,7 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
-	"github.com/yusuke-hoguro/BlogApi/models"
+	"github.com/yusuke-hoguro/BlogApi/internal/models"
 )
 
 const (
