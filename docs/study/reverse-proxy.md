@@ -177,7 +177,7 @@ HTTPS対応のためにNginxをリバースプロキシとして利用する方�
         - certbotコンテナ起動時に更新を要求する（単純な起動では更新処理は実行されないので`renew`を指定して起動する）
         - プロキシーサーバーと共有箇所にある証明書が更新されるのでプロキシーサーバーを再起動して読み込む
         - ログとして更新した証明書情報を出力
-        - 上記をシェル化すること（`utilitys/certbot/renew_cert.sh`）
+        - 上記をシェル化すること（`/infra/utilitys/certbot/renew_cert.sh`）
     1. GitHub Actions のWorkflowでスケジュール設定してそのシェルがAWS内で実行されるようにする
 
 
