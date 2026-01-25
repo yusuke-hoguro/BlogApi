@@ -13,7 +13,7 @@ services:
         condition: service_healthy
     volumes:
       - .:/app # 開発用にコードを同期させる
-    command: ["go", "run", "main.go"] #開発用にgo runを一時的に使用する  
+    command: ["go", "run", "./cmd/api/main.go"] #開発用にgo runを一時的に使用する  
 
   frontend:
     build: 
