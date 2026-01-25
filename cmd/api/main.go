@@ -12,7 +12,7 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
-	"github.com/yusuke-hoguro/BlogApi/db"
+	"github.com/yusuke-hoguro/BlogApi/internal/db"
 	"github.com/yusuke-hoguro/BlogApi/middleware"
 	"github.com/yusuke-hoguro/BlogApi/router"
 
