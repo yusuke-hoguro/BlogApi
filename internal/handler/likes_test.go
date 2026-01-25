@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/yusuke-hoguro/BlogApi/handler"
+	"github.com/yusuke-hoguro/BlogApi/internal/handler"
 	"github.com/yusuke-hoguro/BlogApi/internal/models"
 	"github.com/yusuke-hoguro/BlogApi/testutils"
 )

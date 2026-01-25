@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
-	"github.com/yusuke-hoguro/BlogApi/handler"
+	"github.com/yusuke-hoguro/BlogApi/internal/handler"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
 )
 

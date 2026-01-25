@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	_ "github.com/lib/pq"
-	"github.com/yusuke-hoguro/BlogApi/handler"
+	"github.com/yusuke-hoguro/BlogApi/internal/handler"
 	"github.com/yusuke-hoguro/BlogApi/testutils"
 )
 
