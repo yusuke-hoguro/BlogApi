@@ -15,11 +15,12 @@ on:
 jobs:
   deploy:
     if: |
-      github.event_name == 'workflow_run' &&
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.head_branch == 'main' &&
-      github.event.workflow_run.event != 'schedule' &&
-      github.event.workflow_run.head_repository.full_name == github.repository
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
 
     # AWSへのDeployは承認必須とする
@@ -40,7 +41,12 @@ jobs:
           git fetch origin main
           # 最新のmainのSHAとDeploy対象のSHAを比較
           LATEST_MAIN_SHA=$(git rev-parse origin/main) 
-          TARGET_SHA="${{ github.event.workflow_run.head_sha }}"
+          # 手動実行した場合はgithub.event.workflow_runが存在しないため、その場合はgithub.shaを使用
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TARGET_SHA="${{ github.sha }}"
+          else
+            TARGET_SHA="${{ github.event.workflow_run.head_sha }}"
+          fi
           echo "Latest main SHA: ${LATEST_MAIN_SHA}"
           echo "Target deploy SHA: ${TARGET_SHA}"
           if [ "${LATEST_MAIN_SHA}" != "${TARGET_SHA}" ]; then
