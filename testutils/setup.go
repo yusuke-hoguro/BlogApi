@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/yusuke-hoguro/BlogApi/handler"
-	"github.com/yusuke-hoguro/BlogApi/middleware"
+	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
 )
 
 // 初期化処理

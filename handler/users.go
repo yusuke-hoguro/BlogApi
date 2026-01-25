@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/yusuke-hoguro/BlogApi/middleware"
+	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
 	"github.com/yusuke-hoguro/BlogApi/models"
 	"golang.org/x/crypto/bcrypt"
 )
