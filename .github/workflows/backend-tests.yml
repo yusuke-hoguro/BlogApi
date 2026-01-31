@@ -52,7 +52,7 @@ jobs:
 
       # Docker Composeでビルドとテスト実行
       - name: Build and run tests (docker-compose)
-        run: docker compose -f docker-compose.test.yml up --build --abort-on-container-exit || exit 1
+        run: docker compose -f ./infra/docker-compose.test.yml --env-file ./.env up --build --abort-on-container-exit || exit 1
 
       # カバレッジ対応
       - name: Upload coverage report
@@ -67,7 +67,7 @@ jobs:
         if: failure()
         run: |
           mkdir -p logs
-          docker compose -f docker-compose.test.yml logs > logs/test.log || true
+          docker compose -f ./infra/docker-compose.test.yml --env-file ./.env logs > logs/test.log || true
           cat logs/test.log
 
       # テスト失敗時はログをartifactにUP
@@ -80,7 +80,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Cleanup
-        run:  docker compose -f docker-compose.test.yml down -v
+        run:  docker compose -f ./infra/docker-compose.test.yml --env-file ./.env down -v
   
   generate-swagger:
     needs: [lint, auto-test]

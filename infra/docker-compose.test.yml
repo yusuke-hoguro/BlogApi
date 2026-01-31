@@ -17,7 +17,7 @@ services:
 
   app:
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile
     container_name: go_test
     depends_on:

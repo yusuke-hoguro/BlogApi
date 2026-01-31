@@ -65,12 +65,12 @@ function aws_deploy(){
 	# Docker 再起動
 	echo "Restarting Docker containers"
 	# 既存のコンテナを停止・削除
-	docker compose -f "$COMPOSE_FILE" down --remove-orphans
+	docker compose -f "$COMPOSE_FILE" --env-file ./.env down --remove-orphans
 	# 空き容量を再チェック
 	ensure_disk_space
 	echo "Deploying Docker containers start: $(date)"
 	# Docker イメージのビルドとコンテナの起動
-	docker compose -f "$COMPOSE_FILE" up -d --build
+	docker compose -f "$COMPOSE_FILE" --env-file ./.env up -d --build
 	echo "Deployment finished: $(date)"
 
 	# ビルドキャッシュだけ削除

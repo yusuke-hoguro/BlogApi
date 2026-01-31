@@ -1,33 +1,18 @@
 services:
   app:
-    build: .
+    build: ..
     container_name: go_app
     ports:
       - "8080:8080"
     env_file:
-      - .env
+      - ../.env
     depends_on:
       db:
         condition: service_healthy
-      test-db:
-        condition: service_healthy
     volumes:
-      - .:/app # 開発用にコードを同期させる
+      - ..:/app # 開発用にコードを同期させる
     command: ["go", "run", "./cmd/api/main.go"] #開発用にgo runを一時的に使用する  
 
-  frontend:
-    build: 
-      context: ./blog-api-frontend
-      dockerfile: Dockerfile
-      args:
-        BUILD_ENV: development
-    container_name: blog_frontend
-    ports:
-      - "3000:80"
-    depends_on:
-      - app
-    volumes:
-      - ./infra/nginx/conf.d/blogapi.dev.conf:/etc/nginx/conf.d/default.conf
   db:
     image: postgres:15
     container_name: postgres
@@ -45,7 +30,7 @@ services:
       start_period: 10s
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./sql:/docker-entrypoint-initdb.d
+      - ../sql:/docker-entrypoint-initdb.d
 
   test-db:
     image: postgres:15
@@ -56,12 +41,6 @@ services:
       POSTGRES_DB: ${DB_TEST_NAME}
     ports:
       - "5433:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
     
   pgadmin:
     image: dpage/pgadmin4
@@ -73,6 +52,26 @@ services:
       - "5050:80"
     depends_on:
       - db
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+      - ../blog-api-frontend/dist:/usr/share/nginx/html
+    depends_on:
+      - app
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
 
 volumes:
   pgdata:

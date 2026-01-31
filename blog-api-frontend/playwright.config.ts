@@ -10,7 +10,7 @@ export default defineConfig({
     },
     webServer: {
         // フロントエンドのE2Eテスト用にdocker-composeでコンテナを起動
-        command: 'docker compose -f ../docker-compose.yml up --build frontend',
+        command: 'docker compose -f ../docker-compose.yml --env-file ./.env up --build frontend',
         url: 'http://localhost:3000',
         reuseExistingServer: true,
         timeout: 120_000,
