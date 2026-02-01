@@ -28,5 +28,5 @@ services:
     command: >
       sh -c "rm -f coverage/coverage.out && go test ./... -v -coverprofile=coverage/coverage.out -covermode=atomic"
     volumes:
-      - ./coverage:/app/coverage
+      - ../coverage:/app/coverage
 
