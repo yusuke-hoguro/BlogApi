@@ -8,8 +8,8 @@ import (
 
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
-	"github.com/yusuke-hoguro/BlogApi/handler"
-	"github.com/yusuke-hoguro/BlogApi/middleware"
+	"github.com/yusuke-hoguro/BlogApi/internal/handler"
+	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
 )
 
 // ハンドラー関数の設定を行う

@@ -84,9 +84,10 @@ pgAdmin も利用可能です。（http://localhost:5050）
 ```text
 ~/BlogApi
 ├── docker-compose.yml        # 本番用Docker Compose
-├── nginx/
-│   └── conf.d/
-│       └── blogapi.conf      # Nginxリバースプロキシ設定
+├── infara/
+│    └──nginx/
+│        └── conf.d/
+│           └── blogapi.conf      # Nginxリバースプロキシ設定
 └── certbot/
     ├── conf/                 # 証明書保存用
     └── www/                  # Let's Encrypt認証用
@@ -121,7 +122,7 @@ docker compose up --build -d
 
 ### Nginx + HTTPS 設定例
 
-`nginx/conf.d/blogapi.conf`:
+`infra/nginx/conf.d/blogapi.conf`:
 
 ```nginx
 # HTTP から HTTPS へのリダイレクト

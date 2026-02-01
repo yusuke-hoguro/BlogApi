@@ -17,7 +17,7 @@ jobs:
             host: ${{ secrets.EC2_HOST }}
             username: ${{ secrets.EC2_USER }}
             key: ${{ secrets.EC2_SSH_KEY }}
-            script: bash ~/BlogApi/utilitys/certbot/renew_cert.sh
+            script: bash ~/BlogApi/infra/utilitys/certbot/renew_cert.sh
 
   notify-slack:
     needs: [renew-certificates]

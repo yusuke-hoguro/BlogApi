@@ -8,8 +8,8 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/yusuke-hoguro/BlogApi/middleware"
-	"github.com/yusuke-hoguro/BlogApi/models"
+	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
+	"github.com/yusuke-hoguro/BlogApi/internal/models"
 )
 
 // LikePostHandler godoc

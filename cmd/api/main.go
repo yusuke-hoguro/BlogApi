@@ -12,9 +12,9 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
-	"github.com/yusuke-hoguro/BlogApi/db"
-	"github.com/yusuke-hoguro/BlogApi/middleware"
-	"github.com/yusuke-hoguro/BlogApi/router"
+	"github.com/yusuke-hoguro/BlogApi/internal/db"
+	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
+	"github.com/yusuke-hoguro/BlogApi/internal/router"
 
 	_ "github.com/lib/pq"
 )

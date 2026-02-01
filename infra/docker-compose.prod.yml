@@ -1,17 +1,17 @@
 services:
   app:
-    build: .
+    build: ..
     container_name: go_app
     ports:
       - "8080:8080"
     env_file:
-      - .env
+      - ../.env
     depends_on:
       db:
         condition: service_healthy
     volumes:
-      - .:/app # 開発用にコードを同期させる
-    command: ["go", "run", "main.go"] #開発用にgo runを一時的に使用する  
+      - ..:/app # 開発用にコードを同期させる
+    command: ["go", "run", "./cmd/api/main.go"] #開発用にgo runを一時的に使用する  
 
   db:
     image: postgres:15
@@ -30,7 +30,7 @@ services:
       start_period: 10s
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./sql:/docker-entrypoint-initdb.d
+      - ../sql:/docker-entrypoint-initdb.d
 
   test-db:
     image: postgres:15
@@ -60,9 +60,9 @@ services:
       - "443:443"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-      - ./blog-api-frontend/dist:/usr/share/nginx/html
+      - ../certbot/conf:/etc/letsencrypt
+      - ../certbot/www:/var/www/certbot
+      - ../blog-api-frontend/dist:/usr/share/nginx/html
     depends_on:
       - app
 
@@ -70,8 +70,8 @@ services:
     image: certbot/certbot
     container_name: certbot
     volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
+      - ../certbot/conf:/etc/letsencrypt
+      - ../certbot/www:/var/www/certbot
 
 volumes:
   pgdata:
