@@ -41,16 +41,6 @@ jobs:
         working-directory: blog-api-frontend
         run: npx playwright install --with-deps
 
-      # BlogAPIを起動する
-      - name: Start BlogApi
-        run: docker compose up -d --build
-
-      # BlogAPIの起動を待機する
-      - name: Wait for BlogAPI to start
-        run: |
-          npx wait-on http://localhost:3000 --timeout 120000
-          npx wait-on http://localhost:8080/api/healthz --timeout 120000
-
       # Playwrightのテストを実行する
       - name: Run playwright tests
         working-directory: blog-api-frontend
@@ -84,7 +74,7 @@ jobs:
 
       - name: Cleanup
         if: always()
-        run: docker compose down -v
+        run: docker system prune -f
             
   notify-slack:
     needs: [e2e-test]
