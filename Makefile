@@ -142,9 +142,6 @@ test-e2e:
 	@set -e; \
 	trap 'cd $(CURDIR) && $(MAKE) down-volumes-dev' EXIT; \
 	$(MAKE) down-volumes-dev; \
-	$(MAKE) build-dev; \
-	$(MAKE) up-dev; \
-	$(MAKE) wait-dev-db; \
 	cd blog-api-frontend && npx playwright test
 
 # CIのテストをまとめて実行
