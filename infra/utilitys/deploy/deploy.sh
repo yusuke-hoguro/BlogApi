@@ -2,7 +2,7 @@
 set -e
 
 APP_DIR="$HOME/BlogApi"
-COMPOSE_FILE="docker-compose.prod.yml"
+COMPOSE_FILE="infra/docker-compose.prod.yml"
 
 # 指定パスの空き容量を取得する
 function get_free_space() {
