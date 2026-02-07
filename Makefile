@@ -14,14 +14,16 @@ DC=docker compose --env-file $(ENV_FILE)
 DEV=$(DC) -f $(COMPOSE_DEV_FILE)
 PROD=$(DC) -f $(COMPOSE_PROD_FILE)
 TEST=$(DC) -f $(COMPOSE_TEST_FILE)
-
+FRONT_DIR=blog-api-frontend
+NPM=cd $(FRONT_DIR) && npm
 
 # ターゲット定義
 .PHONY: help \
 		up-dev down-dev down-volumes-dev restart-dev logs-dev build-dev rebuild-dev ps-dev \
 		up-prod down-prod restart-prod logs-prod build-prod rebuild-prod ps-prod \
 		up-test down-test down-volumes-test restart-test logs-test build-test rebuild-test ps-test \
-		test-go test-e2e ci-test wait-test-db
+		test-go test-e2e ci-test wait-test-db \
+		fe-install fe-dev fe-build fe-preview
 
 help:
 	@echo "Makefile commands:"
@@ -53,7 +55,12 @@ help:
 	@echo ""
 	@echo "  make test-go              - Run backend handler function tests"
 	@echo "  make test-e2e             - Run E2E tests"
-	@echo "  make ci-test              - Run all CI tests"	
+	@echo "  make ci-test              - Run all CI tests"
+	@echo ""	
+	@echo "  make fe-install           - Install frontend dependencies"
+	@echo "  make fe-dev               - Start frontend development server"
+	@echo "  make fe-build             - Build frontend"
+	@echo "  make fe-preview           - Preview frontend build"
 
 # 開発環境用
 # 起動
@@ -161,3 +168,17 @@ wait-dev-db:
 		echo "  ...still waiting"; \
 		sleep 1; \
 	done
+
+# フロントエンド関連
+# フロントエンドの依存関係インストール
+fe-install:
+	$(NPM) ci || $(NPM) install
+# フロントエンドの開発サーバー起動
+fe-dev:
+	$(NPM) run dev
+# フロントエンドのビルド
+fe-build:
+	$(NPM) run build
+# フロントエンドのプレビュー起動
+fe-preview:
+	$(NPM) run preview
