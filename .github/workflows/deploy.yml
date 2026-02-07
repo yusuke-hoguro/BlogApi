@@ -2,25 +2,15 @@ name: Deploy to AWS
 run-name: "Deploy to AWS (Branch: ${{ github.ref_name }})"
 
 concurrency:
-  group: deploy-${{ github.event.workflow_run.head_sha }}
+  group: deploy-main
   cancel-in-progress: false
 
 on:
-  workflow_run:
-    workflows: ["E2E Tests (Playwright)"]
-    types:
-      - completed
   workflow_dispatch:
 
 jobs:
   deploy:
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' &&
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.head_branch == 'main' &&
-      github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.head_repository.full_name == github.repository)
+    if: github.ref_name == 'main'
     runs-on: ubuntu-latest
 
     # AWSへのDeployは承認必須とする
@@ -34,7 +24,7 @@ jobs:
           fetch-depth: 0 # 全履歴を取得
 
       # 承認したDeployが最新mainでなければ実行しない
-      - name: Skip if nop latest main commit
+      - name: Deploy only if latest main commit
         shell: bash # パイプライン途中のエラーも確実に検知
         run: |
           set -euo pipefail
@@ -42,15 +32,11 @@ jobs:
           # 最新のmainのSHAとDeploy対象のSHAを比較
           LATEST_MAIN_SHA=$(git rev-parse origin/main) 
           # 手動実行した場合はgithub.event.workflow_runが存在しないため、その場合はgithub.shaを使用
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TARGET_SHA="${{ github.sha }}"
-          else
-            TARGET_SHA="${{ github.event.workflow_run.head_sha }}"
-          fi
+          TARGET_SHA="${{ github.sha }}"
           echo "Latest main SHA: ${LATEST_MAIN_SHA}"
           echo "Target deploy SHA: ${TARGET_SHA}"
           if [ "${LATEST_MAIN_SHA}" != "${TARGET_SHA}" ]; then
-            echo "The target deploy commit is not the latest main commit. Skipping deployment."
+            echo "Target deploy commit is not the latest main commit. Failing to prevent stale deploy."
             exit 1
           fi
 
@@ -75,7 +61,7 @@ jobs:
     with:
       status: ${{ needs.deploy.result == 'success' && 'success' || 'failure' }}
       source: "Deploy to AWS"
-      branch: ${{ github.event.workflow_run.head_branch || github.ref_name }}
+      branch: ${{ github.ref_name }}
       run_id: ${{ github.run_id }}
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
