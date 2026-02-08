@@ -59,7 +59,7 @@ jobs:
     if: always()
     uses: ./.github/workflows/slack-notification.yml
     with:
-      status: ${{ needs.deploy.result == 'success' && 'success' || 'failure' }}
+      status: ${{ needs.deploy.result }}
       source: "Deploy to AWS"
       branch: ${{ github.ref_name }}
       run_id: ${{ github.run_id }}
