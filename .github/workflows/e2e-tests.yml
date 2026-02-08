@@ -90,7 +90,7 @@ jobs:
     with:
       status: ${{ needs.e2e-test.result == 'success'  && 'success' || 'failure' }}      
       source: E2E Tests (Playwright)
-      branch: ${{ github.ref_name }}
+      branch: ${{ github.head_ref || github.ref_name }}
       run_id: ${{ github.run_id }}
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
