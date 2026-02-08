@@ -29,7 +29,7 @@ jobs:
             webhook-type: incoming-webhook
             payload: |
                 {
-                "text": "${{ inputs.status == 'success' && '✅' || '❌' }} *${{ inputs.source }}*\n\
+                "text": "${{ inputs.status == 'success' && '✅' || inputs.status == 'skipped' && '⏭️' || '❌' }} *${{ inputs.source }}*\n\
                 ステータス: ${{ inputs.status }}\n\
                 ブランチ: ${{ inputs.branch }}\n\
                 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ inputs.run_id }}|Actionsの詳細を見る>"

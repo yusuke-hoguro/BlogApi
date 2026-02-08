@@ -1,11 +1,11 @@
 name: E2E Tests (Playwright)
-run-name: "E2E Tests - Playwright (Branch: ${{ github.event.workflow_run.head_branch || github.ref_name }})"
+run-name: "E2E Tests - Playwright (Branch: ${{ github.head_ref || github.ref_name }})"
 
 on:
-  workflow_run:
-    workflows: ["Backend Tests"]
-    types:
-      - completed
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
   # 毎日午前3：00に実行する(JST 03:00 = UTC 18:00)
   schedule:
     - cron: "0 18 * * *"
@@ -13,9 +13,6 @@ on:
 
 jobs:
   e2e-test:
-    if: |
-      github.event_name != 'workflow_run' ||
-      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
 
     steps:
@@ -43,7 +40,7 @@ jobs:
 
       # BlogAPIを起動する
       - name: Start BlogApi
-        run: docker compose up -d --build
+        run: docker compose --env-file ./.env -f ./infra/docker-compose.yml up -d --build
 
       # BlogAPIの起動を待機する
       - name: Wait for BlogAPI to start
@@ -84,7 +81,7 @@ jobs:
 
       - name: Cleanup
         if: always()
-        run: docker compose down -v
+        run: docker system prune -f
             
   notify-slack:
     needs: [e2e-test]
@@ -93,7 +90,7 @@ jobs:
     with:
       status: ${{ needs.e2e-test.result == 'success'  && 'success' || 'failure' }}      
       source: E2E Tests (Playwright)
-      branch: ${{ github.event.workflow_run.head_branch || github.ref_name }}
+      branch: ${{ github.head_ref || github.ref_name }}
       run_id: ${{ github.run_id }}
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
