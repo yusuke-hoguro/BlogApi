@@ -1,6 +1,10 @@
 name: Deploy to AWS
 run-name: "Deploy to AWS (Branch: ${{ github.ref_name }})"
 
+permissions:
+  actions: read
+  contents: read
+
 concurrency:
   group: deploy-main
   cancel-in-progress: false
@@ -42,6 +46,77 @@ jobs:
 
           echo "The target deploy commit is the latest main commit. Proceeding with deployment."
 
+      - name: Require CI success for target SHA
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // GitHub APIクライアントとコンテキストを取得
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // デプロイ対象のSHA
+            const targetSha = context.sha;
+
+            // 必須workflow一覧を保管する
+            const requiredWorkflowNames = [
+              "E2E Tests (Playwright)",
+              "Backend Tests",
+            ];
+
+            // リポジトリ内のworkflowを100件まで取得
+            const workflowsResp = await github.rest.actions.listRepoWorkflows({ owner, repo, per_page: 100 });
+            // workflows配列を取得
+            const workflows = workflowsResp.data.workflows;
+
+            const missing = [];
+            const failures = [];
+
+            // 各必須workflowについてチェック
+            for (const wfName of requiredWorkflowNames) {
+              // 名前でworkflowを特定
+              const wf = workflows.find(w => w.name === wfName);
+              // workflowが見つからない場合はmissingに追加して次へ
+              if (!wf) {
+                missing.push(wfName);
+                continue;
+              }
+
+              // mainの最新100件からtargetShaのrunを探す（見つからない場合は未実行/古い/取得漏れのいずれか）
+              const runsResp = await github.rest.actions.listWorkflowRuns({
+                owner,
+                repo,
+                workflow_id: wf.id,
+                branch: "main",
+                per_page: 100,
+              });
+
+              // targetShaに対応するrunを特定する
+              const run = runsResp.data.workflow_runs.find(r => r.head_sha === targetSha);
+
+              // runが見つからない場合はfailureに追加して次へ
+              if (!run) {
+                failures.push(`${wfName}: no run found for target SHA ${targetSha} on main`);
+                continue;
+              }
+
+              // runのconclusionを確認してsuccessでなければfailureに追加
+              if (run.conclusion !== "success") {
+                failures.push(`${wfName}: conclusion=${run.conclusion} (run_id=${run.id})`);
+              } else {
+                console.log(`OK: ${wfName} success (run_id=${run.id})`);
+              }
+            }
+
+            // missingやfailuresがあればエラーを投げてDeployを中止
+            if (missing.length > 0) {
+              throw new Error(`Required workflows not found in repo: ${missing.join(", ")}`);
+            }
+            if (failures.length > 0) {
+              throw new Error(`CI gate failed for target SHA ${targetSha}:\n- ${failures.join("\n- ")}`);
+            }
+
+            console.log(`All required workflows succeeded for ${targetSha}. Proceeding.`);
+          
       # EC2へDeploy実行
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
