@@ -40,7 +40,7 @@ jobs:
 
       # BlogAPIを起動する
       - name: Start BlogApi
-        run: docker compose up -d --build
+        run: docker compose --env-file ./.env -f ./infra/docker-compose.yml up -d --build
 
       # BlogAPIの起動を待機する
       - name: Wait for BlogAPI to start
@@ -81,7 +81,7 @@ jobs:
 
       - name: Cleanup
         if: always()
-        run: docker compose down -v
+        run: docker system prune -f
             
   notify-slack:
     needs: [e2e-test]
