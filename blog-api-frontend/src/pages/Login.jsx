@@ -35,33 +35,41 @@ export default function Login(){
     }
 
     return(
-        <div className='p-4 max-w-md mx-auto mt-10 bg-gray-50 border rounded shadow overflow-x-hidden box-border'>
-            <h1 className='text-2xl font-bold mb-4 text-center'>ログイン</h1>
-            {error && <p className='text-red-500 mb-4 text-center'>{error}</p>}
-            <form onSubmit={handleSubmit} className="space-y-4 px-4">
-                <input 
-                    type="text" 
-                    placeholder='ユーザー名'
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)} 
-                    className='w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400 box-border'
-                />
-                <input 
-                    type="password" 
-                    placeholder='パスワード'
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)} 
-                    className='w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400 box-border'
-                />
-                <button
-                    type='submit'
-                    disabled={loading}
-                    className='w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-gray-400 transition-colors  box-border'
-                >
-                    {loading ? "ログイン中..." : "ログイン"}
-                </button>
-            </form>
-        </div>
-    );
+        <>
+            <header className="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+                <div className="max-w-7xl mx-auto px-4 py-6 flex justify-center">
+                    <h1 className="text-3xl font-bold">BlogAPI</h1>
+                </div>
+            </header>
+            <div className='min-h-[calc(100vh-180px)] flex items-center justify-center bg-gray-50'>
+                <div className='p-8 max-w-md bg-white rounded-lg shadow-lg overflow-x-hidden box-border'>
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        {error && <p className='text-red-500 text-center mb-4'>{error}</p>}
+                        <input 
+                            type="text" 
+                            placeholder='ユーザー名'
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)} 
+                            className='w-full rounded-lg p-8 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 box-border text-2xl'
+                        />
+                        <input 
+                            type="password" 
+                            placeholder='パスワード'
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)} 
+                            className='w-full rounded-lg p-8 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 box-border text-2xl'
+                        />
+                        <button
+                            type='submit'
+                            disabled={loading}
+                            className='w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 disabled:bg-gray-400 transition-colors box-border font-medium text-lg'
+                        >
+                            {loading ? "ログイン中..." : "ログイン"}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </>
+   );
 }
 
