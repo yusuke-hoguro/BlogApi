@@ -15,27 +15,29 @@ export default function Header(){
     const token = localStorage.getItem("token");
 
     return(
-        <header className="flex justify-between items-center p-4 bg-gray-100 border-b shadow">
-            <Link to="/" className="text-xl font-bold">
-                My Blog
-            </Link>
-            <nav>
-                {token ? (
-                    <button
-                        onClick={handleLogout}
-                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                    >
-                        ログアウト
-                    </button>
-                ):(
-                    <Link
-                        to="/login"
-                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                    >
-                        ログイン
-                    </Link>
-                )}
-            </nav>
+        <header className="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
+            <div className="px-6 py-5 flex justify-between items-center">
+                <Link to="/" className="text-3xl font-semibold text-white/95 visited:text-white hover:text-white transition hover:opacity-90">
+                    BlogAPI
+                </Link>
+                <nav>
+                    {token ? (
+                        <button
+                            onClick={handleLogout}
+                            className="px-4 py-2 text-white/80 hover:text-white rounded transition-colors"
+                        >
+                            ログアウト
+                        </button>
+                    ):(
+                        <Link
+                            to="/login"
+                            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                        >
+                            ログイン
+                        </Link>
+                    )}
+                </nav>
+            </div>
         </header>
     );
 }
