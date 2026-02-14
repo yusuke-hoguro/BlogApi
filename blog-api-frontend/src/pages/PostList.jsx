@@ -23,40 +23,65 @@ export default function PostList(){
     
     if(loading) return <p className="p-4">読み込み中...</p>
 
-    return(
-        <div className="p-4 max-w-3xl mx-auto">
-            <h1 className="text-2xl font-bold mb-4" >投稿一覧</h1>
-            <Link
-                to="/post/create"
-                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-            >
-                新規投稿作成
-            </Link>
-            {/* エラー */}
-            {errorMsg && <p data-testid="post-fetch-error" className="text-red-500 mb-4">{errorMsg}</p>}
-            {/* 空状態 */}
-            {!errorMsg && posts.length === 0 && <p data-testid="post-empty" className="text-gray-500 mb-4">投稿がありません</p>}
-            <ul className="space-y-4">
-                {posts.map(post => (
-                    <li 
-                        key={post.id} 
-                        data-testid="post-item"  // テスト用に追加
-                        className="p-4 border rounded shadow bg-white hover:shadow-md transition-shadow break-words" 
-                    >
-                        <h2>
-                            <Link 
-                                to={`/post/${post.id}`} 
-                                className="text-xl font-semibold text-blue-600 hover:underline break-words"
-                            >
-                                {post.title}
-                            </Link>
-                        </h2>
-                        <p className="text-gray-700 mt-2 break-words">
-                            {post.content?.slice(0, 100)}{post.content?.length > 100 ? '...' : ''}
-                        </p>
-                    </li>
-                ))}
-            </ul>
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-5xl mx-auto px-4 py-10">
+        {/* タイトル行 + 作成ボタン */}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">投稿一覧</h1>
+          <Link
+            to="/post/create"
+            className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
+          >
+            新規投稿作成
+          </Link>
         </div>
-    );
+
+        {/* エラー */}
+        {errorMsg && (
+          <p
+            data-testid="post-fetch-error"
+            className="text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 mb-4"
+          >
+            {errorMsg}
+          </p>
+        )}
+
+        {/* 空状態 */}
+        {!errorMsg && posts.length === 0 && (
+          <p
+            data-testid="post-empty"
+            className="text-gray-600 bg-white border border-gray-200 rounded-lg p-4"
+          >
+            投稿がありません
+          </p>
+        )}
+
+        {/* 一覧 */}
+        <ul className="space-y-4">
+          {posts.map((post) => (
+            <li
+              key={post.id}
+              data-testid="post-item"  // テスト用に追加
+              className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition break-words"
+            >
+              <h2 className="text-lg font-semibold">
+                <Link
+                  to={`/post/${post.id}`}
+                  className="text-blue-700 hover:underline break-words"
+                >
+                  {post.title}
+                </Link>
+              </h2>
+
+              <p className="text-gray-700 mt-2 break-words">
+                {post.content?.slice(0, 100)}
+                {post.content?.length > 100 ? "..." : ""}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
 }
