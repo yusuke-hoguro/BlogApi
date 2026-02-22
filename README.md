@@ -1,42 +1,97 @@
-# Go Blog API
+# BlogApi (Go言語 + PostgreSQL + React) - ポートフォリオ
 
-- Go言語とPostgreSQLを使ったブログAPIのポートフォリオです。  
-- 投稿とコメント、いいねのCRUD機能を備え、JWTによる認証・認可も実装しています。  
-- 開発・テスト環境はDocker Composeで統一し、GitHub ActionsによるCI/CDを構築しています。
+Go標準の`net/http`を使って実装したブログAPI + Reactフロントエンドのポートフォリオです。  
+JWT認証・認可、投稿/コメント/いいねのCRUD、Docker Composeによる開発、GitHub ActionsのCI、EC2 + Nginx + Certbot によるHTTPSデプロイまで含めています。
 
----
-
-## 使用技術
-
-- 言語: Go (net/http, encoding/json, sql)
-- データベース: PostgreSQL
-- 認証: JWT（github.com/golang-jwt/jwt）
-- コンテナ: Docker, docker-compose
-- CI/CD: GitHub Actions
-- テスト: GO `testing` パッケージ
+- **Backend**: Go + net/http + database/sql + PostgreSQL
+- **Frontend**: React + Vite + Tailwind + Axios
+- **Testing**: Playwright + Docker Compose
+- **Infrastructure**: Docker Compose + Nginx + Certbot
 
 ---
 
-## 環境構築
+## Architecture
 
-### 必要ツール
+### Local / Dev (開発・E2E)
 
-- Go: 1.24.2
-- PostgreSQL: 15.13
-- OS: Ubuntu 22.04（推奨）
-- Docker:27.5.1
-- docker compose V2
+```mermaid
+flowchart LR
+  subgraph Host["Host (your PC)"]
+    U[Browser]
+  end
 
-### クローンと初期化
+  subgraph Docker["Docker Network"]
+    U -->|"http://localhost:3000"| NX["Nginx (frontend container)"]
+    NX -->|"static (React build)"| FE["React (built files)"]
+    NX -->|"/api/* -> proxy"| API[Go API :8080]
+    API --> DB["(PostgreSQL :5432)"]
+    PG["pgAdmin :5050<br/>(dev only)"] --> DB
+  end
+```
+
+### Production（EC2想定 / HTTPS）
+
+```mermaid
+flowchart LR
+  U[Browser]
+  subgraph Host["Host (EC2 Instance)"]
+    subgraph Docker["Docker Network"]
+      NX80 -->|ACME challenge| CBW[certbot/www]
+      NX80 -->|301 redirect| NX
+
+      NX -->|"static (React build)" | FE["React (built files)"]
+      NX -->|"/api/* -> proxy"| API[Go API :8080]
+      API --> DB["(PostgreSQL :5432)"]
+      CB[Certbot] -->|cert files| CBF[certbot/conf]
+      NX --> CBF
+    end
+  end
+  U -->|"https://blog-api.duckdns.org"| NX[Nginx :443]
+  U -->|"http://blog-api.duckdns.org"| NX80[Nginx :80]
+```
+---
+
+## Design Principles
+
+- フレームワークに依存しない設計を意識し、Go標準の`net/http`を採用しています。
+- 開発・テスト環境の再現性を重視し、`Docker Compose`を統一基盤としています。
+- 本番環境では`Nginx`のみ外部公開し、アプリケーションおよびDBは内部ネットワークに隔離しています。
+- CIではローカルPCと同一手順を自動実行し、環境差異を最小化しています。
+
+---
+
+## Repository Structure（抜粋）
+
+- `.github` : GitHub ActionsのWorkflow / PRのテンプレートなど
+- `cmd/api/` : APIサーバーのエントリポイント  
+- `internal/` : handler / middleware / repository などアプリ本体  
+- `infra/` : docker-compose（dev/test/prod）/ nginx設定 / utility
+- `blog-api-frontend/` : Reactフロント（PlaywrightによるE2Eテスト含む）  
+- `sql/` : DB初期化用のSQL
+- `docs/` : Swagger / TODO などのドキュメント
+
+---
+
+## Requirements
+
+- Docker / Docker Compose v2  
+- Go 1.24.x :（ローカル直実行したい場合）  
+- Node.js : （フロントをローカルで触りたい場合）  
+
+---
+
+## Quick Start（ローカルPCでの起動）
+
+### 1) ソースコードをClone
 
 ```bash
 git clone https://github.com/yusuke-hoguro/BlogApi.git
 cd BlogApi
 ```
 
-### .envの設定
+### 2) .env を作成
 
-- ルートに `.env` ファイルを作成し、以下を記述：
+`./.env`の設定を確認してください。
 
 ```env
 DB_USER=postgres
@@ -48,187 +103,164 @@ DB_TEST_PORT=5433
 DB_HOST=db
 JWT_SECRET=your_jwt_secret
 APP_PORT=8080
-
-# DB接続用URL（Goのアプリで利用）
-DATABASE_URL=postgres://postgres:yourpassword@db:5432/blog?sslmode=disable
+EMAIL=portfolio@example.com
 ```
 
----
+### 3) 開発環境を起動（推奨: Makefile）
 
-## 実行方法(ローカル)
+makeコマンドを使用して操作が可能です。
+
+起動：
 
 ```bash
-docker compose up --build
+make up-dev
 ```
 
-http://localhost:8080 にてAPIサーバーが起動します。  
-pgAdmin も利用可能です。（http://localhost:5050）
+- API: http://localhost:8080  
+- Frontend: http://localhost:3000  
+- pgAdmin: http://localhost:5050  
 
+停止：
+
+```bash
+make down-dev
+```
+---
+
+## Test
+
+### Backend unit/integration（DockerでクリーンDB + go test）
+
+makeコマンドを使用して実行することができます。
+
+実行コマンド：
+
+```bash
+make test-go
+```
+
+- `infra/docker-compose.test.yml`で`postgres_test`コンテナを起動してから`go test`を実行します。
+- テスト終了時にボリュームを削除して **毎回クリーンDB** で再現性を担保します。
 
 ---
 
-## EC2 デプロイ（ポートフォリオ用）
+### E2E（Playwright）
 
-ブログAPIをAWS EC2上にデプロイし、DuckDNS と Nginx を使って HTTPS 化する手順を記載します。
+makeコマンドを使用して実行することができます。
+
+実行コマンド：
+
+```bash
+make test-e2e
+```
+
+補足：
+
+- `blog-api-frontend/playwright.config.ts`が`docker compose ... up --build frontend`を実行して環境を立ち上げます。
+- global-setup で API の起動待ち + テストユーザー作成を行います。
+
+---
+
+## CI (GitHub Actions)
+
+GitHub Actionsを使用したCIではローカルPCでのテストと同じ思想で、以下を自動実行します。
+
+CIでのテスト内容：
+
+- Backend Tests: テスト用のDocker Composeを使用してAPIの自動テストを実施します。  
+- E2E Tests - Playwright: Playwrightを使用してフロントエンドからバックエンドまでのE2Eテストを実施します。
+
+補足：
+
+- `main`ブランチと`develop`ブランチへのPRおよびPush時に自動で実行されます。
+- スケジューラを使用して毎日午前3：00に自動実行されます。
+- makeコマンドを使用してローカルPCでCI相当のテストを実行することができます。
+
+```bash
+make ci-test
+```
+---
+
+## API Spec
+
+APIの仕様書はOpenAPI (OAS)形式で作成し、GitHub Pagesを利用してパブリックに公開しています。以下のリンクから、Swagger UI を通じて確認可能です。
+
+Swagger UI（GitHub Pages）：https://yusuke-hoguro.github.io/BlogApi/
+
+---
+
+## Deployment (AWS EC2 + Nginx + Certbot)
+
+`infra/docker-compose.prod.yml` を利用し、本番相当の構成で起動できます。
 
 ### 前提
 
-- AWSアカウントを保有している必要があります。
-- EC2 インスタンス（Ubuntu 22.04推奨）を作成する必要があります。
-- セキュリティグループで 80/tcp と 443/tcp を開放してください。
-- Docker, docker-compose がAWS EC2上にインストールをしておいてください。
-- DuckDNS で取得したサブドメインを持っている必要があります。（例: `blog-api.duckdns.org`）
+- EC2（Ubuntu推奨）、80/443開放  
+- DuckDNSのドメイン（例: `blog-api.duckdns.org`）  
+- **現状 Nginx 設定（例: `infra/nginx/default.conf`）にドメインを直書き**
+  - `server_name blog-api.duckdns.org;`
+  - `ssl_certificate /etc/letsencrypt/live/blog-api.duckdns.org/fullchain.pem;`
 
-### ディレクトリ構成（EC2用例）
+### 起動
 
-```text
-~/BlogApi
-├── docker-compose.yml        # 本番用Docker Compose
-├── infara/
-│    └──nginx/
-│        └── conf.d/
-│           └── blogapi.conf      # Nginxリバースプロキシ設定
-└── certbot/
-    ├── conf/                 # 証明書保存用
-    └── www/                  # Let's Encrypt認証用
-```
+makeコマンドを使用して実行することができます。
 
-### 環境変数
-
-EC2でも `.env` をルートに配置します。
-
-```env
-DB_USER=postgres
-DB_PASSWORD=yourpassword
-DB_NAME=blog
-DB_PORT=5432
-DB_HOST=db
-JWT_SECRET=your_jwt_secret
-APP_PORT=8080
-DATABASE_URL=postgres://postgres:yourpassword@db:5432/blog?sslmode=disable
-DUCKDNS_DOMAIN=blog-api.duckdns.org
-```
-
-### Docker Compose 起動
+実行コマンド：
 
 ```bash
-docker compose up --build -d
+make up-prod
 ```
 
-- `app` コンテナで Go API が動作します。
-- `db` コンテナで PostgreSQL が動作します。
-- `nginx` コンテナで HTTPS リバースプロキシが動作
-- `certbot` コンテナで HTTPS リバースプロキシが動作
+### Nginx設定
 
-### Nginx + HTTPS 設定例
+各環境ごとに設定ファイルを分離しています。
 
-`infra/nginx/conf.d/blogapi.conf`:
+開発環境：
 
-```nginx
-# HTTP から HTTPS へのリダイレクト
-server {
-    listen 80;
-    server_name blog-api.duckdns.org;
+- `infra/nginx/conf.d/blogapi.dev.conf`
+  - HTTPのみ
+  - ローカル開発用設定
 
-    location /.well-known/acme-challenge/ {
-        root /var/www/certbot;
-    }
+本番環境：
 
-    location / {
-        return 301 https://$host$request_uri;
-    }
-}
+- `infra/nginx/conf.d/blogapi.prod.conf`
+  - HTTPS（SSL/TLS）対応
+  - Let's Encrypt証明書参照
+  - `/api`をAPI用コンテナへリバースプロキシ
 
-# HTTPS
-server {
-    listen 443 ssl;
-    server_name blog-api.duckdns.org;
+### 証明書（初回発行・更新）
 
-    ssl_certificate /etc/letsencrypt/live/blog-api.duckdns.org/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/blog-api.duckdns.org/privkey.pem;
+Let's Encryptの**webroot方式**で証明書を発行しています。
 
-    location / {
-        proxy_pass http://app:8080;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-}
-```
+- 証明書保存先：`/etc/letsencrypt`
+- Nginx が直接参照する構成
 
-### Certbot（Let's Encrypt）証明書取得
+証明書の自動更新はGitHub Actionsの`Renew TLS certificates with Certbot` workflowを使用し、**毎日 03:00（JST）** にEC2内の`certbot`コンテナを起動して実行しています。
+
+---
+
+## Make Commands
+
+BlogAPIで使用できる主要な`make`コマンドです。
 
 ```bash
-sudo certbot certonly --webroot \
-  -w ./certbot/www \
-  -d blog-api.duckdns.org \
-  --email <メールアドレス> --agree-tos --non-interactive
-```
-
-
-### 動作確認
-
-```bash
-curl -I https://blog-api.duckdns.org/api/posts
-```
-
-- ブラウザでもアクセス可能
-
-### 注意点
-
--  本番用パスワードや JWT シークレットは絶対に公開しないこと。
--  DuckDNS の更新は自動化スクリプトで定期更新を実施すること。
--  EC2 再起動後も `docker compose up -d` で復旧可能です。
-
----
-
-
-## テスト実行方法(Docker環境)
-
-- 毎回クリーンなDBでテストをするため、`down -v` を利用します。
-
-```bash
-# DBを初期化してテスト実行
-docker compose -f docker-compose.test.yml up --build --abort-on-container-exit
-
-# テスト後にコンテナ削除
-docker compose -f docker-compose.test.yml down -v
-```
----
-
-## ログ確認方法
-
-```bash
-# DBログ
-docker compose -f docker-compose.test.yml logs db
-
-# アプリケーションログ
-docker compose -f docker-compose.test.yml logs goapp
+make up-dev        # 開発環境起動（docker-compose.yml 使用）
+make down-dev      # 開発環境停止
+make test-go       # Backendテスト実行（test用compose起動 → DB初期化 → go test）
+make test-e2e      # E2Eテスト実行（Playwright）
+make ci-test       # CI相当のまとめ実行
+make fe-install    # フロントエンド依存関係インストール
+make fe-dev        # フロント開発サーバー起動（Vite）
 ```
 
 ---
 
-## CI/CD
+## Roadmap / TODO
 
-- GitHub Actionsにて `docker-compose.test.yml` を利用し、PR作成時やmainブランチ、developブランチにpush時に自動テストを実行。  
-- ローカルと同一の環境でテストすることで、再現性の高いCIを実現しています。
-
----
-
-## API仕様
-
-- 詳しくは [API設計書 (Swagger UI)](https://yusuke-hoguro.github.io/BlogApi/) を参照
+現在の改善計画・技術的課題は`docs/issue/TODO_LIST.md`にまとめています。
 
 ---
 
-## 今後の改善予定
+## Author
 
-- 課題や改善については[TODO List](docs/issue/TODO_LIST.md)を参照
-
----
-
-## 作者について
-
-- このプロジェクトはGoとバックエンド開発の理解を深める目的で作成したポートフォリオです。
-
----
+Goでのバックエンド開発力（API設計/テスト/CICD/デプロイ）を実務レベルに引き上げる目的で作成したポートフォリオです。
