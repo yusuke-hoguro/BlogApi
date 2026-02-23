@@ -42,7 +42,7 @@ export default function Login(){
         <>
             <header className="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
                 <div className="max-w-7xl mx-auto px-4 py-6 flex justify-center">
-                    <h1 className="text-3xl font-bold">BlogAPI</h1>
+                    <h1 data-testid="login-title" className="text-3xl font-bold">BlogAPI</h1>
                 </div>
             </header>
             <div className='min-h-[calc(100vh-180px)] flex items-center justify-center bg-gray-50'>
