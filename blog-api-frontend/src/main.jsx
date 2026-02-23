@@ -7,6 +7,7 @@ import PostList from './pages/PostList.jsx';
 import PostDetail from './pages/PostDetail.jsx';
 import PostEdit from './pages/PostEdit.jsx';
 import Login from "./pages/Login.jsx";
+import Signup from "./pages/Signup.jsx";
 import './index.css'
 import RequireAuth from './components/RequireAuth.jsx';
 
@@ -25,6 +26,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         </Route>
 
         {/* Headerなしの単独ルート */}
+        <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
       </Routes>
     </BrowserRouter>

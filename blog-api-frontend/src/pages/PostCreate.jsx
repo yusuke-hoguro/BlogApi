@@ -32,46 +32,64 @@ export default function PostCreate() {
   }
 
   return (
-    <div className="p-4 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">新規投稿作成</h1>
-      {errorMsg && <p className="text-red-500 mb-2">{errorMsg}</p>}
+    <div className="min-h-screen bg-gray-50">
+      {/* 共通外枠 */}
+      <div className="max-w-5xl mx-auto px-4 py-10">
+        {/* フォームは少し細めに */}
+        <div className="max-w-3xl mx-auto">
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">新規投稿作成</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block font-medium mb-1" htmlFor="titleInput">タイトル</label>
-          <input
-            id="titleInput"
-            type="text"
-            placeholder="タイトル"
-            className="w-full border rounded p-2"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            disabled={submitting}
-            maxLength={100}
-          />
+          {errorMsg && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+              {errorMsg}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="titleInput">
+                タイトル
+              </label>
+              <input
+                id="titleInput"
+                type="text"
+                placeholder="タイトル"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                disabled={submitting}
+                maxLength={100}
+              />
+              <div className="mt-1 text-right text-xs text-gray-400">{title.length} / 100</div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="contentInput">
+                内容
+              </label>
+              <textarea
+                id="contentInput"
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 resize-none"
+                rows={8}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                disabled={submitting}
+                maxLength={1000}
+                placeholder="本文を入力..."
+              />
+              <div className="mt-1 text-right text-xs text-gray-400">{content.length} / 1000</div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting || !title.trim() || !content.trim()}
+              className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:bg-gray-400 transition focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+            >
+              {submitting ? "送信中..." : "投稿作成"}
+            </button>
+          </form>
         </div>
-
-        <div>
-          <label className="block font-medium mb-1" htmlFor="contentInput">内容</label>
-          <textarea
-            id="contentInput"
-            className="w-full border rounded p-2 resize-none"
-            rows={6}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            disabled={submitting}
-            maxLength={1000}
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={submitting || !title.trim() || !content.trim()}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400"
-        >
-          {submitting ? "送信中..." : "投稿作成"}
-        </button>
-      </form>
+      </div>
     </div>
   );
 }

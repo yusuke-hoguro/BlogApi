@@ -5,7 +5,6 @@ import { POST_ITEM_TEST_ID, POST_FETCH_ERROR_TEST_ID, POST_EMPTY_TEST_ID } from 
 import { TEST_USERS } from '@e2e/fixtures/users';
 import { CREATE_POST_TITLE, CREATE_POST_CONTENT } from '@e2e/constants/posts';
 import { BUTTON_LOGOUT } from '@e2e/constants/buttons';
-import { PAGE_TITLE_LOGIN } from '@e2e/constants/pageTitles';
 
 test.describe('投稿一覧表示画面：正常系テスト', () => {
     // PostListが正しくAPIを叩けて表示できるかを確認する
@@ -74,8 +73,8 @@ test.describe('投稿一覧表示画面：異常系テスト', () => {
         await page.goto('/');
         // URLを確認する
         await expect(page).toHaveURL('/login');
-        // ログインページが開いているかを確認する
-        await expect(page.getByRole('heading', { name: PAGE_TITLE_LOGIN })).toBeVisible();
+        // ログインページが開いているかをTestIDで確認する
+        await expect(page.getByTestId('login-title')).toBeVisible();
         // テストユーザーでログインする
         await loginAsTestUser(page, TEST_USERS.testuser)
         await page.goto('/');
@@ -83,7 +82,7 @@ test.describe('投稿一覧表示画面：異常系テスト', () => {
         await page.getByRole('button', { name: BUTTON_LOGOUT }).click();
         // URLを確認する
         await expect(page).toHaveURL('/login');
-        // ログインページが開いているかを確認する
-        await expect(page.getByRole('heading', { name: PAGE_TITLE_LOGIN })).toBeVisible();
+        // ログインページが開いているかをTestIDで確認する
+        await expect(page.getByTestId('login-title')).toBeVisible();
     });    
 });
