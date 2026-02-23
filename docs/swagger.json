@@ -1,4 +1,7 @@
 {
+    "schemes": [
+        "http"
+    ],
     "swagger": "2.0",
     "info": {
         "description": "This is a sample blog API built with Go net/http.",
@@ -6,7 +9,6 @@
         "contact": {},
         "version": "1.0"
     },
-    "schemes": ["http"],
     "host": "localhost:8080",
     "basePath": "/",
     "paths": {
