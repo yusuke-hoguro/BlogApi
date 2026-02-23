@@ -3,6 +3,7 @@
 // @description This is a sample blog API built with Go net/http.
 // @host localhost:8080
 // @BasePath /
+// @schemes http
 package main
 
 import (

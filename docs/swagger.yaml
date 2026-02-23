@@ -698,4 +698,6 @@ paths:
       summary: 新規ユーザー登録を実施する
       tags:
       - users
+schemes:
+- http
 swagger: "2.0"
