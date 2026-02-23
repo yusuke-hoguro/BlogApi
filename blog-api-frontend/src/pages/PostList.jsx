@@ -74,9 +74,8 @@ export default function PostList(){
                 </Link>
               </h2>
 
-              <p className="text-gray-700 mt-2 break-words">
-                {post.content?.slice(0, 100)}
-                {post.content?.length > 100 ? "..." : ""}
+              <p className="text-gray-700 mt-2 break-words leading-relaxed">
+                {post.content?.length > 120 ? post.content.slice(0, 120) + "..." : post.content}
               </p>
             </li>
           ))}

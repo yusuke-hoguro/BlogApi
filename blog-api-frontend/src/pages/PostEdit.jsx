@@ -15,6 +15,9 @@ export default function PostEdit() {
     const [saving, setSaving] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
 
+    // 各ボタンのスタイルを設定
+    const btnUpdate ="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition focus:outline-none focus:ring-2 focus:ring-blue-500/40";
+
     // 初期表示（元データを取得）:初回レンダリング時のみ実行
     useEffect(() => {
         async function fetchPost(){
@@ -103,7 +106,7 @@ export default function PostEdit() {
                 <button
                     type="submit"
                     disabled={saving}
-                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-400"
+                    className={btnUpdate}
                 >
                     {saving ? "保存中..." : "更新"}
                 </button>
