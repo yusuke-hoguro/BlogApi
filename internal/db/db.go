@@ -6,9 +6,6 @@ import (
 	"os"
 )
 
-// DBのポインタを保管
-var DB *sql.DB
-
 // DBへの接続処理
 func ConnectDB() (*sql.DB, error) {
 	// DB接続を実施する

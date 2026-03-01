@@ -19,7 +19,9 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile
+      target: builder
     container_name: go_test
+    working_dir: /app
     depends_on:
       db:
         condition: service_healthy

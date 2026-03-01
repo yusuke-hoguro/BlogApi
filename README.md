@@ -60,6 +60,20 @@ flowchart LR
 
 ---
 
+## Graceful Shutdown / Signal Handling
+
+本APIは、本番運用を想定し、SIGTERM/SIGINTに対するGraceful Shutdownに対応しています。
+- `signal.NotifyContext` により SIGTERM / SIGINT を捕捉
+- `http.Server.Shutdown()` を使用し、既存リクエスト完了を待機
+- タイムアウト付きコンテキスト（10秒）で安全に終了
+- `http.ErrServerClosed` を正常終了として扱い、exit code 0 を保証
+- Docker環境では、PID1問題を考慮し、`go run` ではなくビルド済みバイナリを直接起動
+
+これにより、以下の環境で安全に停止可能です：
+- Docker Compose
+
+---
+
 ## Repository Structure（抜粋）
 
 - `.github` : GitHub ActionsのWorkflow / PRのテンプレートなど

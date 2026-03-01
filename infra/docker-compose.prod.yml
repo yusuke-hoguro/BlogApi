@@ -9,9 +9,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - ..:/app # 開発用にコードを同期させる
-    command: ["go", "run", "./cmd/api/main.go"] #開発用にgo runを一時的に使用する  
+    stop_signal: SIGTERM
+    stop_grace_period: 30s
 
   db:
     image: postgres:15

@@ -1,6 +1,9 @@
 services:
   app:
-    build: ..
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: builder  
     container_name: go_app
     ports:
       - "8080:8080"
@@ -11,7 +14,10 @@ services:
         condition: service_healthy
     volumes:
       - ..:/app # 開発用にコードを同期させる
-    command: ["go", "run", "./cmd/api/main.go"] #開発用にgo runを一時的に使用する  
+    working_dir: /app
+    command: ["sh", "-c", "go build -o main ./cmd/api/main.go && exec ./main"]
+    stop_signal: SIGTERM
+    stop_grace_period: 30s
 
   frontend:
     build: 
