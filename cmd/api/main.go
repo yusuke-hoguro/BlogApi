@@ -95,7 +95,7 @@ func runServer() error {
 	}
 
 	// サーバーが完全に停止するのを待つ
-	if err := <-errChan; err != nil {
+	if err := <-errChan; err != nil && err != http.ErrServerClosed {
 		return err
 	}
 
