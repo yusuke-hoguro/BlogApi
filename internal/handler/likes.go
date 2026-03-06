@@ -111,6 +111,12 @@ func GetLikesHandler(db *sql.DB) http.HandlerFunc {
 			userIDs = append(userIDs, userID)
 		}
 
+		// rows.Next()のループが終了した後にエラーが発生していないか確認する(DBからのデータ取得中にエラーが発生していないか)
+		if err := rows.Err(); err != nil {
+			respondError(w, "Failed to fetch likes : PostID="+postIDStr, http.StatusInternalServerError)
+			return
+		}
+
 		// JSONレスポンスを返す
 		resp := models.LikesResponse{
 			PostID:    postID,

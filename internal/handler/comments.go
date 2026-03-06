@@ -69,6 +69,12 @@ func GetCommentsByPostIDHandler(db *sql.DB) http.HandlerFunc {
 			comments = append(comments, c)
 		}
 
+		// rows.Next()のループが終了した後にエラーが発生していないか確認する(DBからのデータ取得中にエラーが発生していないか)
+		if err := rows.Err(); err != nil {
+			respondError(w, "Failed to fetch comments : PostID="+postIDStr, http.StatusInternalServerError)
+			return
+		}
+
 		// コメントがない場合
 		if len(comments) == 0 {
 			fmt.Println("No comments : PostID=" + postIDStr)
