@@ -391,6 +391,12 @@ func GetMyPostsHandler(db *sql.DB) http.HandlerFunc {
 			posts = append(posts, post)
 		}
 
+		// rows.Next()のループが終了した後にエラーが発生していないか確認する(DBからのデータ取得中にエラーが発生していないか)
+		if err := rows.Err(); err != nil {
+			respondError(w, "Failed to fetch posts", http.StatusInternalServerError)
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(posts); err != nil {
 			respondError(w, err.Error(), http.StatusInternalServerError)
@@ -436,6 +442,12 @@ func GetAllPostsHandler(db *sql.DB) http.HandlerFunc {
 				return
 			}
 			posts = append(posts, post)
+		}
+
+		// rows.Next()のループが終了した後にエラーが発生していないか確認する(DBからのデータ取得中にエラーが発生していないか)
+		if err := rows.Err(); err != nil {
+			respondError(w, "Failed to fetch posts", http.StatusInternalServerError)
+			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
