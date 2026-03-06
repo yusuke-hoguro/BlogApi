@@ -31,7 +31,7 @@ func SetupTestDB(t *testing.T) *sql.DB {
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
 		// ローカル開発用のデフォルト値
-		dbURL = "postgres://postgres:yourpassword@localhost:5433/blog_test?sslmode=disable"
+		dbURL = "postgres://postgres:yourpassword@localhost:5432/blog_test?sslmode=disable"
 	}
 
 	// DB接続
