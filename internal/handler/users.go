@@ -31,9 +31,12 @@ import (
 // @Router /api/signup [post]
 func SignupHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// リクエストのコンテキストを取得する
+		ctx := r.Context()
+
 		// Postであるかをチェックする
 		if r.Method != http.MethodPost {
-			respondError(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			respondError(w, "Method Not Allowed : Method="+r.Method, http.StatusMethodNotAllowed)
 			return
 		}
 
@@ -60,14 +63,14 @@ func SignupHandler(db *sql.DB) http.HandlerFunc {
 		// パスワードをハッシュ化
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userData.Password), bcrypt.DefaultCost)
 		if err != nil {
-			respondError(w, "Failed to hash password", http.StatusInternalServerError)
+			respondError(w, "Failed to hash password : Username="+userData.Username, http.StatusInternalServerError)
 			return
 		}
 
 		// INSERT実行
-		err = db.QueryRow("INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id", userData.Username, string(hashedPassword)).Scan(&userData.ID)
+		err = db.QueryRowContext(ctx, "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id", userData.Username, string(hashedPassword)).Scan(&userData.ID)
 		if err != nil {
-			respondError(w, "Failed to insert post", http.StatusInternalServerError)
+			respondError(w, "Failed to insert user : Username="+userData.Username, http.StatusInternalServerError)
 			return
 		}
 
@@ -100,9 +103,12 @@ func SignupHandler(db *sql.DB) http.HandlerFunc {
 // @Router /api/login [post]
 func LoginHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// リクエストのコンテキストを取得する
+		ctx := r.Context()
+
 		// Postであるかをチェックする
 		if r.Method != http.MethodPost {
-			respondError(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			respondError(w, "Method Not Allowed : Method="+r.Method, http.StatusMethodNotAllowed)
 			return
 		}
 
@@ -122,19 +128,19 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 
 		// パスワードが空の場合、エラーとする
 		if userData.Password == "" {
-			respondError(w, "Password is required", http.StatusBadRequest)
+			respondError(w, "Password is required : Username="+userData.Username, http.StatusBadRequest)
 			return
 		}
 
 		// ユーザーをDBから検索
 		var id int
 		var hashedPassword string
-		err = db.QueryRow("SELECT id, password FROM users WHERE username = $1", userData.Username).Scan(&id, &hashedPassword)
+		err = db.QueryRowContext(ctx, "SELECT id, password FROM users WHERE username = $1", userData.Username).Scan(&id, &hashedPassword)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				respondError(w, "Invalid username or password", http.StatusUnauthorized)
+				respondError(w, "Invalid username or password : Username="+userData.Username, http.StatusUnauthorized)
 			} else {
-				respondError(w, "Database error", http.StatusInternalServerError)
+				respondError(w, "Database error : Username="+userData.Username, http.StatusInternalServerError)
 			}
 			return
 		}
@@ -142,14 +148,14 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 		// パスワード照合
 		err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(userData.Password))
 		if err != nil {
-			respondError(w, "Invalid username or password", http.StatusUnauthorized)
+			respondError(w, "Invalid username or password : Username="+userData.Username, http.StatusUnauthorized)
 			return
 		}
 
 		// JWT生成
 		token, err := GenerateJWT(id)
 		if err != nil {
-			respondError(w, "Failed to generate token", http.StatusInternalServerError)
+			respondError(w, "Failed to generate token : Username="+userData.Username, http.StatusInternalServerError)
 			return
 		}
 

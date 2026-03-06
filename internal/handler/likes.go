@@ -30,10 +30,14 @@ import (
 // @Router /api/posts/{id}/like [post]
 func LikePostHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// リクエストのコンテキストを取得する
+		ctx := r.Context()
+
 		// 認証情報からユーザーIDを取得
-		userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+		userID, ok := ctx.Value(middleware.UserIDKey).(int)
 		if !ok {
-			respondError(w, "Unauthorized", http.StatusUnauthorized)
+			respondError(w, "Unauthorized : User ID not found in context", http.StatusUnauthorized)
+			return
 		}
 
 		// URIからpostのIDを取得
@@ -41,14 +45,14 @@ func LikePostHandler(db *sql.DB) http.HandlerFunc {
 		postIDStr := vars["id"]
 		postID, err := strconv.Atoi(postIDStr)
 		if err != nil {
-			respondError(w, "Invalid post ID", http.StatusBadRequest)
+			respondError(w, "Invalid post ID : PostID="+postIDStr, http.StatusBadRequest)
 			return
 		}
 
 		// 「いいね」を登録する
-		_, err = db.Exec("INSERT INTO likes (user_id, post_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", userID, postID)
+		_, err = db.ExecContext(ctx, "INSERT INTO likes (user_id, post_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", userID, postID)
 		if err != nil {
-			respondError(w, "Failed to like post", http.StatusInternalServerError)
+			respondError(w, "Failed to like post : PostID="+postIDStr, http.StatusInternalServerError)
 			return
 		}
 
@@ -76,19 +80,22 @@ func LikePostHandler(db *sql.DB) http.HandlerFunc {
 // @Router /api/posts/{id}/likes [get]
 func GetLikesHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// リクエストのコンテキストを取得する
+		ctx := r.Context()
+
 		// URIからpostのIDを取得
 		vars := mux.Vars(r)
 		postIDStr := vars["id"]
 		postID, err := strconv.Atoi(postIDStr)
 		if err != nil {
-			respondError(w, "Invalid post ID", http.StatusBadRequest)
+			respondError(w, "Invalid post ID : PostID="+postIDStr, http.StatusBadRequest)
 			return
 		}
 
 		// 「いいね」の数とユーザー一覧を取得する
-		rows, err := db.Query("SELECT user_id FROM likes WHERE post_id = $1", postID)
+		rows, err := db.QueryContext(ctx, "SELECT user_id FROM likes WHERE post_id = $1", postID)
 		if err != nil {
-			respondError(w, "Failed to fetch likes", http.StatusInternalServerError)
+			respondError(w, "Failed to fetch likes : PostID="+postIDStr, http.StatusInternalServerError)
 			return
 		}
 		defer rows.Close()
@@ -98,7 +105,7 @@ func GetLikesHandler(db *sql.DB) http.HandlerFunc {
 		for rows.Next() {
 			var userID int
 			if err := rows.Scan(&userID); err != nil {
-				respondError(w, "Failed to scan row", http.StatusInternalServerError)
+				respondError(w, "Failed to scan row : PostID="+postIDStr, http.StatusInternalServerError)
 				return
 			}
 			userIDs = append(userIDs, userID)
@@ -136,10 +143,14 @@ func GetLikesHandler(db *sql.DB) http.HandlerFunc {
 // @Router /api/posts/{id}/like [delete]
 func UnlikePostHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// リクエストのコンテキストを取得する
+		ctx := r.Context()
+
 		// 認証情報からユーザーIDを取得
-		userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+		userID, ok := ctx.Value(middleware.UserIDKey).(int)
 		if !ok {
-			respondError(w, "Unauthorized", http.StatusUnauthorized)
+			respondError(w, "Unauthorized : User ID not found in context", http.StatusUnauthorized)
+			return
 		}
 
 		// URIからpostのIDを取得
@@ -147,14 +158,14 @@ func UnlikePostHandler(db *sql.DB) http.HandlerFunc {
 		postIDStr := vars["id"]
 		postID, err := strconv.Atoi(postIDStr)
 		if err != nil {
-			respondError(w, "Invalid post ID", http.StatusBadRequest)
+			respondError(w, "Invalid post ID : PostID="+postIDStr, http.StatusBadRequest)
 			return
 		}
 
 		// 「いいね」を削除する
-		_, err = db.Exec("DELETE FROM likes WHERE user_id = $1 AND post_id = $2", userID, postID)
+		_, err = db.ExecContext(ctx, "DELETE FROM likes WHERE user_id = $1 AND post_id = $2", userID, postID)
 		if err != nil {
-			respondError(w, "Failed to remove like", http.StatusInternalServerError)
+			respondError(w, "Failed to remove like : PostID="+postIDStr, http.StatusInternalServerError)
 			return
 		}
 

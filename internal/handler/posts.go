@@ -35,22 +35,25 @@ const (
 // @Router /api/posts/{id} [get]
 func GetPostsByIDHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// IDを抽出する
+		// リクエストのコンテキストを取得する
+		ctx := r.Context()
+
+		// URLから投稿IDを抽出する
 		idStr := strings.TrimPrefix(r.URL.Path, "/api/posts/")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			respondError(w, "Invalid ID", http.StatusBadRequest)
+			respondError(w, "Invalid ID : PostID="+idStr, http.StatusBadRequest)
 			return
 		}
 
 		// postsテーブルから指定したカラムのデータを取得する
 		var post models.Post
-		err = db.QueryRow("SELECT id, title, content, user_id, created_at FROM posts WHERE id = $1", id).Scan(&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt)
+		err = db.QueryRowContext(ctx, "SELECT id, title, content, user_id, created_at FROM posts WHERE id = $1", id).Scan(&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt)
 		if err == sql.ErrNoRows {
-			respondError(w, "Post not found", http.StatusNotFound)
+			respondError(w, "Post not found : PostID="+idStr, http.StatusNotFound)
 			return
 		} else if err != nil {
-			respondError(w, "Database error", http.StatusInternalServerError)
+			respondError(w, "Database error : PostID="+idStr, http.StatusInternalServerError)
 			return
 		}
 
@@ -83,10 +86,13 @@ func GetPostsByIDHandler(db *sql.DB) http.HandlerFunc {
 // @Router /api/posts [post]
 func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// リクエストのコンテキストを取得する
+		ctx := r.Context()
+
 		// JWTからユーザーIDを取得する
-		userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+		userID, ok := ctx.Value(middleware.UserIDKey).(int)
 		if !ok {
-			respondError(w, "Unauthorized", http.StatusUnauthorized)
+			respondError(w, "Unauthorized userID not found in context", http.StatusUnauthorized)
 			return
 		}
 
@@ -125,7 +131,7 @@ func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 		post.UserID = userID
 
 		// INSERT実行
-		err := db.QueryRow("INSERT INTO posts (title, content, user_id) VALUES ($1, $2, $3) RETURNING id", post.Title, post.Content, post.UserID).Scan(&post.ID)
+		err := db.QueryRowContext(ctx, "INSERT INTO posts (title, content, user_id) VALUES ($1, $2, $3) RETURNING id", post.Title, post.Content, post.UserID).Scan(&post.ID)
 		if err != nil {
 			respondError(w, "Failed to insert post", http.StatusInternalServerError)
 			return
@@ -166,10 +172,13 @@ func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 // @Router /api/posts/{id} [put]
 func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// リクエストのコンテキストを取得する
+		ctx := r.Context()
+
 		// JWTからユーザーIDを取得する
-		userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+		userID, ok := ctx.Value(middleware.UserIDKey).(int)
 		if !ok {
-			respondError(w, "Unauthorized", http.StatusUnauthorized)
+			respondError(w, "Unauthorized userID not found in context", http.StatusUnauthorized)
 			return
 		}
 
@@ -177,24 +186,24 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 		idStr := strings.TrimPrefix(r.URL.Path, "/api/posts/")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			respondError(w, "Invalid post ID", http.StatusBadRequest)
+			respondError(w, "Invalid ID : PostID="+idStr, http.StatusBadRequest)
 			return
 		}
 
 		// DBから投稿者のユーザーIDを取得する
 		var postUserID int
-		err = db.QueryRow("SELECT user_id FROM posts WHERE id = $1", id).Scan(&postUserID)
+		err = db.QueryRowContext(ctx, "SELECT user_id FROM posts WHERE id = $1", id).Scan(&postUserID)
 		if err == sql.ErrNoRows {
-			respondError(w, "Post not found", http.StatusNotFound)
+			respondError(w, "Post not found : PostID="+idStr, http.StatusNotFound)
 			return
 		} else if err != nil {
-			respondError(w, "Database error", http.StatusInternalServerError)
+			respondError(w, "Database error : PostID="+idStr, http.StatusInternalServerError)
 			return
 		}
 
 		// リクエストを投げたユーザーが記事の投稿者でない場合はエラー
 		if postUserID != userID {
-			respondError(w, "Forbidden", http.StatusForbidden)
+			respondError(w, "Forbidden : PostID="+idStr, http.StatusForbidden)
 			return
 		}
 
@@ -230,7 +239,7 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// UPDATE実行
-		result, err := db.Exec("UPDATE posts SET title = $1, content = $2 WHERE id = $3", post.Title, post.Content, id)
+		result, err := db.ExecContext(ctx, "UPDATE posts SET title = $1, content = $2 WHERE id = $3", post.Title, post.Content, id)
 		if err != nil {
 			respondError(w, "Failed to update post", http.StatusInternalServerError)
 			return
@@ -239,7 +248,7 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 		// 更新行数の確認
 		rowsAffected, err := result.RowsAffected()
 		if err != nil || rowsAffected == 0 {
-			respondError(w, "Post nor found or no changes", http.StatusInternalServerError)
+			respondError(w, "Post not found or no changes", http.StatusInternalServerError)
 			return
 		}
 
@@ -251,8 +260,6 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 		}
 	}
 }
-
-// 明日はここから
 
 // DeletePostHandler godoc
 // @Summary 投稿を削除する
@@ -278,10 +285,13 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 // @Router /api/posts/{id} [put]
 func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// リクエストのコンテキストを取得する
+		ctx := r.Context()
+
 		// JWTからリクエストをなげたユーザーIDを取得
-		userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+		userID, ok := ctx.Value(middleware.UserIDKey).(int)
 		if !ok {
-			respondError(w, "Unauthorized", http.StatusUnauthorized)
+			respondError(w, "Unauthorized userID not found in context", http.StatusUnauthorized)
 			return
 		}
 
@@ -289,7 +299,7 @@ func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 		idStr := strings.TrimPrefix(r.URL.Path, "/api/posts/")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			respondError(w, "Invalid post ID", http.StatusBadRequest)
+			respondError(w, "Invalid ID : PostID="+idStr, http.StatusBadRequest)
 			return
 		}
 
@@ -300,18 +310,18 @@ func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 			respondError(w, "Post not found", http.StatusNotFound)
 			return
 		} else if err != nil {
-			respondError(w, "Database error", http.StatusInternalServerError)
+			respondError(w, "Database error : PostID="+idStr, http.StatusInternalServerError)
 			return
 		}
 
 		// リクエストを投げたユーザーが記事の投稿者でない場合はエラー
 		if postUserID != userID {
-			respondError(w, "Forbidden", http.StatusForbidden)
+			respondError(w, "Forbidden : PostID="+idStr, http.StatusForbidden)
 			return
 		}
 
 		// DELETE実行
-		result, err := db.Exec("DELETE FROM posts WHERE id = $1", id)
+		result, err := db.ExecContext(ctx, "DELETE FROM posts WHERE id = $1", id)
 		if err != nil {
 			respondError(w, "Failed to update post", http.StatusInternalServerError)
 			return
@@ -353,15 +363,18 @@ func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 // @Router /api/myposts [get]
 func GetMyPostsHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// リクエストのコンテキストを取得する
+		ctx := r.Context()
+
 		// JWTからリクエストをなげたユーザーIDを取得
-		userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+		userID, ok := ctx.Value(middleware.UserIDKey).(int)
 		if !ok {
-			respondError(w, "Unauthorized", http.StatusUnauthorized)
+			respondError(w, "Unauthorized userID not found in context", http.StatusUnauthorized)
 			return
 		}
 
 		// DBから自分の投稿を取得
-		rows, err := db.Query("SELECT id, title, content, user_id, created_at FROM posts WHERE user_id = $1", userID)
+		rows, err := db.QueryContext(ctx, "SELECT id, title, content, user_id, created_at FROM posts WHERE user_id = $1", userID)
 		if err != nil {
 			respondError(w, "Failed to fetch posts", http.StatusInternalServerError)
 			return
@@ -402,8 +415,11 @@ func GetMyPostsHandler(db *sql.DB) http.HandlerFunc {
 // @Router /api/posts [get]
 func GetAllPostsHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// リクエストのコンテキストを取得する
+		ctx := r.Context()
+
 		// 全投稿を取得する
-		rows, err := db.Query("SELECT id, title, content, user_id, created_at FROM posts ORDER BY created_at DESC")
+		rows, err := db.QueryContext(ctx, "SELECT id, title, content, user_id, created_at FROM posts ORDER BY created_at DESC")
 		if err != nil {
 			respondError(w, "Failed to fetch posts", http.StatusInternalServerError)
 			return
