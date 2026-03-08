@@ -19,7 +19,7 @@ NPM=cd $(FRONT_DIR) && npm
 
 # ターゲット定義
 .PHONY: help \
-		up-dev down-dev down-volumes-dev restart-dev logs-dev build-dev rebuild-dev ps-dev \
+		up-dev up-dev-attach down-dev down-volumes-dev restart-dev logs-dev build-dev rebuild-dev ps-dev \
 		up-prod down-prod restart-prod logs-prod build-prod rebuild-prod ps-prod \
 		up-test down-test down-volumes-test restart-test logs-test build-test rebuild-test ps-test \
 		test-go test-e2e ci-test wait-test-db \
@@ -28,6 +28,7 @@ NPM=cd $(FRONT_DIR) && npm
 help:
 	@echo "Makefile commands:"
 	@echo "  make up-dev               - Start development environment"
+	@echo "  make up-dev-attach        - Start development environment (attached)"
 	@echo "  make down-dev             - Stop development environment"
 	@echo "  make down-volumes-dev     - Stop development environment and remove volumes"
 	@echo "  make restart-dev          - Restart development environment"
@@ -63,9 +64,12 @@ help:
 	@echo "  make fe-preview           - Preview frontend build"
 
 # 開発環境用
-# 起動
+# 起動（デタッチ）
 up-dev:
 	$(DEV) up -d
+# 起動（アタッチ）
+up-dev-attach:
+	$(DEV) up
 # 停止
 down-dev:
 	$(DEV) down
