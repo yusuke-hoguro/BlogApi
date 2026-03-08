@@ -46,9 +46,12 @@ func runServer() error {
 
 	// ルーターの設定
 	r := mux.NewRouter()
+	// ルートの登録
 	router.RegisterRoutes(r, conn)
 	// CORSミドルウェアを適用
 	handler := middleware.CorsMiddleware(r)
+	// タイムアウトミドルウェアを適用(戻り値が関数なので（handler）をつけて実行する)
+	handler = middleware.TimeoutMiddleware(10 * time.Second)(handler)
 
 	// SIGINT/SIGTERMを受けたら停止するコンテキストを作成
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
