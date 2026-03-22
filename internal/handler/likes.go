@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/yusuke-hoguro/BlogApi/internal/apperror"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
 	"github.com/yusuke-hoguro/BlogApi/internal/models"
 )
@@ -36,7 +37,7 @@ func LikePostHandler(db *sql.DB) http.HandlerFunc {
 		// 認証情報からユーザーIDを取得
 		userID, ok := ctx.Value(middleware.UserIDKey).(int)
 		if !ok {
-			respondError(w, "Unauthorized : User ID not found in context", http.StatusUnauthorized)
+			respondAppError(w, apperror.NewAppError(apperror.TypeUnauthorized, "Unauthorized : User ID not found in context", nil))
 			return
 		}
 
@@ -45,20 +46,20 @@ func LikePostHandler(db *sql.DB) http.HandlerFunc {
 		postIDStr := vars["id"]
 		postID, err := strconv.Atoi(postIDStr)
 		if err != nil {
-			respondError(w, "Invalid post ID : PostID="+postIDStr, http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid post ID : PostID="+postIDStr, nil))
 			return
 		}
 
 		// 「いいね」を登録する
 		_, err = db.ExecContext(ctx, "INSERT INTO likes (user_id, post_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", userID, postID)
 		if err != nil {
-			respondError(w, "Failed to like post : PostID="+postIDStr, http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to like post : PostID="+postIDStr, err))
 			return
 		}
 
 		w.WriteHeader(http.StatusCreated)
 		if _, err := fmt.Fprintln(w, "Post liked successfully"); err != nil {
-			respondError(w, err.Error(), http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
 	}
@@ -88,14 +89,14 @@ func GetLikesHandler(db *sql.DB) http.HandlerFunc {
 		postIDStr := vars["id"]
 		postID, err := strconv.Atoi(postIDStr)
 		if err != nil {
-			respondError(w, "Invalid post ID : PostID="+postIDStr, http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid post ID : PostID="+postIDStr, nil))
 			return
 		}
 
 		// 「いいね」の数とユーザー一覧を取得する
 		rows, err := db.QueryContext(ctx, "SELECT user_id FROM likes WHERE post_id = $1", postID)
 		if err != nil {
-			respondError(w, "Failed to fetch likes : PostID="+postIDStr, http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to fetch likes : PostID="+postIDStr, err))
 			return
 		}
 		defer rows.Close()
@@ -105,7 +106,7 @@ func GetLikesHandler(db *sql.DB) http.HandlerFunc {
 		for rows.Next() {
 			var userID int
 			if err := rows.Scan(&userID); err != nil {
-				respondError(w, "Failed to scan row : PostID="+postIDStr, http.StatusInternalServerError)
+				respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to scan row : PostID="+postIDStr, err))
 				return
 			}
 			userIDs = append(userIDs, userID)
@@ -113,7 +114,7 @@ func GetLikesHandler(db *sql.DB) http.HandlerFunc {
 
 		// rows.Next()のループが終了した後にエラーが発生していないか確認する(DBからのデータ取得中にエラーが発生していないか)
 		if err := rows.Err(); err != nil {
-			respondError(w, "Failed to fetch likes : PostID="+postIDStr, http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to fetch likes : PostID="+postIDStr, err))
 			return
 		}
 
@@ -125,7 +126,7 @@ func GetLikesHandler(db *sql.DB) http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(resp); err != nil {
-			respondError(w, err.Error(), http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
 	}
@@ -155,7 +156,7 @@ func UnlikePostHandler(db *sql.DB) http.HandlerFunc {
 		// 認証情報からユーザーIDを取得
 		userID, ok := ctx.Value(middleware.UserIDKey).(int)
 		if !ok {
-			respondError(w, "Unauthorized : User ID not found in context", http.StatusUnauthorized)
+			respondAppError(w, apperror.NewAppError(apperror.TypeUnauthorized, "Unauthorized : User ID not found in context", nil))
 			return
 		}
 
@@ -164,22 +165,21 @@ func UnlikePostHandler(db *sql.DB) http.HandlerFunc {
 		postIDStr := vars["id"]
 		postID, err := strconv.Atoi(postIDStr)
 		if err != nil {
-			respondError(w, "Invalid post ID : PostID="+postIDStr, http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid post ID : PostID="+postIDStr, nil))
 			return
 		}
 
 		// 「いいね」を削除する
 		_, err = db.ExecContext(ctx, "DELETE FROM likes WHERE user_id = $1 AND post_id = $2", userID, postID)
 		if err != nil {
-			respondError(w, "Failed to remove like : PostID="+postIDStr, http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to remove like : PostID="+postIDStr, err))
 			return
 		}
 
 		if _, err := fmt.Fprintln(w, "like removed successfully!"); err != nil {
-			respondError(w, err.Error(), http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
 	}
-
 }

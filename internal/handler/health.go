@@ -3,6 +3,8 @@ package handler
 import (
 	"log"
 	"net/http"
+
+	"github.com/yusuke-hoguro/BlogApi/internal/apperror"
 )
 
 // HealthzHandler godoc
@@ -19,7 +21,7 @@ import (
 func HealthzHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {
-			respondError(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			respondAppError(w, apperror.NewAppError(apperror.TypeMethodNotAllowed, "Method Not Allowed", nil))
 			return
 		}
 		w.WriteHeader(http.StatusOK)

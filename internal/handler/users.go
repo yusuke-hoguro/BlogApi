@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/yusuke-hoguro/BlogApi/internal/apperror"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
 	"github.com/yusuke-hoguro/BlogApi/internal/models"
 	"golang.org/x/crypto/bcrypt"
@@ -36,7 +37,7 @@ func SignupHandler(db *sql.DB) http.HandlerFunc {
 
 		// Postであるかをチェックする
 		if r.Method != http.MethodPost {
-			respondError(w, "Method Not Allowed : Method="+r.Method, http.StatusMethodNotAllowed)
+			respondAppError(w, apperror.NewAppError(apperror.TypeMethodNotAllowed, "Method Not Allowed : Method="+r.Method, nil))
 			return
 		}
 
@@ -44,39 +45,39 @@ func SignupHandler(db *sql.DB) http.HandlerFunc {
 		var userData models.User
 		err := json.NewDecoder(r.Body).Decode(&userData)
 		if err != nil {
-			respondError(w, "Invalid request body", http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid request body", err))
 			return
 		}
 
 		// ユーザー名が空の場合はエラーとする
 		if userData.Username == "" {
-			respondError(w, "Username is required", http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Username is required", nil))
 			return
 		}
 
 		// パスワードが8文字未満の場合はエラーとする
 		if len(userData.Password) < 8 {
-			respondError(w, "Password must be at least 8 characters long", http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Password must be at least 8 characters long", nil))
 			return
 		}
 
 		// パスワードをハッシュ化
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userData.Password), bcrypt.DefaultCost)
 		if err != nil {
-			respondError(w, "Failed to hash password : Username="+userData.Username, http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to hash password : Username="+userData.Username, err))
 			return
 		}
 
 		// INSERT実行
 		err = db.QueryRowContext(ctx, "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id", userData.Username, string(hashedPassword)).Scan(&userData.ID)
 		if err != nil {
-			respondError(w, "Failed to insert user : Username="+userData.Username, http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to insert user : Username="+userData.Username, err))
 			return
 		}
 
 		w.WriteHeader(http.StatusCreated)
 		if err := json.NewEncoder(w).Encode(userData); err != nil {
-			respondError(w, err.Error(), http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
 	}
@@ -108,7 +109,7 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 
 		// Postであるかをチェックする
 		if r.Method != http.MethodPost {
-			respondError(w, "Method Not Allowed : Method="+r.Method, http.StatusMethodNotAllowed)
+			respondAppError(w, apperror.NewAppError(apperror.TypeMethodNotAllowed, "Method Not Allowed : Method="+r.Method, nil))
 			return
 		}
 
@@ -116,19 +117,19 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 		var userData models.User
 		err := json.NewDecoder(r.Body).Decode(&userData)
 		if err != nil {
-			respondError(w, "Invalid request body", http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid request body", err))
 			return
 		}
 
 		// ユーザー名が空の場合はエラーとする
 		if userData.Username == "" {
-			respondError(w, "Username is required", http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Username is required", nil))
 			return
 		}
 
 		// パスワードが空の場合、エラーとする
 		if userData.Password == "" {
-			respondError(w, "Password is required : Username="+userData.Username, http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Password is required : Username="+userData.Username, nil))
 			return
 		}
 
@@ -138,9 +139,9 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 		err = db.QueryRowContext(ctx, "SELECT id, password FROM users WHERE username = $1", userData.Username).Scan(&id, &hashedPassword)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				respondError(w, "Invalid username or password : Username="+userData.Username, http.StatusUnauthorized)
+				respondAppError(w, apperror.NewAppError(apperror.TypeUnauthorized, "Invalid username or password : Username="+userData.Username, err))
 			} else {
-				respondError(w, "Database error : Username="+userData.Username, http.StatusInternalServerError)
+				respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Database error : Username="+userData.Username, err))
 			}
 			return
 		}
@@ -148,21 +149,21 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 		// パスワード照合
 		err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(userData.Password))
 		if err != nil {
-			respondError(w, "Invalid username or password : Username="+userData.Username, http.StatusUnauthorized)
+			respondAppError(w, apperror.NewAppError(apperror.TypeUnauthorized, "Invalid username or password : Username="+userData.Username, err))
 			return
 		}
 
 		// JWT生成
 		token, err := GenerateJWT(id)
 		if err != nil {
-			respondError(w, "Failed to generate token : Username="+userData.Username, http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to generate token : Username="+userData.Username, err))
 			return
 		}
 
 		// レスポンス
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(models.TokenResponse{Token: token}); err != nil {
-			respondError(w, err.Error(), http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
 	}

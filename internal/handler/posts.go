@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/yusuke-hoguro/BlogApi/internal/apperror"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
 	"github.com/yusuke-hoguro/BlogApi/internal/models"
 )
@@ -42,7 +43,7 @@ func GetPostsByIDHandler(db *sql.DB) http.HandlerFunc {
 		idStr := strings.TrimPrefix(r.URL.Path, "/api/posts/")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			respondError(w, "Invalid ID : PostID="+idStr, http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid ID : PostID="+idStr, err))
 			return
 		}
 
@@ -50,17 +51,17 @@ func GetPostsByIDHandler(db *sql.DB) http.HandlerFunc {
 		var post models.Post
 		err = db.QueryRowContext(ctx, "SELECT id, title, content, user_id, created_at FROM posts WHERE id = $1", id).Scan(&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt)
 		if err == sql.ErrNoRows {
-			respondError(w, "Post not found : PostID="+idStr, http.StatusNotFound)
+			respondAppError(w, apperror.NewAppError(apperror.TypeNotFound, "Post not found : PostID="+idStr, err))
 			return
 		} else if err != nil {
-			respondError(w, "Database error : PostID="+idStr, http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Database error : PostID="+idStr, err))
 			return
 		}
 
 		// json形式に変更してレスポンスに書き込む
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(post); err != nil {
-			respondError(w, err.Error(), http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to encode response", err))
 			return
 		}
 	}
@@ -92,38 +93,38 @@ func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 		// JWTからユーザーIDを取得する
 		userID, ok := ctx.Value(middleware.UserIDKey).(int)
 		if !ok {
-			respondError(w, "Unauthorized userID not found in context", http.StatusUnauthorized)
+			respondAppError(w, apperror.NewAppError(apperror.TypeUnauthorized, "Unauthorized userID not found in context", nil))
 			return
 		}
 
 		// Post型の構造体にデコードして格納
 		var post models.Post
 		if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
-			respondError(w, "Invalid request body", http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid request body", err))
 			return
 		}
 
 		// タイトルが空の場合はエラーとする
 		if strings.TrimSpace(post.Title) == "" {
-			respondError(w, "Title must not be empty", http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Title must not be empty", nil))
 			return
 		}
 
 		// タイトルが100文字より大きい場合はエラーとする
 		if len(post.Title) > MaxTitleLength {
-			respondError(w, "Title must be 100 characters or less", http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Title must be 100 characters or less", nil))
 			return
 		}
 
 		// 投稿の内容が空の場合はエラーとする
 		if strings.TrimSpace(post.Content) == "" {
-			respondError(w, "Content is required", http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Content is required", nil))
 			return
 		}
 
 		// 投稿内容が1000文字より大きい場合はエラーとする
 		if len(post.Content) > MaxContentLength {
-			respondError(w, "Content must be 1000 characters or less", http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Content must be 1000 characters or less", nil))
 			return
 		}
 
@@ -133,7 +134,7 @@ func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 		// INSERT実行
 		err := db.QueryRowContext(ctx, "INSERT INTO posts (title, content, user_id) VALUES ($1, $2, $3) RETURNING id", post.Title, post.Content, post.UserID).Scan(&post.ID)
 		if err != nil {
-			respondError(w, "Failed to insert post", http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to insert post", err))
 			return
 		}
 
@@ -141,7 +142,7 @@ func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		if err := json.NewEncoder(w).Encode(post); err != nil {
-			respondError(w, err.Error(), http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to encode response", err))
 			return
 		}
 	}
@@ -178,7 +179,7 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 		// JWTからユーザーIDを取得する
 		userID, ok := ctx.Value(middleware.UserIDKey).(int)
 		if !ok {
-			respondError(w, "Unauthorized userID not found in context", http.StatusUnauthorized)
+			respondAppError(w, apperror.NewAppError(apperror.TypeUnauthorized, "Unauthorized userID not found in context", nil))
 			return
 		}
 
@@ -186,7 +187,7 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 		idStr := strings.TrimPrefix(r.URL.Path, "/api/posts/")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			respondError(w, "Invalid ID : PostID="+idStr, http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid ID : PostID="+idStr, err))
 			return
 		}
 
@@ -194,61 +195,61 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 		var postUserID int
 		err = db.QueryRowContext(ctx, "SELECT user_id FROM posts WHERE id = $1", id).Scan(&postUserID)
 		if err == sql.ErrNoRows {
-			respondError(w, "Post not found : PostID="+idStr, http.StatusNotFound)
+			respondAppError(w, apperror.NewAppError(apperror.TypeNotFound, "Post not found : PostID="+idStr, err))
 			return
 		} else if err != nil {
-			respondError(w, "Database error : PostID="+idStr, http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Database error : PostID="+idStr, err))
 			return
 		}
 
 		// リクエストを投げたユーザーが記事の投稿者でない場合はエラー
 		if postUserID != userID {
-			respondError(w, "Forbidden : PostID="+idStr, http.StatusForbidden)
+			respondAppError(w, apperror.NewAppError(apperror.TypeForbidden, "Forbidden : PostID="+idStr, nil))
 			return
 		}
 
 		// Post型の構造体にデコードして格納
 		var post models.Post
 		if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
-			respondError(w, "Invalid request body", http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid request body", err))
 			return
 		}
 
 		// タイトルが空の場合はエラーとする
 		if strings.TrimSpace(post.Title) == "" {
-			respondError(w, "Title must not be empty", http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Title must not be empty", nil))
 			return
 		}
 
 		// タイトルが100文字より大きい場合はエラーとする
 		if len(post.Title) > MaxTitleLength {
-			respondError(w, "Title must be 100 characters or less", http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Title must be 100 characters or less", nil))
 			return
 		}
 
 		// 投稿の内容が空の場合はエラーとする
 		if strings.TrimSpace(post.Content) == "" {
-			respondError(w, "Content is required", http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Content is required", nil))
 			return
 		}
 
 		// タイトルが1000文字より大きい場合はエラーとする
 		if len(post.Content) > MaxContentLength {
-			respondError(w, "Content must be 1000 characters or less", http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Content must be 1000 characters or less", nil))
 			return
 		}
 
 		// UPDATE実行
 		result, err := db.ExecContext(ctx, "UPDATE posts SET title = $1, content = $2 WHERE id = $3", post.Title, post.Content, id)
 		if err != nil {
-			respondError(w, "Failed to update post", http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to update post", err))
 			return
 		}
 
 		// 更新行数の確認
 		rowsAffected, err := result.RowsAffected()
 		if err != nil || rowsAffected == 0 {
-			respondError(w, "Post not found or no changes", http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Post not found or no changes", err))
 			return
 		}
 
@@ -291,7 +292,7 @@ func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 		// JWTからリクエストをなげたユーザーIDを取得
 		userID, ok := ctx.Value(middleware.UserIDKey).(int)
 		if !ok {
-			respondError(w, "Unauthorized userID not found in context", http.StatusUnauthorized)
+			respondAppError(w, apperror.NewAppError(apperror.TypeUnauthorized, "Unauthorized userID not found in context", nil))
 			return
 		}
 
@@ -299,7 +300,7 @@ func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 		idStr := strings.TrimPrefix(r.URL.Path, "/api/posts/")
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			respondError(w, "Invalid ID : PostID="+idStr, http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid ID : PostID="+idStr, err))
 			return
 		}
 
@@ -307,7 +308,7 @@ func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 		var postUserID int
 		err = db.QueryRow("SELECT user_id FROM posts WHERE id = $1", id).Scan(&postUserID)
 		if err == sql.ErrNoRows {
-			respondError(w, "Post not found", http.StatusNotFound)
+			respondAppError(w, apperror.NewAppError(apperror.TypeNotFound, "Post not found", err))
 			return
 		} else if err != nil {
 			respondError(w, "Database error : PostID="+idStr, http.StatusInternalServerError)
@@ -316,29 +317,29 @@ func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 
 		// リクエストを投げたユーザーが記事の投稿者でない場合はエラー
 		if postUserID != userID {
-			respondError(w, "Forbidden : PostID="+idStr, http.StatusForbidden)
+			respondAppError(w, apperror.NewAppError(apperror.TypeForbidden, "Forbidden : PostID="+idStr, nil))
 			return
 		}
 
 		// DELETE実行
 		result, err := db.ExecContext(ctx, "DELETE FROM posts WHERE id = $1", id)
 		if err != nil {
-			respondError(w, "Failed to update post", http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to delete post", err))
 			return
 		}
 
 		// 削除行数の確認
 		rowsAffected, err := result.RowsAffected()
 		if err != nil {
-			respondError(w, "Failed to confirm deletion", http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to confirm deletion", err))
 			return
 		} else if rowsAffected == 0 {
-			respondError(w, "Post not found", http.StatusNotFound)
+			respondAppError(w, apperror.NewAppError(apperror.TypeNotFound, "Post not found", nil))
 			return
 		}
 
 		if _, err := fmt.Fprintln(w, "Post deleted successfully!"); err != nil {
-			respondError(w, err.Error(), http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
@@ -369,14 +370,14 @@ func GetMyPostsHandler(db *sql.DB) http.HandlerFunc {
 		// JWTからリクエストをなげたユーザーIDを取得
 		userID, ok := ctx.Value(middleware.UserIDKey).(int)
 		if !ok {
-			respondError(w, "Unauthorized userID not found in context", http.StatusUnauthorized)
+			respondAppError(w, apperror.NewAppError(apperror.TypeUnauthorized, "Unauthorized userID not found in context", nil))
 			return
 		}
 
 		// DBから自分の投稿を取得
 		rows, err := db.QueryContext(ctx, "SELECT id, title, content, user_id, created_at FROM posts WHERE user_id = $1", userID)
 		if err != nil {
-			respondError(w, "Failed to fetch posts", http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to fetch posts", err))
 			return
 		}
 		defer rows.Close()
@@ -385,7 +386,7 @@ func GetMyPostsHandler(db *sql.DB) http.HandlerFunc {
 		for rows.Next() {
 			var post models.Post
 			if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt); err != nil {
-				respondError(w, "Post not found", http.StatusNotFound)
+				respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to parse post", err))
 				return
 			}
 			posts = append(posts, post)
@@ -393,13 +394,13 @@ func GetMyPostsHandler(db *sql.DB) http.HandlerFunc {
 
 		// rows.Next()のループが終了した後にエラーが発生していないか確認する(DBからのデータ取得中にエラーが発生していないか)
 		if err := rows.Err(); err != nil {
-			respondError(w, "Failed to fetch posts", http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to fetch posts", err))
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(posts); err != nil {
-			respondError(w, err.Error(), http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
 	}
@@ -427,7 +428,7 @@ func GetAllPostsHandler(db *sql.DB) http.HandlerFunc {
 		// 全投稿を取得する
 		rows, err := db.QueryContext(ctx, "SELECT id, title, content, user_id, created_at FROM posts ORDER BY created_at DESC")
 		if err != nil {
-			respondError(w, "Failed to fetch posts", http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to fetch posts", err))
 			return
 		}
 		defer rows.Close()
@@ -438,7 +439,7 @@ func GetAllPostsHandler(db *sql.DB) http.HandlerFunc {
 		for rows.Next() {
 			var post models.Post
 			if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt); err != nil {
-				respondError(w, "Failed to parse post", http.StatusNotFound)
+				respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to parse post", err))
 				return
 			}
 			posts = append(posts, post)
@@ -446,13 +447,13 @@ func GetAllPostsHandler(db *sql.DB) http.HandlerFunc {
 
 		// rows.Next()のループが終了した後にエラーが発生していないか確認する(DBからのデータ取得中にエラーが発生していないか)
 		if err := rows.Err(); err != nil {
-			respondError(w, "Failed to fetch posts", http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to fetch posts", err))
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(posts); err != nil {
-			respondError(w, err.Error(), http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
 	}

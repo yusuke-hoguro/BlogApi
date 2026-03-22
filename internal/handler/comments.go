@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/yusuke-hoguro/BlogApi/internal/apperror"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
 	"github.com/yusuke-hoguro/BlogApi/internal/models"
 )
@@ -41,7 +42,7 @@ func GetCommentsByPostIDHandler(db *sql.DB) http.HandlerFunc {
 		postIDStr := vars["id"]
 		postID, err := strconv.Atoi(postIDStr)
 		if err != nil {
-			respondError(w, "Invalid post ID : PostID="+postIDStr, http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid post ID : PostID="+postIDStr, err))
 			return
 		}
 
@@ -53,7 +54,7 @@ func GetCommentsByPostIDHandler(db *sql.DB) http.HandlerFunc {
 			ORDER BY created_at ASC
 		`, postID)
 		if err != nil {
-			respondError(w, "Failed to fetch comments : PostID="+postIDStr, http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to fetch comments : PostID="+postIDStr, err))
 			return
 		}
 		defer rows.Close()
@@ -63,7 +64,7 @@ func GetCommentsByPostIDHandler(db *sql.DB) http.HandlerFunc {
 		for rows.Next() {
 			var c models.Comment
 			if err := rows.Scan(&c.ID, &c.PostID, &c.UserID, &c.Content, &c.CreatedAt); err != nil {
-				respondError(w, "Error reading comment : PostID="+postIDStr, http.StatusInternalServerError)
+				respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Error reading comment : PostID="+postIDStr, err))
 				return
 			}
 			comments = append(comments, c)
@@ -71,7 +72,7 @@ func GetCommentsByPostIDHandler(db *sql.DB) http.HandlerFunc {
 
 		// rows.Next()のループが終了した後にエラーが発生していないか確認する(DBからのデータ取得中にエラーが発生していないか)
 		if err := rows.Err(); err != nil {
-			respondError(w, "Failed to fetch comments : PostID="+postIDStr, http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to fetch comments : PostID="+postIDStr, err))
 			return
 		}
 
@@ -82,7 +83,7 @@ func GetCommentsByPostIDHandler(db *sql.DB) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(comments); err != nil {
-			respondError(w, err.Error(), http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
 	}
@@ -113,7 +114,7 @@ func GetCommentsByIDHandler(db *sql.DB) http.HandlerFunc {
 		IDStr := vars["id"]
 		ID, err := strconv.Atoi(IDStr)
 		if err != nil {
-			respondError(w, "Invalid comment ID : CommentID="+IDStr, http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid comment ID : CommentID="+IDStr, err))
 			return
 		}
 
@@ -122,16 +123,16 @@ func GetCommentsByIDHandler(db *sql.DB) http.HandlerFunc {
 		err = db.QueryRowContext(ctx, "SELECT id, post_id, user_id, content, created_at FROM comments WHERE id = $1", ID).Scan(&comment.ID, &comment.PostID, &comment.UserID, &comment.Content, &comment.CreatedAt)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				respondError(w, "Comment Not Found : CommentID="+IDStr, http.StatusNotFound)
+				respondAppError(w, apperror.NewAppError(apperror.TypeNotFound, "Comment Not Found : CommentID="+IDStr, err))
 			} else {
-				respondError(w, "Database error : CommentID="+IDStr, http.StatusInternalServerError)
+				respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Database error : CommentID="+IDStr, err))
 			}
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(comment); err != nil {
-			respondError(w, err.Error(), http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
 	}
@@ -164,7 +165,7 @@ func PostCommentHandler(db *sql.DB) http.HandlerFunc {
 		// JWTからuser_idを取得
 		userID, ok := ctx.Value(middleware.UserIDKey).(int)
 		if !ok {
-			respondError(w, "Unauthorized", http.StatusUnauthorized)
+			respondAppError(w, apperror.NewAppError(apperror.TypeUnauthorized, "Unauthorized", nil))
 			return
 		}
 
@@ -173,25 +174,26 @@ func PostCommentHandler(db *sql.DB) http.HandlerFunc {
 		postIDStr := vars["id"]
 		postID, err := strconv.Atoi(postIDStr)
 		if err != nil {
-			respondError(w, "Invalid post ID : PostID="+postIDStr, http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid post ID : PostID="+postIDStr, err))
 			return
 		}
 
 		// リクエストボディからコメントを読み取る
 		var comment models.Comment
 		if err := json.NewDecoder(r.Body).Decode(&comment); err != nil {
-			respondError(w, "Invalid request body : PostID="+postIDStr, http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid request body : PostID="+postIDStr, err))
 			return
 		}
 
 		// コメントが空の場合はエラーとする
 		if strings.TrimSpace(comment.Content) == "" {
-			respondError(w, "Content is required : PostID="+postIDStr, http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Content is required : PostID="+postIDStr, nil))
+			return
 		}
 
 		// コメントが500文字以上の場合はエラーとする
 		if len(comment.Content) > MaxCommentLength {
-			respondError(w, "Content must be 500 characters or less : PostID="+postIDStr, http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Content must be 500 characters or less : PostID="+postIDStr, nil))
 			return
 		}
 
@@ -208,13 +210,13 @@ func PostCommentHandler(db *sql.DB) http.HandlerFunc {
 			&comment.CreatedAt,
 		)
 		if err != nil {
-			respondError(w, "Failed to insert comment : "+err.Error(), http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to insert comment : "+err.Error(), err))
 			return
 		}
 
 		w.WriteHeader(http.StatusCreated)
 		if err := json.NewEncoder(w).Encode(comment); err != nil {
-			respondError(w, err.Error(), http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
 
@@ -248,7 +250,7 @@ func DeleteCommentHandler(db *sql.DB) http.HandlerFunc {
 		// JWTからuser_idを取得
 		userID, ok := ctx.Value(middleware.UserIDKey).(int)
 		if !ok {
-			respondError(w, "Unauthorized : User ID not found in context", http.StatusUnauthorized)
+			respondAppError(w, apperror.NewAppError(apperror.TypeUnauthorized, "Unauthorized : User ID not found in context", nil))
 			return
 		}
 
@@ -257,7 +259,7 @@ func DeleteCommentHandler(db *sql.DB) http.HandlerFunc {
 		commentIDStr := vars["id"]
 		commentID, err := strconv.Atoi(commentIDStr)
 		if err != nil {
-			respondError(w, "Invalid comment ID : CommentID="+commentIDStr, http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid comment ID : CommentID="+commentIDStr, err))
 			return
 		}
 
@@ -265,30 +267,30 @@ func DeleteCommentHandler(db *sql.DB) http.HandlerFunc {
 		var commentOwnerID int
 		err = db.QueryRowContext(ctx, "SELECT user_id FROM comments WHERE id = $1", commentID).Scan(&commentOwnerID)
 		if err == sql.ErrNoRows {
-			respondError(w, "Comment not found", http.StatusNotFound)
+			respondAppError(w, apperror.NewAppError(apperror.TypeNotFound, "Comment not found : CommentID="+commentIDStr, err))
 			return
 		} else if err != nil {
-			respondError(w, "Database error : CommentID="+commentIDStr, http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Database error : CommentID="+commentIDStr, err))
 			return
 		}
 
 		// 所有者ではない場合は削除不可
 		if commentOwnerID != userID {
-			respondError(w, "Forbidden : CommentID="+commentIDStr, http.StatusForbidden)
+			respondAppError(w, apperror.NewAppError(apperror.TypeForbidden, "Forbidden : CommentID="+commentIDStr, nil))
 			return
 		}
 
 		// コメントを削除する
 		_, err = db.ExecContext(ctx, "DELETE FROM comments WHERE id = $1", commentID)
 		if err != nil {
-			respondError(w, "Failed to delete comment : CommentID="+commentIDStr, http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to delete comment : CommentID="+commentIDStr, err))
 			return
 		}
 
 		// リクエスト正常終了
 		w.WriteHeader(http.StatusOK)
 		if _, err := fmt.Fprintln(w, "Comment deleted successfully!"); err != nil {
-			respondError(w, err.Error(), http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
 	}
@@ -325,7 +327,7 @@ func UpdateCommentHandler(db *sql.DB) http.HandlerFunc {
 		// JWTからuser_idを取得
 		userID, ok := ctx.Value(middleware.UserIDKey).(int)
 		if !ok {
-			respondError(w, "Unauthorized : User ID not found in context", http.StatusUnauthorized)
+			respondAppError(w, apperror.NewAppError(apperror.TypeUnauthorized, "Unauthorized : User ID not found in context", nil))
 			return
 		}
 
@@ -334,7 +336,7 @@ func UpdateCommentHandler(db *sql.DB) http.HandlerFunc {
 		commentIDStr := vars["id"]
 		commentID, err := strconv.Atoi(commentIDStr)
 		if err != nil {
-			respondError(w, "Invalid comment ID : CommentID="+commentIDStr, http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid comment ID : CommentID="+commentIDStr, err))
 			return
 		}
 
@@ -343,18 +345,19 @@ func UpdateCommentHandler(db *sql.DB) http.HandlerFunc {
 			Content string `json:"content"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			respondError(w, "Invalid request body : CommentID="+commentIDStr, http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid request body : CommentID="+commentIDStr, err))
 			return
 		}
 
 		// コメントが空の場合はエラーとする
 		if strings.TrimSpace(req.Content) == "" {
-			respondError(w, "Content is required : CommentID="+commentIDStr, http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Content is required : CommentID="+commentIDStr, nil))
+			return
 		}
 
 		// コメントが500文字以上の場合はエラーとする
 		if len(req.Content) > MaxCommentLength {
-			respondError(w, "Content must be 500 characters or less : CommentID="+commentIDStr, http.StatusBadRequest)
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Content must be 500 characters or less : CommentID="+commentIDStr, nil))
 			return
 		}
 
@@ -362,27 +365,27 @@ func UpdateCommentHandler(db *sql.DB) http.HandlerFunc {
 		var existringUserID int
 		err = db.QueryRowContext(ctx, "SELECT user_id FROM comments WHERE id = $1", commentID).Scan(&existringUserID)
 		if err == sql.ErrNoRows {
-			respondError(w, "Comment not found : CommentID="+commentIDStr, http.StatusNotFound)
+			respondAppError(w, apperror.NewAppError(apperror.TypeNotFound, "Comment not found : CommentID="+commentIDStr, err))
 			return
 		} else if err != nil {
-			respondError(w, "Database error : CommentID="+commentIDStr, http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Database error : CommentID="+commentIDStr, err))
 			return
 		}
 		if existringUserID != userID {
-			respondError(w, "Forbidden : CommentID="+commentIDStr, http.StatusForbidden)
+			respondAppError(w, apperror.NewAppError(apperror.TypeForbidden, "Forbidden : CommentID="+commentIDStr, nil))
 			return
 		}
 
 		// コメントの更新を実施
 		_, err = db.ExecContext(ctx, "UPDATE comments SET content = $1 WHERE id = $2", req.Content, commentID)
 		if err != nil {
-			respondError(w, "Failed to update comment : CommentID="+commentIDStr, http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to update comment : CommentID="+commentIDStr, err))
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
 		if _, err := fmt.Fprintln(w, "Comment update successfully!"); err != nil {
-			respondError(w, err.Error(), http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
 	}
