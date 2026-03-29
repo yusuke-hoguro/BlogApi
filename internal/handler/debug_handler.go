@@ -18,7 +18,9 @@ func SleepHandler() http.HandlerFunc {
 		case <-time.After(30 * time.Second):
 			w.Header().Set("Content-Type", "text/plain")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("completed"))
+			if _, err := w.Write([]byte("completed")); err != nil {
+				log.Println("write error:", err)
+			}
 			return
 		// クライアントがリクエストをキャンセルした場合の処理
 		case <-ctx.Done():
