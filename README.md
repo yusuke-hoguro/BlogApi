@@ -57,6 +57,7 @@ flowchart LR
 - 開発・テスト環境の再現性を重視し、`Docker Compose`を統一基盤としています。
 - 本番環境では`Nginx`のみ外部公開し、アプリケーションおよびDBは内部ネットワークに隔離しています。
 - CIではローカルPCと同一手順を自動実行し、環境差異を最小化しています。
+- context / timeout / errgroup を用いた、安全なキャンセル伝播とエラー処理を意識して設計しています。
 
 ---
 
@@ -113,7 +114,6 @@ DB_PASSWORD=yourpassword
 DB_NAME=blog
 DB_PORT=5432
 DB_TEST_NAME=blog_test
-DB_TEST_PORT=5433
 DB_HOST=db
 JWT_SECRET=your_jwt_secret
 APP_PORT=8080

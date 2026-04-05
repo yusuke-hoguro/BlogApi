@@ -8,6 +8,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -20,6 +21,7 @@ import (
 	"github.com/yusuke-hoguro/BlogApi/internal/db"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
 	"github.com/yusuke-hoguro/BlogApi/internal/router"
+	"golang.org/x/sync/errgroup"
 
 	_ "github.com/lib/pq"
 )
@@ -46,13 +48,12 @@ func runServer() error {
 
 	// ルーターの設定
 	r := mux.NewRouter()
+	// ルートの登録
 	router.RegisterRoutes(r, conn)
 	// CORSミドルウェアを適用
 	handler := middleware.CorsMiddleware(r)
-
-	// SIGINT/SIGTERMを受けたら停止するコンテキストを作成
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
+	// タイムアウトミドルウェアを適用(戻り値が関数なので（handler）をつけて実行する)
+	handler = middleware.TimeoutMiddleware(10 * time.Second)(handler)
 
 	// HTTPサーバーの設定
 	srv := &http.Server{
@@ -64,25 +65,44 @@ func runServer() error {
 		IdleTimeout:       60 * time.Second,
 	}
 
-	// エラー用のチャネル
-	errChan := make(chan error, 1)
+	// シグナルを受け取るためのコンテキストを作成
+	sigCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
-	// サーバーを別ゴルーチンで起動
-	go func() {
-		log.Println("Server started at " + srv.Addr)
-		errChan <- srv.ListenAndServe()
-	}()
+	// errgroupでgoroutineのエラー管理とキャンセル伝播を行う
+	g, ctx := errgroup.WithContext(sigCtx)
 
-	// サーバー停止のシグナルを待つ
-	select {
-	case err := <-errChan: // サーバーエラーが発生した場合
-		if err != nil && err != http.ErrServerClosed {
-			return fmt.Errorf("server error: %w", err)
-		}
-		return nil
-	case <-ctx.Done(): // SIGINT/SIGTERMを受けた場合
-		log.Printf("Shutdown signal received: %v", ctx.Err())
+	// サーバー起動を起動するgoroutine
+	g.Go(func() error {
+		return runHTTPServer(srv)
+	})
+
+	// コンテキストがキャンセルされたらサーバーをシャットダウンするgoroutine
+	g.Go(func() error {
+		return shutdownOnContextDone(ctx, srv)
+	})
+
+	// いずれかのgoroutineがエラーを返すのを待つ
+	if err := g.Wait(); err != nil {
+		return fmt.Errorf("server error: %w", err)
 	}
+
+	return nil
+}
+
+// HTTPサーバーを起動する
+func runHTTPServer(srv *http.Server) error {
+	log.Printf("Server started at %s", srv.Addr)
+	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return fmt.Errorf("server error: %w", err)
+	}
+	return nil
+}
+
+// コンテキストがキャンセルされたらサーバーをシャットダウンする
+func shutdownOnContextDone(ctx context.Context, srv *http.Server) error {
+	<-ctx.Done()
+	log.Printf("Shutdown signal received: %v", ctx.Err())
 
 	// shutdownのタイムアウトを設定
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -93,12 +113,6 @@ func runServer() error {
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		return fmt.Errorf("Server shutdown failed: %w", err)
 	}
-
-	// サーバーが完全に停止するのを待つ
-	if err := <-errChan; err != nil && err != http.ErrServerClosed {
-		return err
-	}
-
 	log.Println("Server shutdown complete")
 	return nil
 }

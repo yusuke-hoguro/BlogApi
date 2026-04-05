@@ -18,7 +18,7 @@ import (
 // 初期化処理
 func init() {
 	// 環境変数の読み込みを実施
-	if err := godotenv.Load("../.env"); err != nil {
+	if err := godotenv.Load("../../.env"); err != nil {
 		log.Printf("warning: could not load .env file: %v", err)
 	}
 }
@@ -31,7 +31,7 @@ func SetupTestDB(t *testing.T) *sql.DB {
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
 		// ローカル開発用のデフォルト値
-		dbURL = "postgres://postgres:yourpassword@localhost:5433/blog_test?sslmode=disable"
+		dbURL = "postgres://postgres:yourpassword@localhost:5432/blog_test?sslmode=disable"
 	}
 
 	// DB接続
