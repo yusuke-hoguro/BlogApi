@@ -26,9 +26,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// 終了シグナルを受け取るためのエラー
-var ErrShutdownSignal = errors.New("shutdown signal received")
-
 func main() {
 	if err := runServer(); err != nil {
 		log.Println(err)
@@ -68,17 +65,16 @@ func runServer() error {
 		IdleTimeout:       60 * time.Second,
 	}
 
+	// シグナルを受け取るためのコンテキストを作成
+	sigCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	// errgroupでgoroutineのエラー管理とキャンセル伝播を行う
-	g, ctx := errgroup.WithContext(context.Background())
+	g, ctx := errgroup.WithContext(sigCtx)
 
 	// サーバー起動を起動するgoroutine
 	g.Go(func() error {
 		return runHTTPServer(srv)
-	})
-
-	// 終了シグナルを待つgoroutine
-	g.Go(func() error {
-		return waitForSignal(ctx)
 	})
 
 	// コンテキストがキャンセルされたらサーバーをシャットダウンするgoroutine
@@ -87,7 +83,7 @@ func runServer() error {
 	})
 
 	// いずれかのgoroutineがエラーを返すのを待つ
-	if err := g.Wait(); err != nil && !errors.Is(err, ErrShutdownSignal) {
+	if err := g.Wait(); err != nil {
 		return fmt.Errorf("server error: %w", err)
 	}
 
@@ -101,16 +97,6 @@ func runHTTPServer(srv *http.Server) error {
 		return fmt.Errorf("server error: %w", err)
 	}
 	return nil
-}
-
-// 終了シグナルを待つ
-func waitForSignal(ctx context.Context) error {
-	sigCtx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
-	defer stop()
-	// shutdownシグナルを待つ
-	<-sigCtx.Done()
-	// errorを返すことでコンテキストのキャンセルをトリガーする
-	return ErrShutdownSignal
 }
 
 // コンテキストがキャンセルされたらサーバーをシャットダウンする
