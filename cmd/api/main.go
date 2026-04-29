@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/yusuke-hoguro/BlogApi/internal/config"
 	"github.com/yusuke-hoguro/BlogApi/internal/db"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
 	"github.com/yusuke-hoguro/BlogApi/internal/router"
@@ -25,11 +26,6 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	_ "github.com/lib/pq"
-)
-
-const (
-	workerCount = 3
-	queueSize   = 100
 )
 
 func main() {
@@ -60,7 +56,7 @@ func runServer() error {
 	g, ctx := errgroup.WithContext(sigCtx)
 
 	// 監視ワーカープールの作成と起動
-	auditPool := workerpool.NewAuditWorkerPool(workerCount, queueSize)
+	auditPool := workerpool.NewAuditWorkerPool(config.WorkerCount, config.QueueSize)
 	auditPool.Start(ctx)
 	// サーバーがシャットダウンする際にワーカープールも停止するようにする
 	defer auditPool.Stop()

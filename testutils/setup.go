@@ -1,6 +1,7 @@
 package testutils
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"net/http"
@@ -11,8 +12,10 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+	"github.com/yusuke-hoguro/BlogApi/internal/config"
 	"github.com/yusuke-hoguro/BlogApi/internal/handler"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
+	"github.com/yusuke-hoguro/BlogApi/internal/workerpool"
 )
 
 // 初期化処理
@@ -62,11 +65,21 @@ func loadTestSQL(t *testing.T, db *sql.DB, filepath string) {
 }
 
 // テスト用のサーバーを設定する
-func SetupTestServer(db *sql.DB) http.Handler {
+func SetupTestServer(db *sql.DB) (http.Handler, func()) {
 	r := mux.NewRouter()
+
+	// 監視ワーカープールの作成と起動
+	ctx, cancel := context.WithCancel(context.Background())
+	auditPool := workerpool.NewAuditWorkerPool(config.WorkerCount, config.QueueSize)
+	auditPool.Start(ctx)
+	// 停止関数を返して呼び出し元でワーカープールを停止できるようにする
+	cleanup := func() {
+		cancel()
+		auditPool.Stop()
+	}
 	r.HandleFunc("/api/posts", handler.GetAllPostsHandler(db)).Methods("GET")                                           // 全投稿取得用
 	r.HandleFunc("/api/posts/{id}", handler.GetPostsByIDHandler(db)).Methods("GET")                                     // 個別投稿取得用
-	r.HandleFunc("/api/posts", middleware.AuthMiddleware(handler.CreatePostHandler(db))).Methods("POST")                // 個別投稿作成用
+	r.HandleFunc("/api/posts", middleware.AuthMiddleware(handler.CreatePostHandler(db, auditPool))).Methods("POST")     // 個別投稿作成用
 	r.HandleFunc("/api/posts/{id}", middleware.AuthMiddleware(handler.UpdatePostHandler(db))).Methods("PUT")            // 個別投稿更新用
 	r.HandleFunc("/api/posts/{id}", middleware.AuthMiddleware(handler.DeletePostHandler(db))).Methods("DELETE")         // 個別投稿削除用
 	r.HandleFunc("/api/posts/{id}/comments", middleware.AuthMiddleware(handler.PostCommentHandler(db))).Methods("POST") // コメント投稿
@@ -75,7 +88,7 @@ func SetupTestServer(db *sql.DB) http.Handler {
 	r.HandleFunc("/api/comments/{id}", middleware.AuthMiddleware(handler.UpdateCommentHandler(db))).Methods("PUT")      // コメントを更新する
 	r.HandleFunc("/api/posts/{id}/like", middleware.AuthMiddleware(handler.LikePostHandler(db))).Methods("POST")        // 投稿にいいねをつける
 	r.HandleFunc("/api/posts/{id}/likes", handler.GetLikesHandler(db)).Methods("GET")                                   // 投稿のいいねを取得する
-	return r
+	return r, cleanup
 }
 
 // テスト用データのパスを取得する
