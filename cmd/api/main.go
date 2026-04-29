@@ -21,9 +21,15 @@ import (
 	"github.com/yusuke-hoguro/BlogApi/internal/db"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
 	"github.com/yusuke-hoguro/BlogApi/internal/router"
+	"github.com/yusuke-hoguro/BlogApi/internal/workerpool"
 	"golang.org/x/sync/errgroup"
 
 	_ "github.com/lib/pq"
+)
+
+const (
+	workerCount = 3
+	queueSize   = 100
 )
 
 func main() {
@@ -46,15 +52,27 @@ func runServer() error {
 		port = "8080"
 	}
 
+	// シグナルを受け取るためのコンテキストを作成
+	sigCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	// errgroupでgoroutineのエラー管理とキャンセル伝播を行う
+	g, ctx := errgroup.WithContext(sigCtx)
+
+	// 監視ワーカープールの作成と起動
+	auditPool := workerpool.NewAuditWorkerPool(workerCount, queueSize)
+	auditPool.Start(ctx)
+	// サーバーがシャットダウンする際にワーカープールも停止するようにする
+	defer auditPool.Stop()
+
 	// ルーターの設定
 	r := mux.NewRouter()
-	// ルートの登録
-	router.RegisterRoutes(r, conn)
+	// ルートの登録(監視ワーカープールを渡す)
+	router.RegisterRoutes(r, conn, auditPool)
 	// CORSミドルウェアを適用
 	handler := middleware.CorsMiddleware(r)
 	// タイムアウトミドルウェアを適用(戻り値が関数なので（handler）をつけて実行する)
 	handler = middleware.TimeoutMiddleware(10 * time.Second)(handler)
-
 	// HTTPサーバーの設定
 	srv := &http.Server{
 		Addr:              ":" + port,
@@ -64,13 +82,6 @@ func runServer() error {
 		ReadHeaderTimeout: 5 * time.Second,
 		IdleTimeout:       60 * time.Second,
 	}
-
-	// シグナルを受け取るためのコンテキストを作成
-	sigCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
-	// errgroupでgoroutineのエラー管理とキャンセル伝播を行う
-	g, ctx := errgroup.WithContext(sigCtx)
 
 	// サーバー起動を起動するgoroutine
 	g.Go(func() error {

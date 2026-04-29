@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/yusuke-hoguro/BlogApi/internal/apperror"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
 	"github.com/yusuke-hoguro/BlogApi/internal/models"
+	"github.com/yusuke-hoguro/BlogApi/internal/workerpool"
 )
 
 const (
@@ -85,7 +87,7 @@ func GetPostsByIDHandler(db *sql.DB) http.HandlerFunc {
 // @Failure 401 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts [post]
-func CreatePostHandler(db *sql.DB) http.HandlerFunc {
+func CreatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -136,6 +138,11 @@ func CreatePostHandler(db *sql.DB) http.HandlerFunc {
 		if err != nil {
 			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to insert post", err))
 			return
+		}
+
+		// 監視ワーカープールにイベントを追加
+		if err := auditPool.Enqueue(ctx, workerpool.AuditEvent{Action: "post_created", UserID: post.UserID, PostID: post.ID}); err != nil {
+			log.Printf("Failed to enqueue audit event: %v", err)
 		}
 
 		// 作成した記事IDをJSONで返す
