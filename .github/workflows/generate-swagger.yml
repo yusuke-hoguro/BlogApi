@@ -18,6 +18,10 @@ on:
         default: "develop"
         type: string
 
+# GitHubの方針でNode.js 24が2026年6月からデフォルトになるため追加
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   generate-swagger:
     runs-on: ubuntu-latest

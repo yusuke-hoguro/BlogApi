@@ -12,6 +12,10 @@ concurrency:
 on:
   workflow_dispatch:
 
+# GitHubの方針でNode.js 24が2026年6月からデフォルトになるため追加
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   deploy:
     if: github.ref_name == 'main'
