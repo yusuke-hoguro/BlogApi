@@ -20,8 +20,10 @@ func TestLikePostHandler(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// テスト用のJWTトークン発行
 	userID := 1
@@ -80,8 +82,10 @@ func TestGetLikesHandler(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// いいねを取得する投稿
 	postID := 1

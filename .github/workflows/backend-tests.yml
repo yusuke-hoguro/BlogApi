@@ -14,22 +14,27 @@ on:
     - cron: "0 18 * * *"
   workflow_dispatch:
 
+# GitHubの方針でNode.js 24が2026年6月からデフォルトになるため追加
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   lint:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with: 
           go-version: 1.24
+          cache: true
 
       # Go言語のコードを分析
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v9
         with:
           version: latest
           args: --timeout=5m
@@ -40,12 +45,13 @@ jobs:
     steps:
       # ランナー環境にリポジトリのコードをチェックアウトする
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set Up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: 1.24
+          cache: true
 
       - name: Verify dependencies
         run: go mod tidy && git diff --exit-code go.mod go.sum 
@@ -56,7 +62,7 @@ jobs:
 
       # カバレッジ対応
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: coverage/coverage.out
@@ -73,7 +79,7 @@ jobs:
       # テスト失敗時はログをartifactにUP
       - name: Upload test logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-logs
           path: logs/test.log

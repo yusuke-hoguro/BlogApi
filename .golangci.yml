@@ -1,3 +1,5 @@
+version: "2"
+
 run:
   timeout: 5m
   tests: true
@@ -10,24 +12,27 @@ linters:
     - unused          # 使われてない変数や関数を検出
     - gosimple        # 冗長なコードをシンプルに
     - gocritic        # より高度なコード改善提案
-    - gofmt           # フォーマットチェック
-    - goimports       # import整列もチェック 
 
   disable:
     - depguard        # 特定のパッケージ利用禁止
 
-issues:
-  exclude-rules:
-    - linters:
-        - errcheck
-      text: "Close"   # defer file.Closeのエラーチェックを無視する
+  exclusions:
+    rules:
+      - linters:
+          - errcheck
+        text: "Close" # defer file.Closeのエラーチェックを無視する
+        
+formatters:
+  enable:
+    - gofmt
+    - goimports
 
+issues:
   max-same-issues: 3
   max-issues-per-linter: 10
-  exclude-use-default: false
 
 output:
   formats:
-    - format: colored-line-number
-  print-issued-lines: true
-  print-linter-name: true
+    text:
+      path: stdout
+      colors: true

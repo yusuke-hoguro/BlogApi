@@ -21,8 +21,10 @@ func TestGetAllPostsHandler(t *testing.T) {
 	defer db.Close()
 
 	// テスト用のサーバーを作成する
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// HTTP Getリクエストの送信
 	resp, err := http.Get(server.URL + "/api/posts")
@@ -60,8 +62,10 @@ func TestCreatePostHandler(t *testing.T) {
 	defer db.Close()
 
 	// テスト用のサーバーを作成する
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// JWTトークンを発行
 	token, err := handler.GenerateJWT(3)
@@ -101,8 +105,10 @@ func TestCreatePostHandlerUnauthorized(t *testing.T) {
 	defer db.Close()
 
 	// テスト用のサーバーを作成する
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// JSONデータを構築
 	postJSON := `{"title": "テスト投稿", "content": "これはテスト用です"}`
@@ -134,8 +140,10 @@ func TestCreatePostHandlerInvalidToken(t *testing.T) {
 	defer db.Close()
 
 	// テスト用のサーバーを作成する
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// 無効なJWTトークン（文字列を壊す）
 	token := "Bearer invalid.token.here"
@@ -171,9 +179,10 @@ func TestCreatePostHandlerInvalidJSON(t *testing.T) {
 	defer db.Close()
 
 	// テスト用のサーバーを作成する
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
-
+	defer cleanup()
 	// JWTトークンを発行
 	token, err := handler.GenerateJWT(3)
 	if err != nil {
@@ -212,8 +221,10 @@ func TestCreatePostHandlerMissingTitle(t *testing.T) {
 	defer db.Close()
 
 	// テスト用のサーバーを作成する
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// JWTトークンを発行
 	token, err := handler.GenerateJWT(3)
@@ -253,8 +264,10 @@ func TestCreatePostHandlerValidation(t *testing.T) {
 	defer db.Close()
 
 	// テスト用のサーバーを作成する
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// JWTトークンを発行
 	token, err := handler.GenerateJWT(3)
@@ -329,8 +342,10 @@ func TestUpdatePostHandler(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーを作成する
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// JWTトークンを発行
 	token, err := handler.GenerateJWT(1)
@@ -374,8 +389,10 @@ func TestUpdatePostHandlerNotFound(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーを作成する
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// JWTトークンを発行
 	token, err := handler.GenerateJWT(1)
@@ -421,8 +438,10 @@ func TestUpdatePostHandlerForbidden(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーを作成する
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// 他人のユーザーIDでJWTトークンを発行
 	token, err := handler.GenerateJWT(99)
@@ -468,8 +487,10 @@ func TestUpdatePostHandlerNoAuthorization(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーを作成する
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// 更新用データのJSON
 	updateJSON := `{"title": "更新されたタイトル", "content": "更新された内容"}`
@@ -507,8 +528,10 @@ func TestUpdatePostHandlerInvalidToken(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーを作成する
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// 改ざんされたトークンを用意
 	invalidToken := "Bearer invalid.jwt.token"
@@ -550,8 +573,10 @@ func TestUpdatePostHandlerValidation(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーを作成する
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// JWTトークンを発行
 	token, err := handler.GenerateJWT(1)
@@ -625,8 +650,10 @@ func TestDeletePostHandler(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// JWTトークンを発行
 	token, err := handler.GenerateJWT(2)
@@ -671,8 +698,10 @@ func TestDeletePostHandlerForbidden(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// コメント投稿した人以外のユーザーIDを設定する
 	token, err := handler.GenerateJWT(99)
@@ -717,8 +746,10 @@ func TestDeletePostHandlerNotFound(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// JWTトークンを発行
 	token, err := handler.GenerateJWT(2)
@@ -763,8 +794,10 @@ func TestDeletePostHandlerNoAuthorization(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// 削除対象のIDからURLを作成
 	postID := 2
@@ -802,8 +835,10 @@ func TestDeletePostHandlerInvalidToken(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// 改ざんされたトークンを用意
 	invalidToken := "Bearer invalid.jwt.token"
@@ -845,8 +880,10 @@ func TestGetPostsByIDHandler(t *testing.T) {
 	defer db.Close()
 
 	// テスト用のサーバーを作成する
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// 投稿IDを指定してJSONデータ作成
 	postID := 1
@@ -879,8 +916,10 @@ func TestGetPostsByIDHandlerNotFound(t *testing.T) {
 	defer db.Close()
 
 	// テスト用のサーバーを作成する
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// 存在しない投稿IDを指定してJSONデータ作成
 	postID := 9999
@@ -913,8 +952,10 @@ func TestGetPostsByIDHandlerInvalidID(t *testing.T) {
 	defer db.Close()
 
 	// テスト用のサーバーを作成する
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// 数値以外のIDを指定してJSONデータ作成
 	url := fmt.Sprintf("%s/api/posts/aaa", server.URL)

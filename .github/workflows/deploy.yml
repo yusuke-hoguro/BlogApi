@@ -12,6 +12,10 @@ concurrency:
 on:
   workflow_dispatch:
 
+# GitHubの方針でNode.js 24が2026年6月からデフォルトになるため追加
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   deploy:
     if: github.ref_name == 'main'
@@ -23,7 +27,7 @@ jobs:
     steps:
       # 最新mainチェック用にリポジトリを取得
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0 # 全履歴を取得
 
