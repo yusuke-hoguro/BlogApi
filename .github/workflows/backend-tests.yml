@@ -62,7 +62,7 @@ jobs:
 
       # カバレッジ対応
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: coverage/coverage.out
@@ -79,7 +79,7 @@ jobs:
       # テスト失敗時はログをartifactにUP
       - name: Upload test logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-logs
           path: logs/test.log

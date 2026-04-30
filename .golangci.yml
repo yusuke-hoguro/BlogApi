@@ -18,15 +18,15 @@ linters:
   disable:
     - depguard        # 特定のパッケージ利用禁止
 
-issues:
-  exclude-rules:
-    - linters:
-        - errcheck
-      text: "Close"   # defer file.Closeのエラーチェックを無視する
+  exclusions:
+    rules:
+      - linters:
+          - errcheck
+        text: "Close" # defer file.Closeのエラーチェックを無視する
 
+issues:
   max-same-issues: 3
   max-issues-per-linter: 10
-  exclude-use-default: false
 
 output:
   formats:
