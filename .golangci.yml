@@ -12,8 +12,6 @@ linters:
     - unused          # 使われてない変数や関数を検出
     - gosimple        # 冗長なコードをシンプルに
     - gocritic        # より高度なコード改善提案
-    - gofmt           # フォーマットチェック
-    - goimports       # import整列もチェック 
 
   disable:
     - depguard        # 特定のパッケージ利用禁止
@@ -23,6 +21,11 @@ linters:
       - linters:
           - errcheck
         text: "Close" # defer file.Closeのエラーチェックを無視する
+        
+formatters:
+  enable:
+    - gofmt
+    - goimports
 
 issues:
   max-same-issues: 3

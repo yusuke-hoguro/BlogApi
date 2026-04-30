@@ -26,7 +26,7 @@ jobs:
 
       # Node.jsのセットアップ（package-lock.json の内容でnpmキャッシュを使うか判断）
       - name: Setup node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: "npm"
