@@ -27,7 +27,7 @@ jobs:
     steps:
       # 最新mainチェック用にリポジトリを取得
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0 # 全履歴を取得
 

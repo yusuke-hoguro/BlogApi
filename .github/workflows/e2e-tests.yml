@@ -22,7 +22,7 @@ jobs:
     steps:
       # ソースコードをランナーにコピー
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # Node.jsのセットアップ（package-lock.json の内容でnpmキャッシュを使うか判断）
       - name: Setup node.js
