@@ -11,6 +11,7 @@ import (
 	"github.com/yusuke-hoguro/BlogApi/internal/apperror"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
 	"github.com/yusuke-hoguro/BlogApi/internal/models"
+	"github.com/yusuke-hoguro/BlogApi/internal/workerpool"
 )
 
 // LikePostHandler godoc
@@ -29,7 +30,7 @@ import (
 // @Failure 401 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts/{id}/like [post]
-func LikePostHandler(db *sql.DB) http.HandlerFunc {
+func LikePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -62,6 +63,9 @@ func LikePostHandler(db *sql.DB) http.HandlerFunc {
 			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
+
+		// 監視ワーカープールにイベントを追加
+		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "post_liked", UserID: userID, PostID: postID})
 	}
 }
 
@@ -79,7 +83,7 @@ func LikePostHandler(db *sql.DB) http.HandlerFunc {
 // @Failure 400 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts/{id}/likes [get]
-func GetLikesHandler(db *sql.DB) http.HandlerFunc {
+func GetLikesHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -129,6 +133,9 @@ func GetLikesHandler(db *sql.DB) http.HandlerFunc {
 			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
+
+		// 監視ワーカープールにイベントを追加
+		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "likes_fetched", PostID: postID})
 	}
 }
 
@@ -148,7 +155,7 @@ func GetLikesHandler(db *sql.DB) http.HandlerFunc {
 // @Failure 401 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts/{id}/like [delete]
-func UnlikePostHandler(db *sql.DB) http.HandlerFunc {
+func UnlikePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -180,6 +187,8 @@ func UnlikePostHandler(db *sql.DB) http.HandlerFunc {
 			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
+		// 監視ワーカープールにイベントを追加
+		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "post_unliked", UserID: userID, PostID: postID})
 		w.WriteHeader(http.StatusNoContent)
 	}
 }

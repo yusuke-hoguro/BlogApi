@@ -10,6 +10,7 @@ import (
 	"github.com/yusuke-hoguro/BlogApi/internal/apperror"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
 	"github.com/yusuke-hoguro/BlogApi/internal/models"
+	"github.com/yusuke-hoguro/BlogApi/internal/workerpool"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -30,7 +31,7 @@ import (
 // @Failure 405 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/signup [post]
-func SignupHandler(db *sql.DB) http.HandlerFunc {
+func SignupHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -80,6 +81,9 @@ func SignupHandler(db *sql.DB) http.HandlerFunc {
 			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
+
+		// 監視ワーカープールにイベントを追加
+		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "user_signed_up", UserID: userData.ID})
 	}
 }
 
@@ -102,7 +106,7 @@ func SignupHandler(db *sql.DB) http.HandlerFunc {
 // @Failure 405 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/login [post]
-func LoginHandler(db *sql.DB) http.HandlerFunc {
+func LoginHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -166,6 +170,9 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
+
+		// 監視ワーカープールにイベントを追加
+		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "user_logged_in", UserID: id})
 	}
 }
 

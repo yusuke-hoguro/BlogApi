@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/yusuke-hoguro/BlogApi/internal/apperror"
+	"github.com/yusuke-hoguro/BlogApi/internal/workerpool"
 )
 
 // HealthzHandler godoc
@@ -18,8 +19,10 @@ import (
 // @Success 200 {string} string "OK"
 // @Failure 405 {object} models.ErrorResponse
 // @Router /api/healthz [get]
-func HealthzHandler() http.HandlerFunc {
+func HealthzHandler(auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {
 			respondAppError(w, apperror.NewAppError(apperror.TypeMethodNotAllowed, "Method Not Allowed", nil))
 			return
@@ -30,5 +33,8 @@ func HealthzHandler() http.HandlerFunc {
 			log.Printf("failed to write response: %v", err)
 			return
 		}
+
+		// 監視ワーカープールにイベントを追加
+		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "health_checked"})
 	}
 }
