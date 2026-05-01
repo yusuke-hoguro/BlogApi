@@ -22,7 +22,7 @@ NPM=cd $(FRONT_DIR) && npm
 		up-dev up-dev-attach down-dev down-volumes-dev restart-dev logs-dev build-dev rebuild-dev ps-dev \
 		up-prod down-prod restart-prod logs-prod build-prod rebuild-prod ps-prod \
 		up-test down-test down-volumes-test restart-test logs-test build-test rebuild-test ps-test \
-		test-go test-e2e ci-test wait-test-db \
+		test-go go-lint test-e2e ci-test wait-test-db \
 		fe-install fe-dev fe-build fe-preview
 
 help:
@@ -55,6 +55,7 @@ help:
 	@echo "  make ps-test              - Show status of containers in test environment"
 	@echo ""
 	@echo "  make test-go              - Run backend handler function tests"
+	@echo "  make go-lint			   - Run golangci-lint checks"
 	@echo "  make test-e2e             - Run E2E tests"
 	@echo "  make ci-test              - Run all CI tests"
 	@echo ""	
@@ -148,6 +149,12 @@ test-go:
 	$(MAKE) wait-test-db; \
 	go test ./internal/handler/... -v
 
+# Go静的解析の実行
+go-lint:
+	golangci-lint --version
+	golangci-lint config verify
+	golangci-lint run --timeout 5m
+
 # E2Eテスト実行
 test-e2e:
 	@set -e; \
@@ -156,7 +163,7 @@ test-e2e:
 	cd blog-api-frontend && npx playwright test
 
 # CIのテストをまとめて実行
-ci-test: test-go test-e2e
+ci-test: go-lint test-go test-e2e
 
 # テスト用DBの起動待ち（5秒待機）
 wait-test-db:

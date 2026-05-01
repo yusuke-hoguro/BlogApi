@@ -21,8 +21,10 @@ func TestPostCommentHandle(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// テスト用のJWTトークン発行
 	token, err := handler.GenerateJWT(3)
@@ -68,8 +70,10 @@ func TestPostCommentHandleValidation(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// テスト用のJWTトークン発行
 	token, err := handler.GenerateJWT(3)
@@ -126,8 +130,10 @@ func TestDeleteCommentHandler(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// テスト用のJWTトークン発行
 	token, err := handler.GenerateJWT(2)
@@ -171,8 +177,10 @@ func TestDeleteCommentHandlerUnauthorized(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// コメント投稿した人以外のユーザーIDを設定する
 	token, err := handler.GenerateJWT(99)
@@ -216,8 +224,10 @@ func TestDeleteCommentHandlerNotFound(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// JWTトークンを発行
 	token, err := handler.GenerateJWT(2)
@@ -261,8 +271,10 @@ func TestDeleteCommentHandlerNoAuthorization(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// コメントIDを指定してJSONデータ作成
 	commentID := 2
@@ -297,8 +309,10 @@ func TestDeleteCommentHandlerInvalidToken(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// 改ざんされたトークンを用意
 	invalidToken := "Bearer invalid.jwt.token"
@@ -336,8 +350,10 @@ func TestGetCommentsByPostIDHandler(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// 投稿IDを設定
 	postID := 2
@@ -396,8 +412,10 @@ func TestGetCommentsByPostIDHandlerMultiple(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// 投稿IDを設定(init_test.sqlで複数コメント登録済み)
 	postID := 1
@@ -457,8 +475,10 @@ func TestGetCommentsByPostIDHandlerEmpty(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// 投稿IDを設定(init_test.sqlで複数コメント登録済み)
 	postID := 3
@@ -502,8 +522,10 @@ func TestGetCommentsByPostIDHandlerPostNotFound(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// 存在しない投稿IDを設定
 	postID := 9999
@@ -550,8 +572,10 @@ func TestGetCommentsByPostIDHandlerInvalidID(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// リクエストの作成
 	url := fmt.Sprintf("%s/api/posts/ddd/comments", server.URL)
@@ -591,8 +615,10 @@ func TestUpdateCommentHandler(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// テスト用のJWTトークン発行
 	token, err := handler.GenerateJWT(1)
@@ -640,8 +666,10 @@ func TestUpdateCommentHandlerNotFound(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// テスト用のJWTトークン発行
 	token, err := handler.GenerateJWT(1)
@@ -689,8 +717,10 @@ func TestUpdateCommentHandlerEmptyContent(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// テスト用のJWTトークン発行
 	token, err := handler.GenerateJWT(2)
@@ -738,8 +768,10 @@ func TestUpdateCommentHandlerNoAuthorization(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// 空のコメントを設定して更新用JSONデータ作成
 	commentID := 2
@@ -779,8 +811,10 @@ func TestUpdateCommentHandlerForbidden(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// テスト用のJWTトークン発行
 	token, err := handler.GenerateJWT(2)
@@ -828,8 +862,10 @@ func TestUpdateCommentHandlerValidation(t *testing.T) {
 	defer db.Close()
 
 	// テスト用サーバーのセットアップ
-	server := httptest.NewServer(testutils.SetupTestServer(db))
+	h, cleanup := testutils.SetupTestServer(db)
+	server := httptest.NewServer(h)
 	defer server.Close()
+	defer cleanup()
 
 	// テスト用のJWTトークン発行
 	token, err := handler.GenerateJWT(1)
