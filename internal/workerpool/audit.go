@@ -9,6 +9,7 @@ import (
 )
 
 var ErrQueueFull = errors.New("job queue is full")
+var ErrQueueClosed = errors.New("job queue is closed")
 
 // 監視イベントの構造体
 type AuditEvent struct {
@@ -23,6 +24,8 @@ type AuditWorkerPool struct {
 	workerCount int
 	stopOnce    sync.Once
 	wg          sync.WaitGroup
+	mu          sync.RWMutex
+	closed      bool
 }
 
 // 新規監視ワーカープールの作成
@@ -43,6 +46,16 @@ func (p *AuditWorkerPool) Start() {
 
 // 監視ワーカープールのキューにイベントを追加
 func (p *AuditWorkerPool) Enqueue(ctx context.Context, event AuditEvent) error {
+	// 読み取り用のロック取得
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	// ワーカープールが停止している場合はエラーを返す
+	if p.closed {
+		return ErrQueueClosed
+	}
+
+	// ジョブチャンネルにイベントを送信（非ブロッキング）
 	select {
 	case p.jobCh <- event:
 		return nil
@@ -56,7 +69,12 @@ func (p *AuditWorkerPool) Enqueue(ctx context.Context, event AuditEvent) error {
 // 監視ワーカープールの停止
 func (p *AuditWorkerPool) Stop() {
 	p.stopOnce.Do(func() {
-		close(p.jobCh)
+		p.mu.Lock()
+		if !p.closed {
+			p.closed = true
+			close(p.jobCh)
+		}
+		p.mu.Unlock()
 		p.wg.Wait()
 	})
 }
