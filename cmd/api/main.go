@@ -57,7 +57,7 @@ func runServer() error {
 
 	// 監視ワーカープールの作成と起動
 	auditPool := workerpool.NewAuditWorkerPool(config.WorkerCount, config.QueueSize)
-	auditPool.Start(ctx)
+	auditPool.Start()
 	// サーバーがシャットダウンする際にワーカープールも停止するようにする
 	defer auditPool.Stop()
 

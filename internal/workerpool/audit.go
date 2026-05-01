@@ -21,6 +21,7 @@ type AuditEvent struct {
 type AuditWorkerPool struct {
 	jobCh       chan AuditEvent
 	workerCount int
+	stopOnce    sync.Once
 	wg          sync.WaitGroup
 }
 
@@ -33,10 +34,10 @@ func NewAuditWorkerPool(wokercount int, queueSize int) *AuditWorkerPool {
 }
 
 // 監視ワーカープールの開始
-func (p *AuditWorkerPool) Start(ctx context.Context) {
+func (p *AuditWorkerPool) Start() {
 	for i := 1; i <= p.workerCount; i++ {
 		p.wg.Add(1)
-		go p.worker(ctx, i)
+		go p.worker(i)
 	}
 }
 
@@ -54,43 +55,31 @@ func (p *AuditWorkerPool) Enqueue(ctx context.Context, event AuditEvent) error {
 
 // 監視ワーカープールの停止
 func (p *AuditWorkerPool) Stop() {
-	close(p.jobCh)
-	p.wg.Wait()
+	p.stopOnce.Do(func() {
+		close(p.jobCh)
+		p.wg.Wait()
+	})
 }
 
 // ワーカーの処理ループ
-func (p *AuditWorkerPool) worker(ctx context.Context, id int) {
+func (p *AuditWorkerPool) worker(id int) {
 	defer p.wg.Done()
 
-	for {
-		select {
-		case event, ok := <-p.jobCh:
-			if !ok {
-				log.Printf("audit worker %d: job channel closed", id)
-				return
-			}
-
-			// イベントの処理を実施
-			if err := processAuditEvent(ctx, id, event); err != nil {
-				log.Printf("audit worker %d: failed to process event: %v", id, err)
-			}
-		case <-ctx.Done():
-			log.Printf("audit worker %d: context cancelled", id)
-			return
+	for event := range p.jobCh {
+		// イベントの処理を実施
+		if err := processAuditEvent(id, event); err != nil {
+			log.Printf("audit worker %d: failed to process event: %v", id, err)
 		}
 	}
+
+	log.Printf("audit worker %d: job channel closed", id)
 }
 
 // 監視イベントの処理関数
-func processAuditEvent(ctx context.Context, workerID int, event AuditEvent) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-		// ここで実際のイベント処理を行う（例: ログ出力）
-		log.Printf("audit worker %d: processing event: action=%s, userID=%d, postID=%d", workerID, event.Action, event.UserID, event.PostID)
-		return nil
-	}
+func processAuditEvent(workerID int, event AuditEvent) error {
+	// ここで実際のイベント処理を行う（例: ログ出力）
+	log.Printf("audit worker %d: processing event: action=%s, userID=%d, postID=%d", workerID, event.Action, event.UserID, event.PostID)
+	return nil
 }
 
 // 監視イベントを文字列に変換する関数

@@ -1,7 +1,6 @@
 package testutils
 
 import (
-	"context"
 	"database/sql"
 	"log"
 	"net/http"
@@ -69,12 +68,10 @@ func SetupTestServer(db *sql.DB) (http.Handler, func()) {
 	r := mux.NewRouter()
 
 	// 監視ワーカープールの作成と起動
-	ctx, cancel := context.WithCancel(context.Background())
 	auditPool := workerpool.NewAuditWorkerPool(config.WorkerCount, config.QueueSize)
-	auditPool.Start(ctx)
+	auditPool.Start()
 	// 停止関数を返して呼び出し元でワーカープールを停止できるようにする
 	cleanup := func() {
-		cancel()
 		auditPool.Stop()
 	}
 	r.HandleFunc("/api/posts", handler.GetAllPostsHandler(db)).Methods("GET")                                           // 全投稿取得用
