@@ -118,7 +118,7 @@ func shutdownOnContextDone(ctx context.Context, srv *http.Server) error {
 	// サーバーをシャットダウン
 	log.Printf("Server shutting down...")
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		return fmt.Errorf("Server shutdown failed: %w", err)
+		return fmt.Errorf("server shutdown failed: %w", err)
 	}
 	log.Println("Server shutdown complete")
 	return nil
