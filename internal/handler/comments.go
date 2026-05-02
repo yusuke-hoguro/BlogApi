@@ -12,6 +12,7 @@ import (
 	"github.com/yusuke-hoguro/BlogApi/internal/apperror"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
 	"github.com/yusuke-hoguro/BlogApi/internal/models"
+	"github.com/yusuke-hoguro/BlogApi/internal/workerpool"
 )
 
 const (
@@ -32,7 +33,7 @@ const (
 // @Failure 400 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts/{id}/comments [get]
-func GetCommentsByPostIDHandler(db *sql.DB) http.HandlerFunc {
+func GetCommentsByPostIDHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -86,6 +87,9 @@ func GetCommentsByPostIDHandler(db *sql.DB) http.HandlerFunc {
 			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
+
+		// 監視ワーカープールにイベントを追加
+		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "comments_fetched", PostID: postID})
 	}
 }
 
@@ -104,7 +108,7 @@ func GetCommentsByPostIDHandler(db *sql.DB) http.HandlerFunc {
 // @Failure 400 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/comments/{id} [get]
-func GetCommentsByIDHandler(db *sql.DB) http.HandlerFunc {
+func GetCommentsByIDHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -135,6 +139,9 @@ func GetCommentsByIDHandler(db *sql.DB) http.HandlerFunc {
 			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
+
+		// 監視ワーカープールにイベントを追加
+		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "comment_fetched", UserID: comment.UserID, PostID: comment.PostID})
 	}
 }
 
@@ -157,7 +164,7 @@ func GetCommentsByIDHandler(db *sql.DB) http.HandlerFunc {
 // @Failure 401 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts/{id}/comments [post]
-func PostCommentHandler(db *sql.DB) http.HandlerFunc {
+func PostCommentHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -220,6 +227,8 @@ func PostCommentHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		// 監視ワーカープールにイベントを追加
+		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "comment_created", UserID: comment.UserID, PostID: comment.PostID})
 	}
 }
 
@@ -242,7 +251,7 @@ func PostCommentHandler(db *sql.DB) http.HandlerFunc {
 // @Failure 401 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/comments/{id} [delete]
-func DeleteCommentHandler(db *sql.DB) http.HandlerFunc {
+func DeleteCommentHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -264,8 +273,8 @@ func DeleteCommentHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// コメントの所有者か確認する
-		var commentOwnerID int
-		err = db.QueryRowContext(ctx, "SELECT user_id FROM comments WHERE id = $1", commentID).Scan(&commentOwnerID)
+		var commentOwnerID, postID int
+		err = db.QueryRowContext(ctx, "SELECT user_id, post_id FROM comments WHERE id = $1", commentID).Scan(&commentOwnerID, &postID)
 		if err == sql.ErrNoRows {
 			respondAppError(w, apperror.NewAppError(apperror.TypeNotFound, "Comment not found : CommentID="+commentIDStr, err))
 			return
@@ -293,6 +302,9 @@ func DeleteCommentHandler(db *sql.DB) http.HandlerFunc {
 			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
+
+		// 監視ワーカープールにイベントを追加
+		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "comment_deleted", UserID: userID, PostID: postID})
 	}
 }
 
@@ -319,7 +331,7 @@ func DeleteCommentHandler(db *sql.DB) http.HandlerFunc {
 // @Failure 404 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/comments/{id} [put]
-func UpdateCommentHandler(db *sql.DB) http.HandlerFunc {
+func UpdateCommentHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -362,8 +374,8 @@ func UpdateCommentHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// コメントの所有者か確認
-		var existringUserID int
-		err = db.QueryRowContext(ctx, "SELECT user_id FROM comments WHERE id = $1", commentID).Scan(&existringUserID)
+		var existringUserID, postID int
+		err = db.QueryRowContext(ctx, "SELECT user_id, post_id FROM comments WHERE id = $1", commentID).Scan(&existringUserID, &postID)
 		if err == sql.ErrNoRows {
 			respondAppError(w, apperror.NewAppError(apperror.TypeNotFound, "Comment not found : CommentID="+commentIDStr, err))
 			return
@@ -388,5 +400,8 @@ func UpdateCommentHandler(db *sql.DB) http.HandlerFunc {
 			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
+
+		// 監視ワーカープールにイベントを追加
+		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "comment_updated", UserID: userID, PostID: postID})
 	}
 }

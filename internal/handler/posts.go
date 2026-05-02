@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -36,7 +35,7 @@ const (
 // @Failure 404 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts/{id} [get]
-func GetPostsByIDHandler(db *sql.DB) http.HandlerFunc {
+func GetPostsByIDHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -66,6 +65,9 @@ func GetPostsByIDHandler(db *sql.DB) http.HandlerFunc {
 			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to encode response", err))
 			return
 		}
+
+		// 監視ワーカープールにイベントを追加
+		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "post_fetched", UserID: post.UserID, PostID: post.ID})
 	}
 }
 
@@ -141,9 +143,7 @@ func CreatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 		}
 
 		// 監視ワーカープールにイベントを追加
-		if err := auditPool.Enqueue(ctx, workerpool.AuditEvent{Action: "post_created", UserID: post.UserID, PostID: post.ID}); err != nil {
-			log.Printf("Failed to enqueue audit event: %v", err)
-		}
+		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "post_created", UserID: post.UserID, PostID: post.ID})
 
 		// 作成した記事IDをJSONで返す
 		w.Header().Set("Content-Type", "application/json")
@@ -178,7 +178,7 @@ func CreatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 // @Failure 404 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts/{id} [put]
-func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
+func UpdatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -260,6 +260,9 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		// 監視ワーカープールにイベントを追加
+		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "post_updated", UserID: userID, PostID: id})
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(post); err != nil {
@@ -291,7 +294,7 @@ func UpdatePostHandler(db *sql.DB) http.HandlerFunc {
 // @Failure 404 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts/{id} [put]
-func DeletePostHandler(db *sql.DB) http.HandlerFunc {
+func DeletePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -349,6 +352,8 @@ func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
+		// 監視ワーカープールにイベントを追加
+		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "post_deleted", UserID: userID, PostID: id})
 		w.WriteHeader(http.StatusNoContent)
 	}
 }
@@ -369,7 +374,7 @@ func DeletePostHandler(db *sql.DB) http.HandlerFunc {
 // @Failure 404 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/myposts [get]
-func GetMyPostsHandler(db *sql.DB) http.HandlerFunc {
+func GetMyPostsHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -410,6 +415,9 @@ func GetMyPostsHandler(db *sql.DB) http.HandlerFunc {
 			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
+
+		// 監視ワーカープールにイベントを追加
+		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "my_posts_fetched", UserID: userID})
 	}
 }
 
@@ -427,7 +435,7 @@ func GetMyPostsHandler(db *sql.DB) http.HandlerFunc {
 // @Failure 404 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts [get]
-func GetAllPostsHandler(db *sql.DB) http.HandlerFunc {
+func GetAllPostsHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -463,5 +471,8 @@ func GetAllPostsHandler(db *sql.DB) http.HandlerFunc {
 			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
 			return
 		}
+
+		// 監視ワーカープールにイベントを追加
+		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "posts_fetched"})
 	}
 }
