@@ -6,7 +6,7 @@ JWT認証・認可、投稿/コメント/いいねのCRUD、Docker Composeによ
 - **Backend**: Go + net/http + database/sql + PostgreSQL
 - **Frontend**: React + Vite + Tailwind + Axios
 - **Testing**: Playwright + Docker Compose
-- **Infrastructure**: Docker Compose + Nginx + Certbot
+- **Infrastructure**: Docker Compose + AWS EC2 + Nginx + Certbot + EventBridge + CloudWatch
 
 ---
 
@@ -242,14 +242,42 @@ make up-prod
   - Let's Encrypt証明書参照
   - `/api`をAPI用コンテナへリバースプロキシ
 
-### 証明書（初回発行・更新）
+### AWS / EC2 運用構成
+
+ポートフォリオとして本番運用を想定し、EC2インスタンスの起動・停止、異常終了通知、IP更新、TLS証明書更新まで自動化しています。
+
+- EC2インスタンス上でDocker Composeによりアプリケーションを起動
+- EBSは運用ログやDockerイメージの増加を考慮して **20GB** に拡張
+- CloudWatchでEC2インスタンスの異常終了を検知し、Eメールで通知
+- Amazon EventBridge Schedulerで毎日 **09:00（JST）** にEC2インスタンスを起動
+- Amazon EventBridge Schedulerで毎日 **18:00（JST）** にEC2インスタンスを停止
+- Amazon EventBridge RuleでEC2インスタンスの停止イベントを検知し、Eメールで通知
+
+### デプロイ
+
+EC2インスタンスへのデプロイはGitHub Actionsの手動workflowで実行します。
+
+- Workflow: `.github/workflows/deploy.yml`
+- 実行方法: GitHub Actionsの`Deploy to AWS`を`workflow_dispatch`で手動実行
+- 対象ブランチ: `main`のみ
+- デプロイ前にGitHub Environment `production` の承認が必須
+- 承認後も、対象コミットが最新の`main`であること、必須CIが成功していることを確認してからEC2へデプロイ
+
+### TLS証明書（初回発行・更新）
 
 Let's Encryptの**webroot方式**で証明書を発行しています。
 
 - 証明書保存先：`/etc/letsencrypt`
 - Nginx が直接参照する構成
+- TLS証明書の自動更新はEC2インスタンス内のcronで **毎日 09:30（JST）** に実行
+- GitHub Actionsの`Renew TLS certificates with Certbot` workflowからも手動実行可能
 
-証明書の自動更新はGitHub Actionsの`Renew TLS certificates with Certbot` workflowを使用し、**毎日 03:00（JST）** にEC2内の`certbot`コンテナを起動して実行しています。
+### DuckDNS / Dynamic DNS
+
+EC2のパブリックIP変更に追従するため、DuckDNSへのIP通知を自動化しています。
+
+- EC2インスタンス内のcronで **5分ごと** にDuckDNSへ現在のIPを通知
+- `blog-api.duckdns.org` が常に稼働中のEC2インスタンスを指すように維持
 
 ---
 
