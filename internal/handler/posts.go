@@ -3,6 +3,7 @@ package handler
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -135,10 +136,35 @@ func CreatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 		// 記事にユーザーIDを設定する
 		post.UserID = userID
 
-		// INSERT実行
-		err := db.QueryRowContext(ctx, "INSERT INTO posts (title, content, user_id) VALUES ($1, $2, $3) RETURNING id", post.Title, post.Content, post.UserID).Scan(&post.ID)
+		// トランザクションを開始する
+		tx, err := db.BeginTx(ctx, nil)
+		if err != nil {
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to start transaction", err))
+			return
+		}
+		defer func() {
+			if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
+				fmt.Printf("Failed to rollback transaction: %v\n", err)
+			}
+		}()
+
+		// 投稿 INSERT実行
+		err = tx.QueryRowContext(ctx, "INSERT INTO posts (title, content, user_id) VALUES ($1, $2, $3) RETURNING id", post.Title, post.Content, post.UserID).Scan(&post.ID)
 		if err != nil {
 			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to insert post", err))
+			return
+		}
+
+		// 投稿統計 INSERT実行
+		_, err = tx.ExecContext(ctx, "INSERT INTO post_stats (post_id) VALUES ($1)", post.ID)
+		if err != nil {
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to insert post stats", err))
+			return
+		}
+
+		// トランザクションをコミットする
+		if err := tx.Commit(); err != nil {
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to commit transaction", err))
 			return
 		}
 
