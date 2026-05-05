@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
-	"strings"
 
 	"github.com/yusuke-hoguro/BlogApi/internal/apperror"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
@@ -37,21 +35,20 @@ func GetPostsByIDHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http
 		ctx := r.Context()
 
 		// URLから投稿IDを抽出する
-		idStr := strings.TrimPrefix(r.URL.Path, "/api/posts/")
-		id, err := strconv.Atoi(idStr)
-		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid ID : PostID="+idStr, err))
+		id, appErr := postIDFromRequest(r)
+		if appErr != nil {
+			respondAppError(w, appErr)
 			return
 		}
 
 		// postsテーブルから指定したカラムのデータを取得する
 		var post models.Post
-		err = db.QueryRowContext(ctx, "SELECT id, title, content, user_id, created_at FROM posts WHERE id = $1", id).Scan(&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt)
+		err := db.QueryRowContext(ctx, "SELECT id, title, content, user_id, created_at FROM posts WHERE id = $1", id).Scan(&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt)
 		if err == sql.ErrNoRows {
-			respondAppError(w, apperror.NewAppError(apperror.TypeNotFound, "Post not found : PostID="+idStr, err))
+			respondAppError(w, apperror.NewAppError(apperror.TypeNotFound, fmt.Sprintf("Post not found : PostID=%d", id), err))
 			return
 		} else if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Database error : PostID="+idStr, err))
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, fmt.Sprintf("Database error : PostID=%d", id), err))
 			return
 		}
 
@@ -182,28 +179,27 @@ func UpdatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 			return
 		}
 
-		// URLからIDを取得する
-		idStr := strings.TrimPrefix(r.URL.Path, "/api/posts/")
-		id, err := strconv.Atoi(idStr)
-		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid ID : PostID="+idStr, err))
+		// URLから投稿IDを抽出する
+		id, appErr := postIDFromRequest(r)
+		if appErr != nil {
+			respondAppError(w, appErr)
 			return
 		}
 
 		// DBから投稿者のユーザーIDを取得する
 		var postUserID int
-		err = db.QueryRowContext(ctx, "SELECT user_id FROM posts WHERE id = $1", id).Scan(&postUserID)
+		err := db.QueryRowContext(ctx, "SELECT user_id FROM posts WHERE id = $1", id).Scan(&postUserID)
 		if err == sql.ErrNoRows {
-			respondAppError(w, apperror.NewAppError(apperror.TypeNotFound, "Post not found : PostID="+idStr, err))
+			respondAppError(w, apperror.NewAppError(apperror.TypeNotFound, fmt.Sprintf("Post not found : PostID=%d", id), err))
 			return
 		} else if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Database error : PostID="+idStr, err))
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, fmt.Sprintf("Database error : PostID=%d", id), err))
 			return
 		}
 
 		// リクエストを投げたユーザーが記事の投稿者でない場合はエラー
 		if postUserID != userID {
-			respondAppError(w, apperror.NewAppError(apperror.TypeForbidden, "Forbidden : PostID="+idStr, nil))
+			respondAppError(w, apperror.NewAppError(apperror.TypeForbidden, fmt.Sprintf("Forbidden : PostID=%d", id), nil))
 			return
 		}
 
@@ -276,27 +272,26 @@ func DeletePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 		}
 
 		// URLからIDを取得する
-		idStr := strings.TrimPrefix(r.URL.Path, "/api/posts/")
-		id, err := strconv.Atoi(idStr)
-		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid ID : PostID="+idStr, err))
+		id, appErr := postIDFromRequest(r)
+		if appErr != nil {
+			respondAppError(w, appErr)
 			return
 		}
 
 		// 削除対象の投稿を作成したユーザーのIDを取得する
 		var postUserID int
-		err = db.QueryRow("SELECT user_id FROM posts WHERE id = $1", id).Scan(&postUserID)
+		err := db.QueryRow("SELECT user_id FROM posts WHERE id = $1", id).Scan(&postUserID)
 		if err == sql.ErrNoRows {
-			respondAppError(w, apperror.NewAppError(apperror.TypeNotFound, "Post not found", err))
+			respondAppError(w, apperror.NewAppError(apperror.TypeNotFound, fmt.Sprintf("Post not found : PostID=%d", id), err))
 			return
 		} else if err != nil {
-			respondError(w, "Database error : PostID="+idStr, http.StatusInternalServerError)
+			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, fmt.Sprintf("Database error : PostID=%d", id), err))
 			return
 		}
 
 		// リクエストを投げたユーザーが記事の投稿者でない場合はエラー
 		if postUserID != userID {
-			respondAppError(w, apperror.NewAppError(apperror.TypeForbidden, "Forbidden : PostID="+idStr, nil))
+			respondAppError(w, apperror.NewAppError(apperror.TypeForbidden, fmt.Sprintf("Forbidden : PostID=%d", id), nil))
 			return
 		}
 
