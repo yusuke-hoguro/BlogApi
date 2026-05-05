@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/yusuke-hoguro/BlogApi/internal/apperror"
-	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
 	"github.com/yusuke-hoguro/BlogApi/internal/models"
 	"github.com/yusuke-hoguro/BlogApi/internal/workerpool"
 )
@@ -83,9 +82,9 @@ func CreatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 		ctx := r.Context()
 
 		// JWTからユーザーIDを取得する
-		userID, ok := ctx.Value(middleware.UserIDKey).(int)
-		if !ok {
-			respondAppError(w, apperror.NewAppError(apperror.TypeUnauthorized, "Unauthorized userID not found in context", nil))
+		userID, appErr := userIDFromContext(ctx)
+		if appErr != nil {
+			respondAppError(w, appErr)
 			return
 		}
 
@@ -173,9 +172,9 @@ func UpdatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 		ctx := r.Context()
 
 		// JWTからユーザーIDを取得する
-		userID, ok := ctx.Value(middleware.UserIDKey).(int)
-		if !ok {
-			respondAppError(w, apperror.NewAppError(apperror.TypeUnauthorized, "Unauthorized userID not found in context", nil))
+		userID, appErr := userIDFromContext(ctx)
+		if appErr != nil {
+			respondAppError(w, appErr)
 			return
 		}
 
@@ -265,9 +264,9 @@ func DeletePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 		ctx := r.Context()
 
 		// JWTからリクエストをなげたユーザーIDを取得
-		userID, ok := ctx.Value(middleware.UserIDKey).(int)
-		if !ok {
-			respondAppError(w, apperror.NewAppError(apperror.TypeUnauthorized, "Unauthorized userID not found in context", nil))
+		userID, appErr := userIDFromContext(ctx)
+		if appErr != nil {
+			respondAppError(w, appErr)
 			return
 		}
 
@@ -341,9 +340,9 @@ func GetMyPostsHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 		ctx := r.Context()
 
 		// JWTからリクエストをなげたユーザーIDを取得
-		userID, ok := ctx.Value(middleware.UserIDKey).(int)
-		if !ok {
-			respondAppError(w, apperror.NewAppError(apperror.TypeUnauthorized, "Unauthorized userID not found in context", nil))
+		userID, appErr := userIDFromContext(ctx)
+		if appErr != nil {
+			respondAppError(w, appErr)
 			return
 		}
 
