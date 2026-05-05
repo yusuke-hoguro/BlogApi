@@ -55,13 +55,8 @@ func GetPostsByIDHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http
 			return
 		}
 
-		// json形式に変更してレスポンスに書き込む
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(post); err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to encode response", err))
-			return
-		}
-
+		// 取得した投稿をJSONで返す
+		respondJSON(w, http.StatusOK, post)
 		// 監視ワーカープールにイベントを追加
 		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "post_fetched", UserID: post.UserID, PostID: post.ID})
 	}
@@ -145,16 +140,10 @@ func CreatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 			return
 		}
 
+		// 作成した投稿をJSONで返す
+		respondJSON(w, http.StatusCreated, post)
 		// 監視ワーカープールにイベントを追加
 		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "post_created", UserID: post.UserID, PostID: post.ID})
-
-		// 作成した記事IDをJSONで返す
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(w).Encode(post); err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to encode response", err))
-			return
-		}
 	}
 }
 
@@ -245,15 +234,10 @@ func UpdatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 			return
 		}
 
+		// 更新した投稿をJSONで返す
+		respondJSON(w, http.StatusOK, post)
 		// 監視ワーカープールにイベントを追加
 		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "post_updated", UserID: userID, PostID: id})
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		if err := json.NewEncoder(w).Encode(post); err != nil {
-			respondError(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
 	}
 }
 
@@ -333,13 +317,10 @@ func DeletePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 			return
 		}
 
-		if _, err := fmt.Fprintln(w, "Post deleted successfully!"); err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
-			return
-		}
+		// 削除成功のため204 No Contentを返す
+		respondJSON(w, http.StatusNoContent, nil)
 		// 監視ワーカープールにイベントを追加
 		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "post_deleted", UserID: userID, PostID: id})
-		w.WriteHeader(http.StatusNoContent)
 	}
 }
 
@@ -395,12 +376,8 @@ func GetMyPostsHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(posts); err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
-			return
-		}
-
+		// 取得した投稿をJSONで返す
+		respondJSON(w, http.StatusOK, posts)
 		// 監視ワーカープールにイベントを追加
 		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "my_posts_fetched", UserID: userID})
 	}
@@ -451,11 +428,8 @@ func GetAllPostsHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(posts); err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
-			return
-		}
+		// 取得した投稿をJSONで返す
+		respondJSON(w, http.StatusOK, posts)
 
 		// 監視ワーカープールにイベントを追加
 		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "posts_fetched"})

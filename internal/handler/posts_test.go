@@ -681,8 +681,8 @@ func TestDeletePostHandler(t *testing.T) {
 	defer resp.Body.Close()
 
 	// ステータスコードの確認
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusOK, resp.StatusCode)
+	if resp.StatusCode != http.StatusNoContent {
+		t.Errorf("期待するステータスコード %d, 実際は %d", http.StatusNoContent, resp.StatusCode)
 	}
 
 	// レスポンスを表示
