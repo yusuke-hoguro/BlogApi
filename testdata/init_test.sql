@@ -1,6 +1,9 @@
+-- テーブルの削除
 DROP TABLE IF EXISTS likes;
 DROP TABLE IF EXISTS comments;
 DROP TABLE IF EXISTS users;
+-- 先に参照されるテーブルを削除(post_statsはpostsを参照しているため、先に削除する必要がある)
+DROP TABLE IF EXISTS post_stats; 
 DROP TABLE IF EXISTS posts;
 
 -- ユーザー用のテーブル作成
@@ -37,6 +40,16 @@ CREATE TABLE IF NOT EXISTS likes(
     UNIQUE(user_id, post_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+);
+
+-- 投稿統計のテーブル追加
+CREATE TABLE IF NOT EXISTS post_stats(
+    post_id INTEGER PRIMARY KEY REFERENCES posts(id) ON DELETE CASCADE,
+    view_count INTEGER NOT NULL DEFAULT 0,
+    like_count INTEGER NOT NULL DEFAULT 0,
+    comment_count INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 初期データ投入
