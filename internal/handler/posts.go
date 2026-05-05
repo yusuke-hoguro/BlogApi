@@ -15,11 +15,6 @@ import (
 	"github.com/yusuke-hoguro/BlogApi/internal/workerpool"
 )
 
-const (
-	MaxTitleLength   = 100
-	MaxContentLength = 1000
-)
-
 // GetPostsByIDHandler godoc
 // @Summary 投稿をIDで取得する
 // @Description 指定したIDの投稿を返す
@@ -109,27 +104,9 @@ func CreatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 			return
 		}
 
-		// タイトルが空の場合はエラーとする
-		if strings.TrimSpace(post.Title) == "" {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Title must not be empty", nil))
-			return
-		}
-
-		// タイトルが100文字より大きい場合はエラーとする
-		if len(post.Title) > MaxTitleLength {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Title must be 100 characters or less", nil))
-			return
-		}
-
-		// 投稿の内容が空の場合はエラーとする
-		if strings.TrimSpace(post.Content) == "" {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Content is required", nil))
-			return
-		}
-
-		// 投稿内容が1000文字より大きい場合はエラーとする
-		if len(post.Content) > MaxContentLength {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Content must be 1000 characters or less", nil))
+		// 投稿のバリデーションを行う
+		if err := validatePostInput(post); err != nil {
+			respondAppError(w, err)
 			return
 		}
 
@@ -248,27 +225,9 @@ func UpdatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 			return
 		}
 
-		// タイトルが空の場合はエラーとする
-		if strings.TrimSpace(post.Title) == "" {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Title must not be empty", nil))
-			return
-		}
-
-		// タイトルが100文字より大きい場合はエラーとする
-		if len(post.Title) > MaxTitleLength {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Title must be 100 characters or less", nil))
-			return
-		}
-
-		// 投稿の内容が空の場合はエラーとする
-		if strings.TrimSpace(post.Content) == "" {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Content is required", nil))
-			return
-		}
-
-		// タイトルが1000文字より大きい場合はエラーとする
-		if len(post.Content) > MaxContentLength {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Content must be 1000 characters or less", nil))
+		// 投稿のバリデーションを行う
+		if err := validatePostInput(post); err != nil {
+			respondAppError(w, err)
 			return
 		}
 
