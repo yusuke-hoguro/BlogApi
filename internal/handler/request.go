@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -27,4 +28,12 @@ func userIDFromContext(ctx context.Context) (int, *apperror.AppError) {
 		return 0, apperror.NewAppError(apperror.TypeUnauthorized, "Unauthorized userID not found in context", nil)
 	}
 	return userID, nil
+}
+
+// JSONのリクエストボディを構造体にデコードする関数
+func decodeJSON(r *http.Request, dst any) *apperror.AppError {
+	if err := json.NewDecoder(r.Body).Decode(dst); err != nil {
+		return apperror.NewAppError(apperror.TypeBadRequest, "Invalid request body", err)
+	}
+	return nil
 }
