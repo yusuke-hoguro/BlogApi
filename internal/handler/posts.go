@@ -2,7 +2,6 @@ package handler
 
 import (
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -90,8 +89,8 @@ func CreatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 
 		// Post型の構造体にデコードして格納
 		var post models.Post
-		if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid request body", err))
+		if appErr := decodeJSON(r, &post); appErr != nil {
+			respondAppError(w, appErr)
 			return
 		}
 
@@ -204,8 +203,8 @@ func UpdatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 
 		// Post型の構造体にデコードして格納
 		var post models.Post
-		if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid request body", err))
+		if appErr := decodeJSON(r, &post); appErr != nil {
+			respondAppError(w, appErr)
 			return
 		}
 
