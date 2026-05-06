@@ -21,8 +21,8 @@ func respondJSON(w http.ResponseWriter, status int, data any) {
 }
 
 // エラーレスポンスを返す関数
-func respondError(w http.ResponseWriter, message string, staus int) {
-	respondJSON(w, staus, map[string]string{"message": message})
+func respondError(w http.ResponseWriter, message string, status int) {
+	respondJSON(w, status, map[string]string{"message": message})
 }
 
 // アプリケーションエラーを処理する関数

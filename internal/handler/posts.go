@@ -2,12 +2,12 @@ package handler
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/yusuke-hoguro/BlogApi/internal/apperror"
 	"github.com/yusuke-hoguro/BlogApi/internal/models"
+	"github.com/yusuke-hoguro/BlogApi/internal/repository"
 	"github.com/yusuke-hoguro/BlogApi/internal/workerpool"
 )
 
@@ -31,25 +31,19 @@ func GetPostsByIDHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
-
 		// URLから投稿IDを抽出する
 		id, appErr := postIDFromRequest(r)
 		if appErr != nil {
 			respondAppError(w, appErr)
 			return
 		}
-
-		// postsテーブルから指定したカラムのデータを取得する
-		var post models.Post
-		err := db.QueryRowContext(ctx, "SELECT id, title, content, user_id, created_at FROM posts WHERE id = $1", id).Scan(&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt)
-		if err == sql.ErrNoRows {
-			respondAppError(w, apperror.NewAppError(apperror.TypeNotFound, fmt.Sprintf("Post not found : PostID=%d", id), err))
-			return
-		} else if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, fmt.Sprintf("Database error : PostID=%d", id), err))
+		// DBから指定したIDの投稿を取得する
+		repo := repository.NewPostRepository(db)
+		post, err := repo.FindByID(ctx, id)
+		if err != nil {
+			respondAppError(w, err)
 			return
 		}
-
 		// 取得した投稿をJSONで返す
 		respondJSON(w, http.StatusOK, post)
 		// 監視ワーカープールにイベントを追加
@@ -79,62 +73,31 @@ func CreatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
-
 		// JWTからユーザーIDを取得する
 		userID, appErr := userIDFromContext(ctx)
 		if appErr != nil {
 			respondAppError(w, appErr)
 			return
 		}
-
 		// Post型の構造体にデコードして格納
 		var post models.Post
 		if appErr := decodeJSON(r, &post); appErr != nil {
 			respondAppError(w, appErr)
 			return
 		}
-
 		// 投稿のバリデーションを行う
 		if err := validatePostInput(post); err != nil {
 			respondAppError(w, err)
 			return
 		}
-
 		// 記事にユーザーIDを設定する
 		post.UserID = userID
-
-		// トランザクションを開始する
-		tx, err := db.BeginTx(ctx, nil)
-		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to start transaction", err))
+		// 投稿を作成する
+		repo := repository.NewPostRepository(db)
+		if err := repo.Create(ctx, &post); err != nil {
+			respondAppError(w, err)
 			return
 		}
-		defer func() {
-			if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
-				fmt.Printf("Failed to rollback transaction: %v\n", err)
-			}
-		}()
-
-		// 投稿 INSERT実行
-		err = tx.QueryRowContext(ctx, "INSERT INTO posts (title, content, user_id) VALUES ($1, $2, $3) RETURNING id", post.Title, post.Content, post.UserID).Scan(&post.ID)
-		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to insert post", err))
-			return
-		}
-
-		// 投稿統計 INSERT実行
-		_, err = tx.ExecContext(ctx, "INSERT INTO post_stats (post_id) VALUES ($1)", post.ID)
-		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to insert post stats", err))
-			return
-		}
-
-		// トランザクションをコミットする
-		if err := tx.Commit(); err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to commit transaction", err))
-			return
-		}
-
 		// 作成した投稿をJSONで返す
 		respondJSON(w, http.StatusCreated, post)
 		// 監視ワーカープールにイベントを追加
@@ -169,65 +132,46 @@ func UpdatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
-
 		// JWTからユーザーIDを取得する
 		userID, appErr := userIDFromContext(ctx)
 		if appErr != nil {
 			respondAppError(w, appErr)
 			return
 		}
-
 		// URLから投稿IDを抽出する
 		id, appErr := postIDFromRequest(r)
 		if appErr != nil {
 			respondAppError(w, appErr)
 			return
 		}
-
 		// DBから投稿者のユーザーIDを取得する
-		var postUserID int
-		err := db.QueryRowContext(ctx, "SELECT user_id FROM posts WHERE id = $1", id).Scan(&postUserID)
-		if err == sql.ErrNoRows {
-			respondAppError(w, apperror.NewAppError(apperror.TypeNotFound, fmt.Sprintf("Post not found : PostID=%d", id), err))
-			return
-		} else if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, fmt.Sprintf("Database error : PostID=%d", id), err))
+		repo := repository.NewPostRepository(db)
+		postUserID, err := repo.FindUserIDByPostID(ctx, id)
+		if err != nil {
+			respondAppError(w, err)
 			return
 		}
-
 		// リクエストを投げたユーザーが記事の投稿者でない場合はエラー
 		if postUserID != userID {
 			respondAppError(w, apperror.NewAppError(apperror.TypeForbidden, fmt.Sprintf("Forbidden : PostID=%d", id), nil))
 			return
 		}
-
 		// Post型の構造体にデコードして格納
 		var post models.Post
 		if appErr := decodeJSON(r, &post); appErr != nil {
 			respondAppError(w, appErr)
 			return
 		}
-
 		// 投稿のバリデーションを行う
 		if err := validatePostInput(post); err != nil {
 			respondAppError(w, err)
 			return
 		}
-
-		// UPDATE実行
-		result, err := db.ExecContext(ctx, "UPDATE posts SET title = $1, content = $2 WHERE id = $3", post.Title, post.Content, id)
-		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to update post", err))
+		// 指定したIDの投稿を更新する
+		if err := repo.Update(ctx, id, &post); err != nil {
+			respondAppError(w, err)
 			return
 		}
-
-		// 更新行数の確認
-		rowsAffected, err := result.RowsAffected()
-		if err != nil || rowsAffected == 0 {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Post not found or no changes", err))
-			return
-		}
-
 		// 更新した投稿をJSONで返す
 		respondJSON(w, http.StatusOK, post)
 		// 監視ワーカープールにイベントを追加
@@ -261,55 +205,35 @@ func DeletePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
-
 		// JWTからリクエストをなげたユーザーIDを取得
 		userID, appErr := userIDFromContext(ctx)
 		if appErr != nil {
 			respondAppError(w, appErr)
 			return
 		}
-
 		// URLからIDを取得する
 		id, appErr := postIDFromRequest(r)
 		if appErr != nil {
 			respondAppError(w, appErr)
 			return
 		}
-
 		// 削除対象の投稿を作成したユーザーのIDを取得する
-		var postUserID int
-		err := db.QueryRow("SELECT user_id FROM posts WHERE id = $1", id).Scan(&postUserID)
-		if err == sql.ErrNoRows {
-			respondAppError(w, apperror.NewAppError(apperror.TypeNotFound, fmt.Sprintf("Post not found : PostID=%d", id), err))
-			return
-		} else if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, fmt.Sprintf("Database error : PostID=%d", id), err))
+		repo := repository.NewPostRepository(db)
+		postUserID, err := repo.FindUserIDByPostID(ctx, id)
+		if err != nil {
+			respondAppError(w, err)
 			return
 		}
-
 		// リクエストを投げたユーザーが記事の投稿者でない場合はエラー
 		if postUserID != userID {
 			respondAppError(w, apperror.NewAppError(apperror.TypeForbidden, fmt.Sprintf("Forbidden : PostID=%d", id), nil))
 			return
 		}
-
 		// DELETE実行
-		result, err := db.ExecContext(ctx, "DELETE FROM posts WHERE id = $1", id)
-		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to delete post", err))
+		if err := repo.Delete(ctx, id); err != nil {
+			respondAppError(w, err)
 			return
 		}
-
-		// 削除行数の確認
-		rowsAffected, err := result.RowsAffected()
-		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to confirm deletion", err))
-			return
-		} else if rowsAffected == 0 {
-			respondAppError(w, apperror.NewAppError(apperror.TypeNotFound, "Post not found", nil))
-			return
-		}
-
 		// 削除成功のため204 No Contentを返す
 		respondJSON(w, http.StatusNoContent, nil)
 		// 監視ワーカープールにイベントを追加
@@ -337,38 +261,19 @@ func GetMyPostsHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
-
 		// JWTからリクエストをなげたユーザーIDを取得
 		userID, appErr := userIDFromContext(ctx)
 		if appErr != nil {
 			respondAppError(w, appErr)
 			return
 		}
-
-		// DBから自分の投稿を取得
-		rows, err := db.QueryContext(ctx, "SELECT id, title, content, user_id, created_at FROM posts WHERE user_id = $1", userID)
+		// DBから指定したユーザーIDの投稿を取得する
+		repo := repository.NewPostRepository(db)
+		posts, err := repo.ListByUserID(ctx, userID)
 		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to fetch posts", err))
+			respondAppError(w, err)
 			return
 		}
-		defer rows.Close()
-
-		var posts []models.Post
-		for rows.Next() {
-			var post models.Post
-			if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt); err != nil {
-				respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to parse post", err))
-				return
-			}
-			posts = append(posts, post)
-		}
-
-		// rows.Next()のループが終了した後にエラーが発生していないか確認する(DBからのデータ取得中にエラーが発生していないか)
-		if err := rows.Err(); err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to fetch posts", err))
-			return
-		}
-
 		// 取得した投稿をJSONで返す
 		respondJSON(w, http.StatusOK, posts)
 		// 監視ワーカープールにイベントを追加
@@ -394,36 +299,15 @@ func GetAllPostsHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
-
 		// 全投稿を取得する
-		rows, err := db.QueryContext(ctx, "SELECT id, title, content, user_id, created_at FROM posts ORDER BY created_at DESC")
+		repo := repository.NewPostRepository(db)
+		posts, err := repo.ListAll(ctx)
 		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to fetch posts", err))
+			respondAppError(w, err)
 			return
 		}
-		defer rows.Close()
-
-		// nilをJSON化しないようにスライスを初期化する
-		posts := []models.Post{}
-
-		for rows.Next() {
-			var post models.Post
-			if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt); err != nil {
-				respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to parse post", err))
-				return
-			}
-			posts = append(posts, post)
-		}
-
-		// rows.Next()のループが終了した後にエラーが発生していないか確認する(DBからのデータ取得中にエラーが発生していないか)
-		if err := rows.Err(); err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to fetch posts", err))
-			return
-		}
-
 		// 取得した投稿をJSONで返す
 		respondJSON(w, http.StatusOK, posts)
-
 		// 監視ワーカープールにイベントを追加
 		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "posts_fetched"})
 	}
