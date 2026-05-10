@@ -1,13 +1,10 @@
 package handler
 
 import (
-	"database/sql"
-	"fmt"
 	"net/http"
 
-	"github.com/yusuke-hoguro/BlogApi/internal/apperror"
 	"github.com/yusuke-hoguro/BlogApi/internal/models"
-	"github.com/yusuke-hoguro/BlogApi/internal/repository"
+	"github.com/yusuke-hoguro/BlogApi/internal/service"
 	"github.com/yusuke-hoguro/BlogApi/internal/workerpool"
 )
 
@@ -27,7 +24,7 @@ import (
 // @Failure 404 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts/{id} [get]
-func GetPostsByIDHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
+func GetPostsByIDHandler(postService *service.PostService, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -38,8 +35,7 @@ func GetPostsByIDHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http
 			return
 		}
 		// DBから指定したIDの投稿を取得する
-		repo := repository.NewPostRepository(db)
-		post, err := repo.FindByID(ctx, id)
+		post, err := postService.GetPostByID(ctx, id)
 		if err != nil {
 			respondAppError(w, err)
 			return
@@ -69,7 +65,7 @@ func GetPostsByIDHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http
 // @Failure 401 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts [post]
-func CreatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
+func CreatePostHandler(postService *service.PostService, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -93,8 +89,7 @@ func CreatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 		// 記事にユーザーIDを設定する
 		post.UserID = userID
 		// 投稿を作成する
-		repo := repository.NewPostRepository(db)
-		if err := repo.Create(ctx, &post); err != nil {
+		if err := postService.CreatePost(ctx, &post); err != nil {
 			respondAppError(w, err)
 			return
 		}
@@ -128,7 +123,7 @@ func CreatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 // @Failure 404 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts/{id} [put]
-func UpdatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
+func UpdatePostHandler(postService *service.PostService, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -144,16 +139,9 @@ func UpdatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 			respondAppError(w, appErr)
 			return
 		}
-		// DBから投稿者のユーザーIDを取得する
-		repo := repository.NewPostRepository(db)
-		postUserID, err := repo.FindUserIDByPostID(ctx, id)
-		if err != nil {
+		// DBから投稿者のユーザーIDを取得して、リクエストを投げたユーザーが記事の投稿者でない場合はエラーを返す
+		if err := postService.EnsurePostOwner(ctx, userID, id); err != nil {
 			respondAppError(w, err)
-			return
-		}
-		// リクエストを投げたユーザーが記事の投稿者でない場合はエラー
-		if postUserID != userID {
-			respondAppError(w, apperror.NewAppError(apperror.TypeForbidden, fmt.Sprintf("Forbidden : PostID=%d", id), nil))
 			return
 		}
 		// Post型の構造体にデコードして格納
@@ -168,7 +156,7 @@ func UpdatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 			return
 		}
 		// 指定したIDの投稿を更新する
-		if err := repo.Update(ctx, id, &post); err != nil {
+		if err := postService.UpdatePost(ctx, id, &post); err != nil {
 			respondAppError(w, err)
 			return
 		}
@@ -201,7 +189,7 @@ func UpdatePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 // @Failure 404 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts/{id} [put]
-func DeletePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
+func DeletePostHandler(postService *service.PostService, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -217,20 +205,13 @@ func DeletePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 			respondAppError(w, appErr)
 			return
 		}
-		// 削除対象の投稿を作成したユーザーのIDを取得する
-		repo := repository.NewPostRepository(db)
-		postUserID, err := repo.FindUserIDByPostID(ctx, id)
-		if err != nil {
+		// 削除対象の投稿を作成したユーザーのIDを取得して、リクエストを投げたユーザーが記事の投稿者でない場合はエラーを返す
+		if err := postService.EnsurePostOwner(ctx, userID, id); err != nil {
 			respondAppError(w, err)
 			return
 		}
-		// リクエストを投げたユーザーが記事の投稿者でない場合はエラー
-		if postUserID != userID {
-			respondAppError(w, apperror.NewAppError(apperror.TypeForbidden, fmt.Sprintf("Forbidden : PostID=%d", id), nil))
-			return
-		}
-		// DELETE実行
-		if err := repo.Delete(ctx, id); err != nil {
+		// 指定したIDの投稿を削除する
+		if err := postService.DeletePost(ctx, id); err != nil {
 			respondAppError(w, err)
 			return
 		}
@@ -257,7 +238,7 @@ func DeletePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 // @Failure 404 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/myposts [get]
-func GetMyPostsHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
+func GetMyPostsHandler(postService *service.PostService, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -268,8 +249,7 @@ func GetMyPostsHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 			return
 		}
 		// DBから指定したユーザーIDの投稿を取得する
-		repo := repository.NewPostRepository(db)
-		posts, err := repo.ListByUserID(ctx, userID)
+		posts, err := postService.GetPostsByUserID(ctx, userID)
 		if err != nil {
 			respondAppError(w, err)
 			return
@@ -284,7 +264,6 @@ func GetMyPostsHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 // GetAllPostsHandler godoc
 // @Summary すべての投稿を取得する
 // @Description DBから全投稿を取得して返却する
-// @Description 送られてきたIDの投稿を削除する
 // @Description
 // @Description **エラー条件:**
 // @Description - 投稿が存在しない → 404 Not Found
@@ -295,13 +274,12 @@ func GetMyPostsHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.H
 // @Failure 404 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts [get]
-func GetAllPostsHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
+func GetAllPostsHandler(postService *service.PostService, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
 		// 全投稿を取得する
-		repo := repository.NewPostRepository(db)
-		posts, err := repo.ListAll(ctx)
+		posts, err := postService.GetAllPosts(ctx)
 		if err != nil {
 			respondAppError(w, err)
 			return
