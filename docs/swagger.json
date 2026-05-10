@@ -317,7 +317,7 @@
         },
         "/api/posts": {
             "get": {
-                "description": "DBから全投稿を取得して返却する\n送られてきたIDの投稿を削除する\n\n**エラー条件:**\n- 投稿が存在しない → 404 Not Found\n- データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError",
+                "description": "DBから全投稿を取得して返却する\n\n**エラー条件:**\n- 投稿が存在しない → 404 Not Found\n- データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError",
                 "produces": [
                     "application/json"
                 ],
