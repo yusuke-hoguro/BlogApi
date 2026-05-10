@@ -21,7 +21,9 @@ import (
 	"github.com/yusuke-hoguro/BlogApi/internal/config"
 	"github.com/yusuke-hoguro/BlogApi/internal/db"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
+	"github.com/yusuke-hoguro/BlogApi/internal/repository"
 	"github.com/yusuke-hoguro/BlogApi/internal/router"
+	"github.com/yusuke-hoguro/BlogApi/internal/service"
 	"github.com/yusuke-hoguro/BlogApi/internal/workerpool"
 	"golang.org/x/sync/errgroup"
 
@@ -63,8 +65,11 @@ func runServer() error {
 
 	// ルーターの設定
 	r := mux.NewRouter()
+	// PostServiceのインスタンスを作成
+	postRepo := repository.NewPostRepository(conn)
+	postService := service.NewPostService(postRepo)
 	// ルートの登録(監視ワーカープールを渡す)
-	router.RegisterRoutes(r, conn, auditPool)
+	router.RegisterRoutes(r, conn, auditPool, postService)
 	// CORSミドルウェアを適用
 	handler := middleware.CorsMiddleware(r)
 	// タイムアウトミドルウェアを適用(戻り値が関数なので（handler）をつけて実行する)
