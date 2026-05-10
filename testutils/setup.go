@@ -11,11 +11,10 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+	"github.com/yusuke-hoguro/BlogApi/internal/app"
 	"github.com/yusuke-hoguro/BlogApi/internal/config"
 	"github.com/yusuke-hoguro/BlogApi/internal/handler"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
-	"github.com/yusuke-hoguro/BlogApi/internal/repository"
-	"github.com/yusuke-hoguro/BlogApi/internal/service"
 	"github.com/yusuke-hoguro/BlogApi/internal/workerpool"
 )
 
@@ -69,9 +68,8 @@ func loadTestSQL(t *testing.T, db *sql.DB, filepath string) {
 func SetupTestServer(db *sql.DB) (http.Handler, func()) {
 	r := mux.NewRouter()
 
-	// 投稿用サービスを作成
-	postRepo := repository.NewPostRepository(db)
-	postService := service.NewPostService(postRepo)
+	// サービスを作成
+	services := app.NewServices(db)
 
 	// 監視ワーカープールの作成と起動
 	auditPool := workerpool.NewAuditWorkerPool(config.WorkerCount, config.QueueSize)
@@ -80,23 +78,23 @@ func SetupTestServer(db *sql.DB) (http.Handler, func()) {
 	cleanup := func() {
 		auditPool.Stop()
 	}
-	r.HandleFunc("/api/healthz", handler.HealthzHandler(auditPool)).Methods(http.MethodGet, http.MethodHead)                        // ヘルスチェック用
-	r.HandleFunc("/api/posts", handler.GetAllPostsHandler(postService, auditPool)).Methods("GET")                                   // 全投稿取得用
-	r.HandleFunc("/api/posts/{id}", handler.GetPostsByIDHandler(postService, auditPool)).Methods("GET")                             // 個別投稿取得用
-	r.HandleFunc("/api/posts", middleware.AuthMiddleware(handler.CreatePostHandler(postService, auditPool))).Methods("POST")        // 個別投稿作成用
-	r.HandleFunc("/api/posts/{id}", middleware.AuthMiddleware(handler.UpdatePostHandler(postService, auditPool))).Methods("PUT")    // 個別投稿更新用
-	r.HandleFunc("/api/posts/{id}", middleware.AuthMiddleware(handler.DeletePostHandler(postService, auditPool))).Methods("DELETE") // 個別投稿削除用
-	r.HandleFunc("/api/myposts", middleware.AuthMiddleware(handler.GetMyPostsHandler(postService, auditPool))).Methods("GET")       // 自身の投稿のみ取得
-	r.HandleFunc("/api/signup", handler.SignupHandler(db, auditPool)).Methods("POST")                                               // ユーザー登録用
-	r.HandleFunc("/api/login", handler.LoginHandler(db, auditPool)).Methods("POST")                                                 // ログイン用
-	r.HandleFunc("/api/posts/{id}/comments", middleware.AuthMiddleware(handler.PostCommentHandler(db, auditPool))).Methods("POST")  // コメント投稿
-	r.HandleFunc("/api/posts/{id}/comments", handler.GetCommentsByPostIDHandler(db, auditPool)).Methods("GET")                      // 投稿のコメント取得
-	r.HandleFunc("/api/comments/{id}", handler.GetCommentsByIDHandler(db, auditPool)).Methods("GET")                                // コメントIDで詳細取得
-	r.HandleFunc("/api/comments/{id}", middleware.AuthMiddleware(handler.DeleteCommentHandler(db, auditPool))).Methods("DELETE")    // コメントIDで削除
-	r.HandleFunc("/api/comments/{id}", middleware.AuthMiddleware(handler.UpdateCommentHandler(db, auditPool))).Methods("PUT")       // コメントを更新する
-	r.HandleFunc("/api/posts/{id}/like", middleware.AuthMiddleware(handler.LikePostHandler(db, auditPool))).Methods("POST")         // 投稿にいいねをつける
-	r.HandleFunc("/api/posts/{id}/likes", handler.GetLikesHandler(db, auditPool)).Methods("GET")                                    // 投稿のいいねを取得する
-	r.HandleFunc("/api/posts/{id}/like", middleware.AuthMiddleware(handler.UnlikePostHandler(db, auditPool))).Methods("DELETE")     // 投稿のいいねを削除する
+	r.HandleFunc("/api/healthz", handler.HealthzHandler(auditPool)).Methods(http.MethodGet, http.MethodHead)                          // ヘルスチェック用
+	r.HandleFunc("/api/posts", handler.GetAllPostsHandler(services.Post, auditPool)).Methods("GET")                                   // 全投稿取得用
+	r.HandleFunc("/api/posts/{id}", handler.GetPostsByIDHandler(services.Post, auditPool)).Methods("GET")                             // 個別投稿取得用
+	r.HandleFunc("/api/posts", middleware.AuthMiddleware(handler.CreatePostHandler(services.Post, auditPool))).Methods("POST")        // 個別投稿作成用
+	r.HandleFunc("/api/posts/{id}", middleware.AuthMiddleware(handler.UpdatePostHandler(services.Post, auditPool))).Methods("PUT")    // 個別投稿更新用
+	r.HandleFunc("/api/posts/{id}", middleware.AuthMiddleware(handler.DeletePostHandler(services.Post, auditPool))).Methods("DELETE") // 個別投稿削除用
+	r.HandleFunc("/api/myposts", middleware.AuthMiddleware(handler.GetMyPostsHandler(services.Post, auditPool))).Methods("GET")       // 自身の投稿のみ取得
+	r.HandleFunc("/api/signup", handler.SignupHandler(db, auditPool)).Methods("POST")                                                 // ユーザー登録用
+	r.HandleFunc("/api/login", handler.LoginHandler(db, auditPool)).Methods("POST")                                                   // ログイン用
+	r.HandleFunc("/api/posts/{id}/comments", middleware.AuthMiddleware(handler.PostCommentHandler(db, auditPool))).Methods("POST")    // コメント投稿
+	r.HandleFunc("/api/posts/{id}/comments", handler.GetCommentsByPostIDHandler(db, auditPool)).Methods("GET")                        // 投稿のコメント取得
+	r.HandleFunc("/api/comments/{id}", handler.GetCommentsByIDHandler(db, auditPool)).Methods("GET")                                  // コメントIDで詳細取得
+	r.HandleFunc("/api/comments/{id}", middleware.AuthMiddleware(handler.DeleteCommentHandler(db, auditPool))).Methods("DELETE")      // コメントIDで削除
+	r.HandleFunc("/api/comments/{id}", middleware.AuthMiddleware(handler.UpdateCommentHandler(db, auditPool))).Methods("PUT")         // コメントを更新する
+	r.HandleFunc("/api/posts/{id}/like", middleware.AuthMiddleware(handler.LikePostHandler(db, auditPool))).Methods("POST")           // 投稿にいいねをつける
+	r.HandleFunc("/api/posts/{id}/likes", handler.GetLikesHandler(db, auditPool)).Methods("GET")                                      // 投稿のいいねを取得する
+	r.HandleFunc("/api/posts/{id}/like", middleware.AuthMiddleware(handler.UnlikePostHandler(db, auditPool))).Methods("DELETE")       // 投稿のいいねを削除する
 	return r, cleanup
 }
 

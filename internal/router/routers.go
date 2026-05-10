@@ -8,25 +8,25 @@ import (
 
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
+	"github.com/yusuke-hoguro/BlogApi/internal/app"
 	"github.com/yusuke-hoguro/BlogApi/internal/handler"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
-	"github.com/yusuke-hoguro/BlogApi/internal/service"
 	"github.com/yusuke-hoguro/BlogApi/internal/workerpool"
 )
 
 // ハンドラー関数の設定を行う
-func RegisterRoutes(r *mux.Router, db *sql.DB, auditPool *workerpool.AuditWorkerPool, postService *service.PostService) {
+func RegisterRoutes(r *mux.Router, db *sql.DB, auditPool *workerpool.AuditWorkerPool, services *app.Services) {
 	// Swagger UI
 	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 	// ヘルスチェック用
 	r.HandleFunc("/api/healthz", handler.HealthzHandler(auditPool)).Methods(http.MethodGet, http.MethodHead) // ヘルスチェック用
 	// 投稿関係の処理
-	r.HandleFunc("/api/posts", handler.GetAllPostsHandler(postService, auditPool)).Methods(http.MethodGet)                                   // 全投稿取得用
-	r.HandleFunc("/api/posts/{id}", handler.GetPostsByIDHandler(postService, auditPool)).Methods(http.MethodGet)                             // 個別投稿取得用
-	r.HandleFunc("/api/posts", middleware.AuthMiddleware(handler.CreatePostHandler(postService, auditPool))).Methods(http.MethodPost)        // 個別投稿作成用
-	r.HandleFunc("/api/posts/{id}", middleware.AuthMiddleware(handler.UpdatePostHandler(postService, auditPool))).Methods(http.MethodPut)    // 個別投稿更新用
-	r.HandleFunc("/api/posts/{id}", middleware.AuthMiddleware(handler.DeletePostHandler(postService, auditPool))).Methods(http.MethodDelete) // 個別投稿削除用
-	r.HandleFunc("/api/myposts", middleware.AuthMiddleware(handler.GetMyPostsHandler(postService, auditPool))).Methods(http.MethodGet)       // 自身の投稿のみ取得
+	r.HandleFunc("/api/posts", handler.GetAllPostsHandler(services.Post, auditPool)).Methods(http.MethodGet)                                   // 全投稿取得用
+	r.HandleFunc("/api/posts/{id}", handler.GetPostsByIDHandler(services.Post, auditPool)).Methods(http.MethodGet)                             // 個別投稿取得用
+	r.HandleFunc("/api/posts", middleware.AuthMiddleware(handler.CreatePostHandler(services.Post, auditPool))).Methods(http.MethodPost)        // 個別投稿作成用
+	r.HandleFunc("/api/posts/{id}", middleware.AuthMiddleware(handler.UpdatePostHandler(services.Post, auditPool))).Methods(http.MethodPut)    // 個別投稿更新用
+	r.HandleFunc("/api/posts/{id}", middleware.AuthMiddleware(handler.DeletePostHandler(services.Post, auditPool))).Methods(http.MethodDelete) // 個別投稿削除用
+	r.HandleFunc("/api/myposts", middleware.AuthMiddleware(handler.GetMyPostsHandler(services.Post, auditPool))).Methods(http.MethodGet)       // 自身の投稿のみ取得
 	// ユーザー認証系
 	r.HandleFunc("/api/signup", handler.SignupHandler(db, auditPool)).Methods(http.MethodPost) // ユーザー登録用
 	r.HandleFunc("/api/login", handler.LoginHandler(db, auditPool)).Methods(http.MethodPost)   // ログイン用
