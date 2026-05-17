@@ -3,7 +3,7 @@ module github.com/yusuke-hoguro/BlogApi
 go 1.24.2
 
 require (
-	github.com/lib/pq v1.10.9
+	github.com/lib/pq v1.12.3
 	golang.org/x/crypto v0.38.0
 )
 
