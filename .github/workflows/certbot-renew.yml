@@ -9,7 +9,7 @@ jobs:
 
     steps:
       - name: Renew cert on EC2
-        uses: appleboy/ssh-action@v1.0.3 # 外部のサーバーへSSH接続してコマンド実行
+        uses: appleboy/ssh-action@v1.2.5 # 外部のサーバーへSSH接続してコマンド実行
         with:
             host: ${{ secrets.EC2_HOST }}
             username: ${{ secrets.EC2_USER }}
