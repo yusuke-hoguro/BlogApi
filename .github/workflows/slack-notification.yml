@@ -17,13 +17,16 @@ on:
         type: string
     secrets:
       SLACK_WEBHOOK_URL:
-        required: true
+        required: false
 
 jobs:
   notify:
     runs-on: ubuntu-latest
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
       - name: Notify Slack
+        if: ${{ env.SLACK_WEBHOOK_URL != '' }}
         uses: slackapi/slack-github-action@v3
         with:
             webhook-type: incoming-webhook
@@ -34,5 +37,3 @@ jobs:
                 ブランチ: ${{ inputs.branch }}\n\
                 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ inputs.run_id }}|Actionsの詳細を見る>"
                 }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
