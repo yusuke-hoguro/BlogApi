@@ -7,7 +7,7 @@ COPY . .
 RUN go build -o main ./cmd/api/main.go
 
 # 実行ステージ
-FROM alpine:3.20
+FROM alpine:3.23
 WORKDIR /app
 # ビルドステージから実行ファイルをコピー
 COPY --from=builder /app/main ./main
