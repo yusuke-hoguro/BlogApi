@@ -13,7 +13,7 @@ services:
     stop_grace_period: 30s
 
   db:
-    image: postgres:15
+    image: postgres:18
     container_name: postgres
     environment:
       POSTGRES_USER: ${DB_USER}
@@ -32,7 +32,7 @@ services:
       - ../sql:/docker-entrypoint-initdb.d
 
   test-db:
-    image: postgres:15
+    image: postgres:18
     container_name: postgres_test
     environment:
       POSTGRES_USER: ${DB_USER}
