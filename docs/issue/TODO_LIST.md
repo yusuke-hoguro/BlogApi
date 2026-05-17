@@ -11,8 +11,14 @@
 
 ## 改善タスク
 - [ ] AWSサーバーでの容量不足問題を解決する
-- [ ] graceful shutdown対応
+- [x] graceful shutdown対応
 - [ ] DBインデックス最適化
+- [x] Dependabotの依存関係チェック頻度を月1回に抑制する
+- [x] Dependabotの未完了PR数を各エコシステム最大3件に制限する
+- [x] Dependabotのメジャーバージョン更新を通常PR対象から除外する
+- [ ] PostgreSQL 18への移行検証を行う
+  - PostgreSQL 18はメジャーバージョンアップかつDocker公式イメージのデータディレクトリ変更を伴うため、通常のDependabot PRではなく別タスクとして扱う
+  - `postgres:15`から`postgres:18`への移行可否、volume mount、バックアップ/リストア、CI/E2E、本番ロールバック方針を確認する
 
 ---
 
