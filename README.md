@@ -92,7 +92,7 @@ flowchart LR
 ## Requirements
 
 - Docker / Docker Compose v2  
-- Go 1.24.x :（ローカル直実行したい場合）  
+- Go 1.25.x :（ローカル直実行したい場合）  
 - Node.js : （フロントをローカルで触りたい場合）  
 
 ---
@@ -207,7 +207,12 @@ make ci-test
 - Docker Compose: `infra/docker-compose*.yml`
 - GitHub Actions: `.github/workflows`
 
-各依存関係を週次で確認し、更新がある場合は Pull Request として検知できるようにしています。
+ポートフォリオ開発の進行を優先するため、依存関係の確認は月次で実行し、各エコシステムごとの未完了 Pull Request は最大3件までに制限しています。
+
+補足：
+
+- パッチ・マイナー更新は通常の依存更新として確認します。
+- DBやランタイムなどのメジャーバージョン更新は、影響範囲を確認したうえで別タスクとして扱います。
 
 ---
 
