@@ -1,12 +1,13 @@
 # BlogApi (Go言語 + PostgreSQL + React) - ポートフォリオ
 
 Go標準の`net/http`を使って実装したブログAPI + Reactフロントエンドのポートフォリオです。  
-JWT認証・認可、投稿/コメント/いいねのCRUD、Docker Composeによる開発、GitHub ActionsのCI、EC2 + Nginx + Certbot によるHTTPSデプロイまで含めています。
+JWT認証・認可、投稿/コメント/いいねのCRUD、Docker Composeによる開発、GitHub ActionsのCI、Dependabotによる依存関係更新、EC2 + Nginx + Certbot によるHTTPSデプロイまで含めています。
 
 - **Backend**: Go + net/http + database/sql + PostgreSQL
 - **Frontend**: React + Vite + Tailwind + Axios
 - **Testing**: Playwright + Docker Compose
 - **Infrastructure**: Docker Compose + AWS EC2 + Nginx + Certbot + EventBridge + CloudWatch
+- **Maintenance**: DependabotによるGo / npm / Docker / Docker Compose / GitHub Actionsの依存関係更新
 
 ---
 
@@ -57,6 +58,7 @@ flowchart LR
 - 開発・テスト環境の再現性を重視し、`Docker Compose`を統一基盤としています。
 - 本番環境では`Nginx`のみ外部公開し、アプリケーションおよびDBは内部ネットワークに隔離しています。
 - CIではローカルPCと同一手順を自動実行し、環境差異を最小化しています。
+- Dependabotでバックエンド、フロントエンド、コンテナ、CIの依存関係を定期的に確認し、更新漏れを防ぐ構成にしています。
 - context / timeout / errgroup を用いた、安全なキャンセル伝播とエラー処理を意識して設計しています。
 
 ---
@@ -193,6 +195,20 @@ CIでのテスト内容：
 ```bash
 make ci-test
 ```
+---
+
+## Dependency Updates (Dependabot)
+
+依存関係の更新を継続的に確認するため、Dependabotを導入しています。
+
+- Go modules: `go.mod` / `go.sum`
+- Frontend npm: `blog-api-frontend/package.json` / `package-lock.json`
+- Docker images: ルートおよびフロントエンドの`Dockerfile`
+- Docker Compose: `infra/docker-compose*.yml`
+- GitHub Actions: `.github/workflows`
+
+各依存関係を週次で確認し、更新がある場合は Pull Request として検知できるようにしています。
+
 ---
 
 ## API Spec
