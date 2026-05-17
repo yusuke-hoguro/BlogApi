@@ -51,7 +51,7 @@ jobs:
           echo "The target deploy commit is the latest main commit. Proceeding with deployment."
 
       - name: Require CI success for target SHA
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             // GitHub APIクライアントとコンテキストを取得
