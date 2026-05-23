@@ -57,18 +57,36 @@ func runMigration(ctx context.Context, conn *sql.DB, file string) error {
 		return nil
 	}
 
-	// マイグレーションファイルの内容を読み込む
+	sqlText, err := readMigrationSQL(file)
+	if err != nil {
+		return err
+	}
+
+	if err := applyMigration(ctx, conn, version, sqlText); err != nil {
+		return err
+	}
+
+	fmt.Printf("applied migration: %s\n", version)
+	return nil
+}
+
+// マイグレーションファイルの内容を読み込む関数
+func readMigrationSQL(file string) (string, error) {
 	sqlBytes, err := os.ReadFile(file)
 	if err != nil {
-		return fmt.Errorf("failed to read migration file %s: %w", file, err)
+		return "", fmt.Errorf("failed to read migration file %s: %w", file, err)
 	}
 
-	// 文字列に変換して空でないことを確認する
 	sqlText := strings.TrimSpace(string(sqlBytes))
 	if sqlText == "" {
-		return fmt.Errorf("migration %s is empty", version)
+		return "", fmt.Errorf("migration %s is empty", filepath.Base(file))
 	}
 
+	return sqlText, nil
+}
+
+// マイグレーションSQLを実行して適用済みとして記録する関数
+func applyMigration(ctx context.Context, conn *sql.DB, version string, sqlText string) error {
 	// トランザクションを開始する
 	tx, err := conn.BeginTx(ctx, nil)
 	if err != nil {
@@ -94,7 +112,7 @@ func runMigration(ctx context.Context, conn *sql.DB, file string) error {
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit migration %s: %w", version, err)
 	}
-	fmt.Printf("applied migration: %s\n", version)
+
 	return nil
 }
 
