@@ -14,10 +14,20 @@ function get_free_space() {
 # DBの起動完了を待つ関数
 function wait_db(){
 	echo "Waiting for DB..."
+	local max_attempts=60
+	local sleep_seconds=2
+	local attempt=1
+
 	# コマンドが成功するまで待つ
 	until "${COMPOSE[@]}" exec -T db pg_isready -U postgres >/dev/null 2>&1; do
-		echo "  ...still waiting"
-		sleep 1
+		if [ "$attempt" -ge "$max_attempts" ]; then
+			echo "DB did not become ready after $((max_attempts * sleep_seconds)) seconds"
+			return 1
+		fi
+
+		echo "  ...still waiting (${attempt}/${max_attempts})"
+		attempt=$((attempt + 1))
+		sleep "$sleep_seconds"
 	done
 	echo "DB is ready"
 }
