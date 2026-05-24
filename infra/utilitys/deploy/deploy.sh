@@ -2,11 +2,24 @@
 set -e
 
 APP_DIR="$HOME/BlogApi"
-COMPOSE_FILE="infra/docker-compose.prod.yml"
+COMPOSE_FILE="$APP_DIR/infra/docker-compose.prod.yml"
+ENV_FILE="$APP_DIR/.env"
+COMPOSE=(docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE")
 
 # 指定パスの空き容量を取得する
 function get_free_space() {
 	df -BG "$1" | awk 'NR==2 {gsub(/G/,"",$4); print $4}'
+}
+
+# DBの起動完了を待つ関数
+function wait_db(){
+	echo "Waiting for DB..."
+	# コマンドが成功するまで待つ
+	until "${COMPOSE[@]}" exec -T db pg_isready -U postgres >/dev/null 2>&1; do
+		echo "  ...still waiting"
+		sleep 1
+	done
+	echo "DB is ready"
 }
 
 # デプロイの前に空き容量を確認する関数
@@ -40,43 +53,90 @@ function ensure_disk_space(){
 	fi
 }
 
-# AWSへデプロイを実施する関数
-function aws_deploy(){
-	echo "Starting deployment"
-	# デプロイ前に空き容量を確認
-	ensure_disk_space
-	# アプリケーションディレクトリへ移動して最新コードを取得
-	cd ~/BlogApi
+# BlogAPIの最新コードを取得する
+function update_repository(){
+	cd "$APP_DIR"
 	git fetch origin
 	git checkout -f main
 	git pull origin main
+}
 
-	# フロントエンドのビルドを実施
+# フロントエンドのビルドを実行する
+function build_frontend(){
 	echo "Building frontend start: $(date)"
-	cd blog-api-frontend
+	cd "$APP_DIR/blog-api-frontend"
 	npm install
 	npm run build
 	echo "Building frontend end: $(date)"
 	# Node modules削除して容量確保
 	rm -rf node_modules
 	npm cache clean --force || true
-	cd ..
+	cd "$APP_DIR"
+}
 
-	# Docker 再起動
-	echo "Restarting Docker containers"
-	# 既存のコンテナを停止・削除
-	docker compose -f "$COMPOSE_FILE" --env-file ./.env down --remove-orphans
-	# 空き容量を再チェック
-	ensure_disk_space
+# Dockerコンテナを停止する
+function stop_containers() {
+	echo "Stopping Docker containers"
+	"${COMPOSE[@]}" down --remove-orphans
+}
+
+# appコンテナのDockerfileをビルドしてイメージ作成
+function build_app_image() {
+	echo "Building Docker images start: $(date)"
+	"${COMPOSE[@]}" build app
+	echo "Building Docker images end: $(date)"
+}
+
+# Postgress DBを起動する
+function start_db(){
+	"${COMPOSE[@]}" up -d db
+	wait_db	
+}
+
+# DBマイグレーションを実行する
+function run_migrations(){
+	echo "Running DB migrations start: $(date)"
+	"${COMPOSE[@]}" run --rm app ./migrate
+	echo "Running DB migrations end: $(date)"
+}
+
+# Deploy後にBlogAPIを起動する
+function start_services(){
 	echo "Deploying Docker containers start: $(date)"
-	# Docker イメージのビルドとコンテナの起動
-	docker compose -f "$COMPOSE_FILE" --env-file ./.env up -d --build
+	"${COMPOSE[@]}" up -d
 	echo "Deployment finished: $(date)"
+}
 
-	# ビルドキャッシュだけ削除
+# ビルド後のキャッシュを削除する
+function cleanup_docker_cache(){
 	echo "Post-clean (builder cache)"
 	docker builder prune -af || true
 	echo "Done"
+}
+
+# AWSへデプロイを実施する関数
+function aws_deploy(){
+	echo "Starting deployment"
+	# デプロイ前に空き容量を確認
+	ensure_disk_space
+	# アプリケーションディレクトリへ移動して最新コードを取得
+	update_repository
+	# フロントエンドのビルドを実施
+	build_frontend
+	# Docker 再起動
+	stop_containers
+	# 空き容量を再チェック
+	ensure_disk_space
+	# App用のDockerfileをビルドする
+	build_app_image
+	# Postgres DB用のコンテナを起動する
+	start_db
+	# DBマイグレーションを実行する
+	run_migrations
+	# デプロイと起動を実行
+	start_services
+	# ビルドキャッシュだけ削除
+	cleanup_docker_cache
 }
 
 # main
