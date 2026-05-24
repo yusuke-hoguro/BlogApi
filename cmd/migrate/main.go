@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -33,8 +34,14 @@ func run() error {
 	}
 	defer conn.Close()
 
-	// 30秒で自動キャンセルするコンテキストを作成
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	// マイグレーション実行時のタイムアウト時間を取得
+	timeout, err := migrationTimeout()
+	if err != nil {
+		return err
+	}
+
+	// 設定されたタイムアウトで自動キャンセルするコンテキストを作成
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	// DBマイグレーションを実行する
@@ -43,4 +50,23 @@ func run() error {
 	}
 	log.Println("migration completed")
 	return nil
+}
+
+// DBマイグレーションのタイムアウト時間を取得する
+func migrationTimeout() (time.Duration, error) {
+	const defaultTimeoutSeconds = 300
+	// 環境変数からマイグレーション実行のタイムアウト時間を取得する
+	value := os.Getenv("MIGRATION_TIMEOUT_SECONDS")
+	if value == "" {
+		return time.Duration(defaultTimeoutSeconds) * time.Second, nil
+	}
+	// 取得した文字列を秒数に変換する
+	seconds, err := strconv.Atoi(value)
+	if err != nil {
+		return 0, fmt.Errorf("invalid MIGRATION_TIMEOUT_SECONDS: %w", err)
+	}
+	if seconds <= 0 {
+		return 0, fmt.Errorf("MIGRATION_TIMEOUT_SECONDS must be positive")
+	}
+	return time.Duration(seconds) * time.Second, nil
 }
