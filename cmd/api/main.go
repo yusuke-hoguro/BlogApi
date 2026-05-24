@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/yusuke-hoguro/BlogApi/internal/app"
 	"github.com/yusuke-hoguro/BlogApi/internal/config"
 	"github.com/yusuke-hoguro/BlogApi/internal/db"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
@@ -63,8 +64,10 @@ func runServer() error {
 
 	// ルーターの設定
 	r := mux.NewRouter()
+	// サービスのインスタンスを作成
+	services := app.NewServices(conn)
 	// ルートの登録(監視ワーカープールを渡す)
-	router.RegisterRoutes(r, conn, auditPool)
+	router.RegisterRoutes(r, conn, auditPool, services)
 	// CORSミドルウェアを適用
 	handler := middleware.CorsMiddleware(r)
 	// タイムアウトミドルウェアを適用(戻り値が関数なので（handler）をつけて実行する)

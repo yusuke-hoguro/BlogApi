@@ -23,7 +23,8 @@ NPM=cd $(FRONT_DIR) && npm
 		up-prod down-prod restart-prod logs-prod build-prod rebuild-prod ps-prod \
 		up-test down-test down-volumes-test restart-test logs-test build-test rebuild-test ps-test \
 		test-go go-lint test-e2e ci-test wait-test-db \
-		fe-install fe-dev fe-build fe-preview
+		fe-install fe-dev fe-build fe-preview \
+		migrate migrate-dev migrate-prod
 
 help:
 	@echo "Makefile commands:"
@@ -63,6 +64,10 @@ help:
 	@echo "  make fe-dev               - Start frontend development server"
 	@echo "  make fe-build             - Build frontend"
 	@echo "  make fe-preview           - Preview frontend build"
+	@echo ""	
+	@echo "  make migrate              - Run DB migrate"
+	@echo "  make migrate-dev          - Run DB migrations inside the app container"
+	@echo "  make migrate-prod         - Run DB migrations inside the production app container"
 
 # 開発環境用
 # 起動（デタッチ）
@@ -193,3 +198,15 @@ fe-build:
 # フロントエンドのプレビュー起動
 fe-preview:
 	$(NPM) run preview
+
+# DBマイグレーション実行
+migrate:
+	go run ./cmd/migrate
+
+# Appコンテナ内でDBマイグレーション実行
+migrate-dev:
+	$(DEV) exec app go run ./cmd/migrate
+
+# 本番環境でDBマイグレーション実行
+migrate-prod:
+	$(PROD) exec app ./migrate
