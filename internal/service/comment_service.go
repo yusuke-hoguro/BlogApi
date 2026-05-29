@@ -1,15 +1,23 @@
 package service
 
 import (
+	"context"
+
+	"github.com/yusuke-hoguro/BlogApi/internal/models"
 	"github.com/yusuke-hoguro/BlogApi/internal/repository"
 )
 
-// 投稿用サービスの構造体
+// コメント用サービスの構造体
 type CommentService struct {
 	repo *repository.CommentRepository
 }
 
-// 投稿用サービスのインスタンスを生成する関数
+// コメント用サービスのインスタンスを生成する関数
 func NewCommentService(repo *repository.CommentRepository) *CommentService {
 	return &CommentService{repo: repo}
+}
+
+// 指定した投稿IDのコメントを取得する
+func (s *CommentService) GetCommentsByPostID(ctx context.Context, postID int) ([]models.Comment, error) {
+	return s.repo.ListByPostID(ctx, postID)
 }

@@ -31,7 +31,7 @@ func RegisterRoutes(r *mux.Router, db *sql.DB, auditPool *workerpool.AuditWorker
 	r.HandleFunc("/api/signup", handler.SignupHandler(db, auditPool)).Methods(http.MethodPost) // ユーザー登録用
 	r.HandleFunc("/api/login", handler.LoginHandler(db, auditPool)).Methods(http.MethodPost)   // ログイン用
 	// コメント関係
-	r.HandleFunc("/api/posts/{id}/comments", handler.GetCommentsByPostIDHandler(db, auditPool)).Methods(http.MethodGet)                     // 投稿のコメント取得
+	r.HandleFunc("/api/posts/{id}/comments", handler.GetCommentsByPostIDHandler(services.Comment, auditPool)).Methods(http.MethodGet)       // 投稿のコメント取得
 	r.HandleFunc("/api/posts/{id}/comments", middleware.AuthMiddleware(handler.PostCommentHandler(db, auditPool))).Methods(http.MethodPost) // 投稿のコメント投稿
 	r.HandleFunc("/api/comments/{id}", handler.GetCommentsByIDHandler(db, auditPool)).Methods(http.MethodGet)                               // コメントIDで詳細取得
 	r.HandleFunc("/api/comments/{id}", middleware.AuthMiddleware(handler.DeleteCommentHandler(db, auditPool))).Methods(http.MethodDelete)   // コメントIDで削除

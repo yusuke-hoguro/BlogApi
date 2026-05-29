@@ -12,6 +12,7 @@ import (
 	"github.com/yusuke-hoguro/BlogApi/internal/apperror"
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
 	"github.com/yusuke-hoguro/BlogApi/internal/models"
+	"github.com/yusuke-hoguro/BlogApi/internal/service"
 	"github.com/yusuke-hoguro/BlogApi/internal/workerpool"
 )
 
@@ -33,60 +34,27 @@ const (
 // @Failure 400 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts/{id}/comments [get]
-func GetCommentsByPostIDHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
+func GetCommentsByPostIDHandler(commentService *service.CommentService, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
-
 		// URIからpostのIDを取得
 		vars := mux.Vars(r)
-		postIDStr := vars["id"]
-		postID, err := strconv.Atoi(postIDStr)
+		postID, appErr := parseID(vars["id"])
+		if appErr != nil {
+			respondAppError(w, appErr)
+			return
+		}
+
+		// 指定した投稿のコメントをすべて取得する
+		comments, err := commentService.GetCommentsByPostID(ctx, postID)
 		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid post ID : PostID="+postIDStr, err))
+			respondAppError(w, err)
 			return
 		}
 
-		// 指定した投稿のコメントを取得する
-		rows, err := db.QueryContext(ctx, `
-			SELECT id, post_id, user_id, content, created_at
-			FROM comments
-			WHERE post_id = $1
-			ORDER BY created_at ASC
-		`, postID)
-		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to fetch comments : PostID="+postIDStr, err))
-			return
-		}
-		defer rows.Close()
-
-		// 取得したコメントをスライスに格納
-		var comments []models.Comment
-		for rows.Next() {
-			var c models.Comment
-			if err := rows.Scan(&c.ID, &c.PostID, &c.UserID, &c.Content, &c.CreatedAt); err != nil {
-				respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Error reading comment : PostID="+postIDStr, err))
-				return
-			}
-			comments = append(comments, c)
-		}
-
-		// rows.Next()のループが終了した後にエラーが発生していないか確認する(DBからのデータ取得中にエラーが発生していないか)
-		if err := rows.Err(); err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to fetch comments : PostID="+postIDStr, err))
-			return
-		}
-
-		// コメントがない場合
-		if len(comments) == 0 {
-			fmt.Println("No comments : PostID=" + postIDStr)
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(comments); err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
-			return
-		}
+		// 指定した投稿のコメントをJSONで返す
+		respondJSON(w, http.StatusOK, comments)
 
 		// 監視ワーカープールにイベントを追加
 		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "comments_fetched", PostID: postID})
