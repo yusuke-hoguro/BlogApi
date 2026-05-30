@@ -33,7 +33,7 @@ func RegisterRoutes(r *mux.Router, db *sql.DB, auditPool *workerpool.AuditWorker
 	// コメント関係
 	r.HandleFunc("/api/posts/{id}/comments", handler.GetCommentsByPostIDHandler(services.Comment, auditPool)).Methods(http.MethodGet)       // 投稿のコメント取得
 	r.HandleFunc("/api/posts/{id}/comments", middleware.AuthMiddleware(handler.PostCommentHandler(db, auditPool))).Methods(http.MethodPost) // 投稿のコメント投稿
-	r.HandleFunc("/api/comments/{id}", handler.GetCommentsByIDHandler(db, auditPool)).Methods(http.MethodGet)                               // コメントIDで詳細取得
+	r.HandleFunc("/api/comments/{id}", handler.GetCommentsByIDHandler(services.Comment, auditPool)).Methods(http.MethodGet)                 // コメントIDで詳細取得
 	r.HandleFunc("/api/comments/{id}", middleware.AuthMiddleware(handler.DeleteCommentHandler(db, auditPool))).Methods(http.MethodDelete)   // コメントIDで削除
 	r.HandleFunc("/api/comments/{id}", middleware.AuthMiddleware(handler.UpdateCommentHandler(db, auditPool))).Methods(http.MethodPut)      // コメントを更新する
 	// 「いいね」関係

@@ -89,7 +89,7 @@ func SetupTestServer(db *sql.DB) (http.Handler, func()) {
 	r.HandleFunc("/api/login", handler.LoginHandler(db, auditPool)).Methods("POST")                                                   // ログイン用
 	r.HandleFunc("/api/posts/{id}/comments", middleware.AuthMiddleware(handler.PostCommentHandler(db, auditPool))).Methods("POST")    // コメント投稿
 	r.HandleFunc("/api/posts/{id}/comments", handler.GetCommentsByPostIDHandler(services.Comment, auditPool)).Methods("GET")          // 投稿のコメント取得
-	r.HandleFunc("/api/comments/{id}", handler.GetCommentsByIDHandler(db, auditPool)).Methods("GET")                                  // コメントIDで詳細取得
+	r.HandleFunc("/api/comments/{id}", handler.GetCommentsByIDHandler(services.Comment, auditPool)).Methods("GET")                    // コメントIDで詳細取得
 	r.HandleFunc("/api/comments/{id}", middleware.AuthMiddleware(handler.DeleteCommentHandler(db, auditPool))).Methods("DELETE")      // コメントIDで削除
 	r.HandleFunc("/api/comments/{id}", middleware.AuthMiddleware(handler.UpdateCommentHandler(db, auditPool))).Methods("PUT")         // コメントを更新する
 	r.HandleFunc("/api/posts/{id}/like", middleware.AuthMiddleware(handler.LikePostHandler(db, auditPool))).Methods("POST")           // 投稿にいいねをつける

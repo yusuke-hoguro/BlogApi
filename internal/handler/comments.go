@@ -38,6 +38,7 @@ func GetCommentsByPostIDHandler(commentService *service.CommentService, auditPoo
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
+
 		// URIからpostのIDを取得
 		vars := mux.Vars(r)
 		postID, appErr := parseID(vars["id"])
@@ -74,39 +75,31 @@ func GetCommentsByPostIDHandler(commentService *service.CommentService, auditPoo
 // @Param id path int true "コメントID"
 // @Success 200 {object} models.Comment
 // @Failure 400 {object} models.ErrorResponse
+// @Failure 404 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/comments/{id} [get]
-func GetCommentsByIDHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
+func GetCommentsByIDHandler(commentService *service.CommentService, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
 
 		// URIからコメントのIDを取得
 		vars := mux.Vars(r)
-		IDStr := vars["id"]
-		ID, err := strconv.Atoi(IDStr)
-		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid comment ID : CommentID="+IDStr, err))
+		id, appErr := parseID(vars["id"])
+		if appErr != nil {
+			respondAppError(w, appErr)
 			return
 		}
 
 		// 指定したIDのコメントを取得する
-		var comment models.Comment
-		err = db.QueryRowContext(ctx, "SELECT id, post_id, user_id, content, created_at FROM comments WHERE id = $1", ID).Scan(&comment.ID, &comment.PostID, &comment.UserID, &comment.Content, &comment.CreatedAt)
+		comment, err := commentService.GetCommentByID(ctx, id)
 		if err != nil {
-			if err == sql.ErrNoRows {
-				respondAppError(w, apperror.NewAppError(apperror.TypeNotFound, "Comment Not Found : CommentID="+IDStr, err))
-			} else {
-				respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Database error : CommentID="+IDStr, err))
-			}
+			respondAppError(w, err)
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(comment); err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
-			return
-		}
+		// 指定したコメントをJSONで返す
+		respondJSON(w, http.StatusOK, comment)
 
 		// 監視ワーカープールにイベントを追加
 		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "comment_fetched", UserID: comment.UserID, PostID: comment.PostID})

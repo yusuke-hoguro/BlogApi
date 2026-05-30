@@ -21,3 +21,8 @@ func NewCommentService(repo *repository.CommentRepository) *CommentService {
 func (s *CommentService) GetCommentsByPostID(ctx context.Context, postID int) ([]models.Comment, error) {
 	return s.repo.ListByPostID(ctx, postID)
 }
+
+// 指定したIDのコメントを取得する
+func (s *CommentService) GetCommentByID(ctx context.Context, commentID int) (*models.Comment, error) {
+	return s.repo.FindByID(ctx, commentID)
+}
