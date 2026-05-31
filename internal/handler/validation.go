@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"strings"
 	"unicode/utf8"
 
@@ -12,6 +13,7 @@ import (
 const (
 	MaxTitleLength   = 100  // 投稿のタイトルの最大長
 	MaxContentLength = 1000 // 投稿の内容の最大長
+	MaxCommentLength = 500  // コメントの最大長
 )
 
 // 投稿の入力を検証する関数
@@ -35,5 +37,20 @@ func validatePostInput(post models.Post) *apperror.AppError {
 	if utf8.RuneCountInString(post.Content) > MaxContentLength {
 		return apperror.NewAppError(apperror.TypeBadRequest, "Content must be 1000 characters or less", nil)
 	}
+	return nil
+}
+
+// コメントの入力を検証する
+func validateCommentInput(comment models.Comment, postID int) *apperror.AppError {
+	// コメントが空の場合はエラーとする
+	if strings.TrimSpace(comment.Content) == "" {
+		return apperror.NewAppError(apperror.TypeBadRequest, fmt.Sprintf("Content is required : PostID=%d", postID), nil)
+	}
+
+	// コメントが指定文字以上の場合はエラーとする
+	if len(comment.Content) > MaxCommentLength {
+		return apperror.NewAppError(apperror.TypeBadRequest, fmt.Sprintf("Content must be %d characters or less : PostID=%d", MaxCommentLength, postID), nil)
+	}
+
 	return nil
 }

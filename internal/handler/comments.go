@@ -16,10 +16,6 @@ import (
 	"github.com/yusuke-hoguro/BlogApi/internal/workerpool"
 )
 
-const (
-	MaxCommentLength = 500
-)
-
 // GetCommentsByPostIDHandler godoc
 // @Summary 投稿のコメントを取得する
 // @Description 指定した投稿のコメントをすべて取得する
@@ -120,12 +116,12 @@ func GetCommentsByIDHandler(commentService *service.CommentService, auditPool *w
 // @Param Authorization header string true "Bearer Token"
 // @Param id path int true "投稿ID"
 // @Param post body models.Comment true "コメント内容"
-// @Success 200 {object} models.Comment
+// @Success 201 {object} models.Comment
 // @Failure 400 {object} models.ErrorResponse
 // @Failure 401 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts/{id}/comments [post]
-func PostCommentHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
+func PostCommentHandler(commentService *service.CommentService, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
@@ -139,54 +135,33 @@ func PostCommentHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.
 
 		// URIからpostのIDを取得
 		vars := mux.Vars(r)
-		postIDStr := vars["id"]
-		postID, err := strconv.Atoi(postIDStr)
-		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid post ID : PostID="+postIDStr, err))
+		postID, appErr := parseID(vars["id"])
+		if appErr != nil {
+			respondAppError(w, appErr)
 			return
 		}
 
 		// リクエストボディからコメントを読み取る
 		var comment models.Comment
 		if err := json.NewDecoder(r.Body).Decode(&comment); err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid request body : PostID="+postIDStr, err))
+			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, fmt.Sprintf("Invalid request body : PostID=%d", postID), err))
 			return
 		}
 
-		// コメントが空の場合はエラーとする
-		if strings.TrimSpace(comment.Content) == "" {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Content is required : PostID="+postIDStr, nil))
-			return
-		}
-
-		// コメントが500文字以上の場合はエラーとする
-		if len(comment.Content) > MaxCommentLength {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Content must be 500 characters or less : PostID="+postIDStr, nil))
+		// コメントのバリデーションを実施する
+		if err := validateCommentInput(comment, postID); err != nil {
+			respondAppError(w, err)
 			return
 		}
 
 		// コメントを挿入する
-		query := `INSERT INTO comments (post_id, user_id, content) 
-				VALUES ($1, $2, $3)
-				RETURNING id, post_id, user_id, content, created_at`
-
-		err = db.QueryRowContext(ctx, query, postID, userID, comment.Content).Scan(
-			&comment.ID,
-			&comment.PostID,
-			&comment.UserID,
-			&comment.Content,
-			&comment.CreatedAt,
-		)
-		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to insert comment : "+err.Error(), err))
+		if err := commentService.CreateComment(ctx, postID, userID, &comment); err != nil {
+			respondAppError(w, err)
 			return
 		}
 
-		w.WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(w).Encode(comment); err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
-			return
-		}
+		// 作成したコメントをJSONで返す
+		respondJSON(w, http.StatusCreated, comment)
 
 		// 監視ワーカープールにイベントを追加
 		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "comment_created", UserID: comment.UserID, PostID: comment.PostID})

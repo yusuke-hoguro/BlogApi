@@ -26,3 +26,10 @@ func (s *CommentService) GetCommentsByPostID(ctx context.Context, postID int) ([
 func (s *CommentService) GetCommentByID(ctx context.Context, commentID int) (*models.Comment, error) {
 	return s.repo.FindByID(ctx, commentID)
 }
+
+// コメントの作成処理を実施する
+func (s *CommentService) CreateComment(ctx context.Context, postID int, userID int, comment *models.Comment) error {
+	comment.PostID = postID
+	comment.UserID = userID
+	return s.repo.Create(ctx, comment)
+}

@@ -63,3 +63,23 @@ func (r *CommentRepository) FindByID(ctx context.Context, id int) (*models.Comme
 	}
 	return &comment, nil
 }
+
+// コメントを作成する
+func (r *CommentRepository) Create(ctx context.Context, comment *models.Comment) error {
+	// コメントを挿入する
+	query := `INSERT INTO comments (post_id, user_id, content) 
+				VALUES ($1, $2, $3)
+				RETURNING id, post_id, user_id, content, created_at`
+
+	err := r.db.QueryRowContext(ctx, query, comment.PostID, comment.UserID, comment.Content).Scan(
+		&comment.ID,
+		&comment.PostID,
+		&comment.UserID,
+		&comment.Content,
+		&comment.CreatedAt,
+	)
+	if err != nil {
+		return apperror.NewAppError(apperror.TypeInternalServer, "Failed to insert comment", err)
+	}
+	return nil
+}
