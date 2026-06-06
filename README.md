@@ -208,6 +208,12 @@ make test-go
 
 makeコマンドを使用して実行することができます。
 
+初回のみPlaywright用ブラウザをインストールします。
+
+```bash
+make pw-install
+```
+
 実行コマンド：
 
 ```bash
@@ -218,6 +224,8 @@ make test-e2e
 
 - `blog-api-frontend/playwright.config.ts`が`docker compose ... up --build frontend`を実行して環境を立ち上げます。
 - global-setup で API の起動待ち + テストユーザー作成を行います。
+- UIモードで確認したい場合は`make pw-ui`、操作を記録しながらテストを作る場合は`make pw-codegen`を使用します。
+- Codegenの起動URLを変えたい場合は`make pw-codegen PW_URL=http://localhost:3000/posts`のように指定できます。
 
 ---
 
@@ -355,14 +363,24 @@ BlogAPIで使用できる主要な`make`コマンドです。
 ```bash
 make up-dev        # 開発環境起動（docker-compose.yml 使用）
 make down-dev      # 開発環境停止
+make logs-dev      # 開発環境ログ表示
+make ps-dev        # 開発環境コンテナ状態確認
 make test-go       # Backendテスト実行（test用compose起動 → DB初期化 → go test）
 make test-e2e      # E2Eテスト実行（Playwright）
+make pw-install    # Playwright用ブラウザをインストール
+make pw-test       # Playwrightテスト実行
+make pw-ui         # Playwright UIモードでテスト実行
+make pw-codegen    # Playwright Codegen起動（PW_URLでURL指定可）
+make pw-report     # Playwright HTMLレポート表示
+make go-lint       # golangci-lint実行
 make ci-test       # CI相当のまとめ実行
 make migrate       # ローカル環境からDBマイグレーション実行
 make migrate-dev   # 開発用appコンテナ内でDBマイグレーション実行
 make migrate-prod  # 本番用appコンテナ内でDBマイグレーション実行
 make fe-install    # フロントエンド依存関係インストール
 make fe-dev        # フロント開発サーバー起動（Vite）
+make fe-build      # フロントエンドビルド
+make fe-preview    # フロントエンドビルドのプレビュー起動
 ```
 
 ---
