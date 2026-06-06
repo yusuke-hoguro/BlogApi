@@ -11,14 +11,19 @@ import (
 	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
 )
 
+// ID文字列を解析して数値に変換
+func parseID(idStr string) (int, *apperror.AppError) {
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return 0, apperror.NewAppError(apperror.TypeBadRequest, "Invalid id: "+idStr, err)
+	}
+	return id, nil
+}
+
 // URLから投稿IDを抽出する関数
 func postIDFromRequest(r *http.Request) (int, *apperror.AppError) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/posts/")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		return 0, apperror.NewAppError(apperror.TypeBadRequest, "Invalid ID : PostID="+idStr, err)
-	}
-	return id, nil
+	return parseID(idStr)
 }
 
 // コンテキストからユーザーIDを取得する関数
