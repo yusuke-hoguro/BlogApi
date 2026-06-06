@@ -175,7 +175,7 @@ test-e2e:
 	$(PLAYWRIGHT) test
 
 # Playwrightブラウザのインストール
-pw-install:
+pw-install: fe-install
 	$(PLAYWRIGHT) install
 
 # Playwrightテスト実行
