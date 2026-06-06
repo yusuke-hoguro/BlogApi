@@ -16,13 +16,15 @@ PROD=$(DC) -f $(COMPOSE_PROD_FILE)
 TEST=$(DC) -f $(COMPOSE_TEST_FILE)
 FRONT_DIR=blog-api-frontend
 NPM=cd $(FRONT_DIR) && npm
+PLAYWRIGHT=cd $(FRONT_DIR) && npx playwright
+PW_URL?=http://localhost:3000
 
 # ターゲット定義
 .PHONY: help \
 		up-dev up-dev-attach down-dev down-volumes-dev restart-dev logs-dev build-dev rebuild-dev ps-dev \
 		up-prod down-prod restart-prod logs-prod build-prod rebuild-prod ps-prod \
 		up-test down-test down-volumes-test restart-test logs-test build-test rebuild-test ps-test \
-		test-go go-lint test-e2e ci-test wait-test-db \
+		test-go go-lint test-e2e pw-install pw-test pw-ui pw-codegen pw-report ci-test wait-test-db \
 		fe-install fe-dev fe-build fe-preview \
 		migrate migrate-dev migrate-prod
 
@@ -58,6 +60,11 @@ help:
 	@echo "  make test-go              - Run backend handler function tests"
 	@echo "  make go-lint			   - Run golangci-lint checks"
 	@echo "  make test-e2e             - Run E2E tests"
+	@echo "  make pw-install           - Install Playwright browsers"
+	@echo "  make pw-test              - Run Playwright tests"
+	@echo "  make pw-ui                - Run Playwright tests with UI mode"
+	@echo "  make pw-codegen           - Open Playwright codegen (PW_URL=http://localhost:3000)"
+	@echo "  make pw-report            - Open Playwright HTML report"
 	@echo "  make ci-test              - Run all CI tests"
 	@echo ""	
 	@echo "  make fe-install           - Install frontend dependencies"
@@ -165,7 +172,27 @@ test-e2e:
 	@set -e; \
 	trap 'cd $(CURDIR) && $(MAKE) down-volumes-dev' EXIT; \
 	$(MAKE) down-volumes-dev; \
-	cd blog-api-frontend && npx playwright test
+	$(PLAYWRIGHT) test
+
+# Playwrightブラウザのインストール
+pw-install:
+	$(PLAYWRIGHT) install
+
+# Playwrightテスト実行
+pw-test:
+	$(PLAYWRIGHT) test
+
+# Playwright UIモードでテスト実行
+pw-ui:
+	$(PLAYWRIGHT) test --ui
+
+# Playwright Codegenを起動
+pw-codegen:
+	$(PLAYWRIGHT) codegen $(PW_URL)
+
+# Playwright HTMLレポートを表示
+pw-report:
+	$(PLAYWRIGHT) show-report
 
 # CIのテストをまとめて実行
 ci-test: go-lint test-go test-e2e
