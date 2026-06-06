@@ -28,16 +28,16 @@ func RegisterRoutes(r *mux.Router, db *sql.DB, auditPool *workerpool.AuditWorker
 	r.HandleFunc("/api/posts/{id}", middleware.AuthMiddleware(handler.DeletePostHandler(services.Post, auditPool))).Methods(http.MethodDelete) // 個別投稿削除用
 	r.HandleFunc("/api/myposts", middleware.AuthMiddleware(handler.GetMyPostsHandler(services.Post, auditPool))).Methods(http.MethodGet)       // 自身の投稿のみ取得
 	// ユーザー認証系
-	r.HandleFunc("/api/signup", handler.SignupHandler(db, auditPool)).Methods(http.MethodPost) // ユーザー登録用
-	r.HandleFunc("/api/login", handler.LoginHandler(db, auditPool)).Methods(http.MethodPost)   // ログイン用
+	r.HandleFunc("/api/signup", handler.SignupHandler(services.User, auditPool)).Methods(http.MethodPost) // ユーザー登録用
+	r.HandleFunc("/api/login", handler.LoginHandler(services.User, auditPool)).Methods(http.MethodPost)   // ログイン用
 	// コメント関係
-	r.HandleFunc("/api/posts/{id}/comments", handler.GetCommentsByPostIDHandler(db, auditPool)).Methods(http.MethodGet)                     // 投稿のコメント取得
-	r.HandleFunc("/api/posts/{id}/comments", middleware.AuthMiddleware(handler.PostCommentHandler(db, auditPool))).Methods(http.MethodPost) // 投稿のコメント投稿
-	r.HandleFunc("/api/comments/{id}", handler.GetCommentsByIDHandler(db, auditPool)).Methods(http.MethodGet)                               // コメントIDで詳細取得
-	r.HandleFunc("/api/comments/{id}", middleware.AuthMiddleware(handler.DeleteCommentHandler(db, auditPool))).Methods(http.MethodDelete)   // コメントIDで削除
-	r.HandleFunc("/api/comments/{id}", middleware.AuthMiddleware(handler.UpdateCommentHandler(db, auditPool))).Methods(http.MethodPut)      // コメントを更新する
+	r.HandleFunc("/api/posts/{id}/comments", handler.GetCommentsByPostIDHandler(services.Comment, auditPool)).Methods(http.MethodGet)                     // 投稿のコメント取得
+	r.HandleFunc("/api/posts/{id}/comments", middleware.AuthMiddleware(handler.PostCommentHandler(services.Comment, auditPool))).Methods(http.MethodPost) // 投稿のコメント投稿
+	r.HandleFunc("/api/comments/{id}", handler.GetCommentsByIDHandler(services.Comment, auditPool)).Methods(http.MethodGet)                               // コメントIDで詳細取得
+	r.HandleFunc("/api/comments/{id}", middleware.AuthMiddleware(handler.DeleteCommentHandler(services.Comment, auditPool))).Methods(http.MethodDelete)   // コメントIDで削除
+	r.HandleFunc("/api/comments/{id}", middleware.AuthMiddleware(handler.UpdateCommentHandler(services.Comment, auditPool))).Methods(http.MethodPut)      // コメントを更新する
 	// 「いいね」関係
-	r.HandleFunc("/api/posts/{id}/like", middleware.AuthMiddleware(handler.LikePostHandler(db, auditPool))).Methods(http.MethodPost)     // 投稿にいいねをつける
-	r.HandleFunc("/api/posts/{id}/likes", handler.GetLikesHandler(db, auditPool)).Methods(http.MethodGet)                                // 投稿のいいねを取得する
-	r.HandleFunc("/api/posts/{id}/like", middleware.AuthMiddleware(handler.UnlikePostHandler(db, auditPool))).Methods(http.MethodDelete) // 投稿のいいねを削除する
+	r.HandleFunc("/api/posts/{id}/like", middleware.AuthMiddleware(handler.LikePostHandler(services.Like, auditPool))).Methods(http.MethodPost)     // 投稿にいいねをつける
+	r.HandleFunc("/api/posts/{id}/likes", handler.GetLikesHandler(services.Like, auditPool)).Methods(http.MethodGet)                                // 投稿のいいねを取得する
+	r.HandleFunc("/api/posts/{id}/like", middleware.AuthMiddleware(handler.UnlikePostHandler(services.Like, auditPool))).Methods(http.MethodDelete) // 投稿のいいねを削除する
 }

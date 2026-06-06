@@ -97,13 +97,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Comment'
+            additionalProperties:
+              type: string
+            type: object
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/models.ErrorResponse'
         "401":
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/models.ErrorResponse'
         "500":
@@ -136,6 +146,10 @@ paths:
             $ref: '#/definitions/models.Comment'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/models.ErrorResponse'
         "500":
@@ -180,7 +194,9 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Comment'
+            additionalProperties:
+              type: string
+            type: object
         "400":
           description: Bad Request
           schema:
@@ -233,7 +249,7 @@ paths:
         送られてきたユーザー情報でログインする
 
         **エラー条件:**
-        - 無効なユーザー情報、ユーザー名が空、パスワードが8文字未満 → 400 Bad Request
+        - 無効なユーザー情報、ユーザー名が空、パスワードが空 → 400 Bad Request
         - ユーザー名かパスワードが不正 → 401 Unauthorized
         - 許可されていないメソッド → 405 MethodNotAllowed
         - データ更新/取得失敗、JWT生成失敗、レスポンス書き込み失敗 → 500 ServerError
@@ -533,8 +549,8 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
             $ref: '#/definitions/models.Comment'
         "400":
@@ -572,8 +588,6 @@ paths:
       responses:
         "204":
           description: No Content
-          schema:
-            type: string
         "400":
           description: Bad Request
           schema:
@@ -588,7 +602,7 @@ paths:
             $ref: '#/definitions/models.ErrorResponse'
       summary: 投稿の「いいね」を削除する
       tags:
-      - comments
+      - likes
     post:
       description: |-
         指定したIDの投稿に「いいね」をつける
@@ -607,9 +621,11 @@ paths:
       - application/json
       responses:
         "201":
-          description: Post liked successfully
+          description: Created
           schema:
-            type: string
+            additionalProperties:
+              type: string
+            type: object
         "400":
           description: Bad Request
           schema:
@@ -624,7 +640,7 @@ paths:
             $ref: '#/definitions/models.ErrorResponse'
       summary: 投稿に「いいね」をつける
       tags:
-      - comments
+      - likes
   /api/posts/{id}/likes:
     get:
       description: |-
@@ -656,7 +672,7 @@ paths:
             $ref: '#/definitions/models.ErrorResponse'
       summary: 投稿の「いいね」を取得する
       tags:
-      - comments
+      - likes
   /api/signup:
     post:
       consumes:

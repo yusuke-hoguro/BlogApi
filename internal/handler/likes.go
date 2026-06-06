@@ -1,16 +1,10 @@
 package handler
 
 import (
-	"database/sql"
-	"encoding/json"
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/yusuke-hoguro/BlogApi/internal/apperror"
-	"github.com/yusuke-hoguro/BlogApi/internal/middleware"
-	"github.com/yusuke-hoguro/BlogApi/internal/models"
+	"github.com/yusuke-hoguro/BlogApi/internal/service"
 	"github.com/yusuke-hoguro/BlogApi/internal/workerpool"
 )
 
@@ -22,47 +16,41 @@ import (
 // @Description - 無効なID → 400 Bad Request
 // @Description - リクエスト認証エラー → 401 Unauthorized
 // @Description - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
-// @Tags comments
+// @Tags likes
 // @Produce json
 // @Param id path int true "投稿ID"
-// @Success 201 {string} string "Post liked successfully"
+// @Success 201 {object} map[string]string
 // @Failure 400 {object} models.ErrorResponse
 // @Failure 401 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts/{id}/like [post]
-func LikePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
+func LikePostHandler(likeService *service.LikeService, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
 
 		// 認証情報からユーザーIDを取得
-		userID, ok := ctx.Value(middleware.UserIDKey).(int)
-		if !ok {
-			respondAppError(w, apperror.NewAppError(apperror.TypeUnauthorized, "Unauthorized : User ID not found in context", nil))
+		userID, appErr := userIDFromContext(ctx)
+		if appErr != nil {
+			respondAppError(w, appErr)
 			return
 		}
 
 		// URIからpostのIDを取得
 		vars := mux.Vars(r)
-		postIDStr := vars["id"]
-		postID, err := strconv.Atoi(postIDStr)
-		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid post ID : PostID="+postIDStr, nil))
+		postID, appErr := parseID(vars["id"])
+		if appErr != nil {
+			respondAppError(w, appErr)
 			return
 		}
 
 		// 「いいね」を登録する
-		_, err = db.ExecContext(ctx, "INSERT INTO likes (user_id, post_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", userID, postID)
-		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to like post : PostID="+postIDStr, err))
+		if err := likeService.LikePost(ctx, userID, postID); err != nil {
+			respondAppError(w, err)
 			return
 		}
 
-		w.WriteHeader(http.StatusCreated)
-		if _, err := fmt.Fprintln(w, "Post liked successfully"); err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
-			return
-		}
+		respondJSON(w, http.StatusCreated, map[string]string{"message": "Post liked successfully"})
 
 		// 監視ワーカープールにイベントを追加
 		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "post_liked", UserID: userID, PostID: postID})
@@ -76,63 +64,35 @@ func LikePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.Han
 // @Description **エラー条件:**
 // @Description - 無効なID → 400 Bad Request
 // @Description - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
-// @Tags comments
+// @Tags likes
 // @Produce json
 // @Param id path int true "投稿ID"
 // @Success 200 {object} models.LikesResponse
 // @Failure 400 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts/{id}/likes [get]
-func GetLikesHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
+func GetLikesHandler(likeService *service.LikeService, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
 
 		// URIからpostのIDを取得
 		vars := mux.Vars(r)
-		postIDStr := vars["id"]
-		postID, err := strconv.Atoi(postIDStr)
-		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid post ID : PostID="+postIDStr, nil))
+		postID, appErr := parseID(vars["id"])
+		if appErr != nil {
+			respondAppError(w, appErr)
 			return
 		}
 
 		// 「いいね」の数とユーザー一覧を取得する
-		rows, err := db.QueryContext(ctx, "SELECT user_id FROM likes WHERE post_id = $1", postID)
+		likes, err := likeService.GetLikes(ctx, postID)
 		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to fetch likes : PostID="+postIDStr, err))
-			return
-		}
-		defer rows.Close()
-
-		// 「いいね」を押してくれたユーザーIDを保管する
-		var userIDs []int
-		for rows.Next() {
-			var userID int
-			if err := rows.Scan(&userID); err != nil {
-				respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to scan row : PostID="+postIDStr, err))
-				return
-			}
-			userIDs = append(userIDs, userID)
-		}
-
-		// rows.Next()のループが終了した後にエラーが発生していないか確認する(DBからのデータ取得中にエラーが発生していないか)
-		if err := rows.Err(); err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to fetch likes : PostID="+postIDStr, err))
+			respondAppError(w, err)
 			return
 		}
 
 		// JSONレスポンスを返す
-		resp := models.LikesResponse{
-			PostID:    postID,
-			LikeCount: len(userIDs),
-			UserIDs:   userIDs,
-		}
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(resp); err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
-			return
-		}
+		respondJSON(w, http.StatusOK, likes)
 
 		// 監視ワーカープールにイベントを追加
 		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "likes_fetched", PostID: postID})
@@ -147,48 +107,43 @@ func GetLikesHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.Han
 // @Description - 無効なID → 400 Bad Request
 // @Description - リクエスト認証エラー → 401 Unauthorized
 // @Description - データ更新/取得失敗 or レスポンス書き込み失敗 → 500 ServerError
-// @Tags comments
+// @Tags likes
 // @Produce json
 // @Param id path int true "投稿ID"
-// @Success 204 {string} string "No Content"
+// @Success 204 "No Content"
 // @Failure 400 {object} models.ErrorResponse
 // @Failure 401 {object} models.ErrorResponse
 // @Failure 500 {object} models.ErrorResponse
 // @Router /api/posts/{id}/like [delete]
-func UnlikePostHandler(db *sql.DB, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
+func UnlikePostHandler(likeService *service.LikeService, auditPool *workerpool.AuditWorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// リクエストのコンテキストを取得する
 		ctx := r.Context()
 
 		// 認証情報からユーザーIDを取得
-		userID, ok := ctx.Value(middleware.UserIDKey).(int)
-		if !ok {
-			respondAppError(w, apperror.NewAppError(apperror.TypeUnauthorized, "Unauthorized : User ID not found in context", nil))
+		userID, appErr := userIDFromContext(ctx)
+		if appErr != nil {
+			respondAppError(w, appErr)
 			return
 		}
 
 		// URIからpostのIDを取得
 		vars := mux.Vars(r)
-		postIDStr := vars["id"]
-		postID, err := strconv.Atoi(postIDStr)
-		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeBadRequest, "Invalid post ID : PostID="+postIDStr, nil))
+		postID, appErr := parseID(vars["id"])
+		if appErr != nil {
+			respondAppError(w, appErr)
 			return
 		}
 
 		// 「いいね」を削除する
-		_, err = db.ExecContext(ctx, "DELETE FROM likes WHERE user_id = $1 AND post_id = $2", userID, postID)
-		if err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to remove like : PostID="+postIDStr, err))
+		if err := likeService.UnlikePost(ctx, userID, postID); err != nil {
+			respondAppError(w, err)
 			return
 		}
 
-		if _, err := fmt.Fprintln(w, "like removed successfully!"); err != nil {
-			respondAppError(w, apperror.NewAppError(apperror.TypeInternalServer, "Failed to write response", err))
-			return
-		}
+		respondJSON(w, http.StatusNoContent, nil)
+
 		// 監視ワーカープールにイベントを追加
 		enqueueAuditEvent(ctx, auditPool, workerpool.AuditEvent{Action: "post_unliked", UserID: userID, PostID: postID})
-		w.WriteHeader(http.StatusNoContent)
 	}
 }

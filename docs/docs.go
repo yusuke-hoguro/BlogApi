@@ -47,6 +47,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -96,7 +102,10 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Comment"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "400": {
@@ -160,7 +169,10 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Comment"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "400": {
@@ -171,6 +183,18 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/models.ErrorResponse"
                         }
@@ -212,7 +236,7 @@ const docTemplate = `{
         },
         "/api/login": {
             "post": {
-                "description": "送られてきたユーザー情報でログインする\n\n**エラー条件:**\n- 無効なユーザー情報、ユーザー名が空、パスワードが8文字未満 → 400 Bad Request\n- ユーザー名かパスワードが不正 → 401 Unauthorized\n- 許可されていないメソッド → 405 MethodNotAllowed\n- データ更新/取得失敗、JWT生成失敗、レスポンス書き込み失敗 → 500 ServerError",
+                "description": "送られてきたユーザー情報でログインする\n\n**エラー条件:**\n- 無効なユーザー情報、ユーザー名が空、パスワードが空 → 400 Bad Request\n- ユーザー名かパスワードが不正 → 401 Unauthorized\n- 許可されていないメソッド → 405 MethodNotAllowed\n- データ更新/取得失敗、JWT生成失敗、レスポンス書き込み失敗 → 500 ServerError",
                 "consumes": [
                     "application/json"
                 ],
@@ -602,8 +626,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/models.Comment"
                         }
@@ -636,7 +660,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "comments"
+                    "likes"
                 ],
                 "summary": "投稿に「いいね」をつける",
                 "parameters": [
@@ -650,9 +674,12 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Post liked successfully",
+                        "description": "Created",
                         "schema": {
-                            "type": "string"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "400": {
@@ -681,7 +708,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "comments"
+                    "likes"
                 ],
                 "summary": "投稿の「いいね」を削除する",
                 "parameters": [
@@ -695,10 +722,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "No Content",
-                        "schema": {
-                            "type": "string"
-                        }
+                        "description": "No Content"
                     },
                     "400": {
                         "description": "Bad Request",
@@ -728,7 +752,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "comments"
+                    "likes"
                 ],
                 "summary": "投稿の「いいね」を取得する",
                 "parameters": [

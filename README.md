@@ -81,7 +81,7 @@ flowchart LR
 
 - `.github` : GitHub ActionsのWorkflow / PRのテンプレートなど
 - `cmd/api/` : APIサーバーのエントリポイント  
-- `internal/` : handler / middleware / repository などアプリ本体  
+- `internal/` : handler / service / repository / middleware などアプリ本体  
 - `infra/` : docker-compose（dev/test/prod）/ nginx設定 / utility
 - `blog-api-frontend/` : Reactフロント（PlaywrightによるE2Eテスト含む）  
 - `sql/` : DB初期化用SQL / マイグレーションSQL

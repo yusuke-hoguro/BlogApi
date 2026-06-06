@@ -44,6 +44,12 @@
                             "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -93,7 +99,10 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Comment"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "400": {
@@ -157,7 +166,10 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Comment"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "400": {
@@ -168,6 +180,18 @@
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/models.ErrorResponse"
                         }
@@ -209,7 +233,7 @@
         },
         "/api/login": {
             "post": {
-                "description": "送られてきたユーザー情報でログインする\n\n**エラー条件:**\n- 無効なユーザー情報、ユーザー名が空、パスワードが8文字未満 → 400 Bad Request\n- ユーザー名かパスワードが不正 → 401 Unauthorized\n- 許可されていないメソッド → 405 MethodNotAllowed\n- データ更新/取得失敗、JWT生成失敗、レスポンス書き込み失敗 → 500 ServerError",
+                "description": "送られてきたユーザー情報でログインする\n\n**エラー条件:**\n- 無効なユーザー情報、ユーザー名が空、パスワードが空 → 400 Bad Request\n- ユーザー名かパスワードが不正 → 401 Unauthorized\n- 許可されていないメソッド → 405 MethodNotAllowed\n- データ更新/取得失敗、JWT生成失敗、レスポンス書き込み失敗 → 500 ServerError",
                 "consumes": [
                     "application/json"
                 ],
@@ -599,8 +623,8 @@
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/models.Comment"
                         }
@@ -633,7 +657,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "comments"
+                    "likes"
                 ],
                 "summary": "投稿に「いいね」をつける",
                 "parameters": [
@@ -647,9 +671,12 @@
                 ],
                 "responses": {
                     "201": {
-                        "description": "Post liked successfully",
+                        "description": "Created",
                         "schema": {
-                            "type": "string"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     },
                     "400": {
@@ -678,7 +705,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "comments"
+                    "likes"
                 ],
                 "summary": "投稿の「いいね」を削除する",
                 "parameters": [
@@ -692,10 +719,7 @@
                 ],
                 "responses": {
                     "204": {
-                        "description": "No Content",
-                        "schema": {
-                            "type": "string"
-                        }
+                        "description": "No Content"
                     },
                     "400": {
                         "description": "Bad Request",
@@ -725,7 +749,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "comments"
+                    "likes"
                 ],
                 "summary": "投稿の「いいね」を取得する",
                 "parameters": [
