@@ -64,3 +64,33 @@ func validateCommentContent(content string, target string) *apperror.AppError {
 
 	return nil
 }
+
+// ユーザー登録の入力を検証する
+func validateSignupInput(user models.User) *apperror.AppError {
+	// ユーザー名が空の場合はエラーとする
+	if user.Username == "" {
+		return apperror.NewAppError(apperror.TypeBadRequest, "Username is required", nil)
+	}
+
+	// パスワードが8文字未満の場合はエラーとする
+	if len(user.Password) < 8 {
+		return apperror.NewAppError(apperror.TypeBadRequest, "Password must be at least 8 characters long", nil)
+	}
+
+	return nil
+}
+
+// ログインの入力を検証する
+func validateLoginInput(user models.User) *apperror.AppError {
+	// ユーザー名が空の場合はエラーとする
+	if user.Username == "" {
+		return apperror.NewAppError(apperror.TypeBadRequest, "Username is required", nil)
+	}
+
+	// パスワードが空の場合、エラーとする
+	if user.Password == "" {
+		return apperror.NewAppError(apperror.TypeBadRequest, "Password is required : Username="+user.Username, nil)
+	}
+
+	return nil
+}

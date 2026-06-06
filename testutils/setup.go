@@ -85,8 +85,8 @@ func SetupTestServer(db *sql.DB) (http.Handler, func()) {
 	r.HandleFunc("/api/posts/{id}", middleware.AuthMiddleware(handler.UpdatePostHandler(services.Post, auditPool))).Methods("PUT")               // 個別投稿更新用
 	r.HandleFunc("/api/posts/{id}", middleware.AuthMiddleware(handler.DeletePostHandler(services.Post, auditPool))).Methods("DELETE")            // 個別投稿削除用
 	r.HandleFunc("/api/myposts", middleware.AuthMiddleware(handler.GetMyPostsHandler(services.Post, auditPool))).Methods("GET")                  // 自身の投稿のみ取得
-	r.HandleFunc("/api/signup", handler.SignupHandler(db, auditPool)).Methods("POST")                                                            // ユーザー登録用
-	r.HandleFunc("/api/login", handler.LoginHandler(db, auditPool)).Methods("POST")                                                              // ログイン用
+	r.HandleFunc("/api/signup", handler.SignupHandler(services.User, auditPool)).Methods("POST")                                                 // ユーザー登録用
+	r.HandleFunc("/api/login", handler.LoginHandler(services.User, auditPool)).Methods("POST")                                                   // ログイン用
 	r.HandleFunc("/api/posts/{id}/comments", middleware.AuthMiddleware(handler.PostCommentHandler(services.Comment, auditPool))).Methods("POST") // コメント投稿
 	r.HandleFunc("/api/posts/{id}/comments", handler.GetCommentsByPostIDHandler(services.Comment, auditPool)).Methods("GET")                     // 投稿のコメント取得
 	r.HandleFunc("/api/comments/{id}", handler.GetCommentsByIDHandler(services.Comment, auditPool)).Methods("GET")                               // コメントIDで詳細取得
