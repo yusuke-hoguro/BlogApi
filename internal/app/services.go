@@ -11,15 +11,18 @@ import (
 type Services struct {
 	Post    *service.PostService
 	Comment *service.CommentService
+	Like    *service.LikeService
 }
 
 // サービスの初期化を行う関数
 func NewServices(db *sql.DB) *Services {
 	postRepo := repository.NewPostRepository(db)
 	commentRepo := repository.NewCommentRepository(db)
+	likeRepo := repository.NewLikeRepository(db)
 
 	return &Services{
 		Post:    service.NewPostService(postRepo),
 		Comment: service.NewCommentService(commentRepo),
+		Like:    service.NewLikeService(likeRepo),
 	}
 }

@@ -92,9 +92,9 @@ func SetupTestServer(db *sql.DB) (http.Handler, func()) {
 	r.HandleFunc("/api/comments/{id}", handler.GetCommentsByIDHandler(services.Comment, auditPool)).Methods("GET")                               // コメントIDで詳細取得
 	r.HandleFunc("/api/comments/{id}", middleware.AuthMiddleware(handler.DeleteCommentHandler(services.Comment, auditPool))).Methods("DELETE")   // コメントIDで削除
 	r.HandleFunc("/api/comments/{id}", middleware.AuthMiddleware(handler.UpdateCommentHandler(services.Comment, auditPool))).Methods("PUT")      // コメントを更新する
-	r.HandleFunc("/api/posts/{id}/like", middleware.AuthMiddleware(handler.LikePostHandler(db, auditPool))).Methods("POST")                      // 投稿にいいねをつける
-	r.HandleFunc("/api/posts/{id}/likes", handler.GetLikesHandler(db, auditPool)).Methods("GET")                                                 // 投稿のいいねを取得する
-	r.HandleFunc("/api/posts/{id}/like", middleware.AuthMiddleware(handler.UnlikePostHandler(db, auditPool))).Methods("DELETE")                  // 投稿のいいねを削除する
+	r.HandleFunc("/api/posts/{id}/like", middleware.AuthMiddleware(handler.LikePostHandler(services.Like, auditPool))).Methods("POST")           // 投稿にいいねをつける
+	r.HandleFunc("/api/posts/{id}/likes", handler.GetLikesHandler(services.Like, auditPool)).Methods("GET")                                      // 投稿のいいねを取得する
+	r.HandleFunc("/api/posts/{id}/like", middleware.AuthMiddleware(handler.UnlikePostHandler(services.Like, auditPool))).Methods("DELETE")       // 投稿のいいねを削除する
 	return r, cleanup
 }
 
