@@ -3,7 +3,9 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 
+	"github.com/lib/pq"
 	"github.com/yusuke-hoguro/BlogApi/internal/apperror"
 )
 
@@ -22,6 +24,9 @@ func (r *UserRepository) Create(ctx context.Context, username string, hashedPass
 	var id int
 	err := r.db.QueryRowContext(ctx, "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id", username, hashedPassword).Scan(&id)
 	if err != nil {
+		if isUniqueViolation(err, "users_username_key") {
+			return 0, apperror.NewAppError(apperror.TypeConflict, "User already exists : Username="+username, err)
+		}
 		return 0, apperror.NewAppError(apperror.TypeInternalServer, "Failed to insert user : Username="+username, err)
 	}
 	return id, nil
@@ -38,4 +43,9 @@ func (r *UserRepository) FindAuthByUsername(ctx context.Context, username string
 		return 0, "", apperror.NewAppError(apperror.TypeInternalServer, "Database error : Username="+username, err)
 	}
 	return id, hashedPassword, nil
+}
+
+func isUniqueViolation(err error, constraint string) bool {
+	var pqErr *pq.Error
+	return errors.As(err, &pqErr) && string(pqErr.Code) == "23505" && pqErr.Constraint == constraint
 }
