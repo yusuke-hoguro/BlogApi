@@ -22,7 +22,7 @@ func TestSignupHandlerDuplicateUsername(t *testing.T) {
 	defer cleanup()
 
 	// testdata/init_test.sql で作成済みのユーザー名を指定する
-	signupJSON := `{"username":"testuser","password":"password123"}`
+	signupJSON := `{"username":"testuser","password":"password"}`
 	req, err := http.NewRequest(http.MethodPost, server.URL+"/api/signup", strings.NewReader(signupJSON))
 	if err != nil {
 		t.Fatal("リクエスト生成失敗:", err)

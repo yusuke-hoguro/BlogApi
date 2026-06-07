@@ -52,23 +52,31 @@ CREATE TABLE IF NOT EXISTS post_stats(
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 初期データ投入
+-- 初期データ投入、投入後にシーケンスの値を更新する
 INSERT INTO posts (user_id, title, content) VALUES
   (1, 'テストタイトル1', 'テスト内容1'),
   (2, 'テストタイトル2', 'テスト内容2'),
   (3, 'コメントテスト用', 'コメント追加テスト');
 
+SELECT setval(pg_get_serial_sequence('posts', 'id'), (SELECT MAX(id) FROM posts));
+
 INSERT INTO users (id, username, password) VALUES
-  (1, 'testuser', 'pass'),
-  (2, 'testuser2', 'pass2'),
-  (3, 'testuser3', 'pass3');
+  (1, 'testuser', 'password'),
+  (2, 'testuser2', 'password2'),
+  (3, 'testuser3', 'password3');
+
+SELECT setval(pg_get_serial_sequence('users', 'id'), (SELECT MAX(id) FROM users));
 
 INSERT INTO comments (id, post_id, user_id, content) VALUES
   (3, 1, 1, 'Default Comment'),
   (4, 1, 1, 'Default Comment'),
   (2, 2, 2, 'Delete Comment');
 
+SELECT setval(pg_get_serial_sequence('comments', 'id'), (SELECT MAX(id) FROM comments));
+
 INSERT INTO likes (id, user_id, post_id) VALUES
   (1, 1, 1),
   (2, 2, 1),
   (3, 3, 1);
+
+SELECT setval(pg_get_serial_sequence('likes', 'id'), (SELECT MAX(id) FROM likes));
