@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TEST_USERS } from '@e2e/fixtures/users';
-import { loginAsTestUser, createPost } from '@e2e/utils/utils';
+import { loginAsTestUser, createPost, createUniqueText } from '@e2e/utils/utils';
 import { BUTTON_LOGOUT, BUTTON_DELETE_POST, BUTTON_CREATE_POST } from '@e2e/constants/buttons';
 import { CREATE_POST_TITLE, CREATE_POST_CONTENT } from '@e2e/constants/posts';
 import { POST_ITEM_TEST_ID, } from '@e2e/constants/selectors';
@@ -29,13 +29,13 @@ test.describe('認証・認可のテスト', () => {
         await expect(page).toHaveURL('/login');
     });
 
-    test('未ログインで投稿詳細画面へアクセスするテスト', async ({ page }) => {
+    test('未ログインで投稿詳細画面へアクセスするテスト', async ({ page }, testInfo) => {
         // テストユーザーでログイン
         const token = await loginAsTestUser(page, TEST_USERS.testuser)
         // トップページ（投稿一覧表示）へ遷移する
         await page.goto('/');
         // APIを使用してテスト用の投稿を作成する
-        const testTitle = CREATE_POST_TITLE + `${Date.now()}`;
+        const testTitle = createUniqueText(CREATE_POST_TITLE, testInfo);
         const testContent = CREATE_POST_CONTENT
         const post = await createPost(page, token, testTitle, testContent)
         // ログアウト
@@ -74,7 +74,7 @@ test.describe('認証・認可のテスト', () => {
         await expect(posts.filter({ hasText: testTitle })).toHaveCount(0);
     });
 
-    test('トークンが期限切れになった場合のテスト', async ({ page }) => {
+    test('トークンが期限切れになった場合のテスト', async ({ page }, testInfo) => {
         // テストユーザーでログイン
         const token = await loginAsTestUser(page, TEST_USERS.testuser)
         // トップページにアクセスする
@@ -90,7 +90,7 @@ test.describe('認証・認可のテスト', () => {
         // 投稿作成ページが開けたかを確認する
         await expect(page.getByRole('heading', { name: PAGE_TITLE_POST_CREATE })).toBeVisible();
         // 新規投稿の作成を実施する
-        const title = CREATE_POST_TITLE + `${Date.now()}`;
+        const title = createUniqueText(CREATE_POST_TITLE, testInfo);
         const content = CREATE_POST_CONTENT;
         await page.getByLabel(LABEL_POST_CREATE_TITLE).fill(title);
         await page.getByLabel(LABEL_POST_CREATE_CONTEXT).fill(content);

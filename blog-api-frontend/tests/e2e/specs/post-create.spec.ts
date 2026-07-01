@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '@e2e/utils/utils';
+import { loginAsTestUser, createUniqueText } from '@e2e/utils/utils';
 import { ASSERTION_TIMEOUT_MS } from '@e2e/constants/config';
 import { TEST_USERS } from '@e2e/fixtures/users';
 import { POST_ITEM_TEST_ID, POST_TITLE_TEST_ID, POST_CONTENT_TEST_ID } from '@e2e/constants/selectors';
@@ -10,7 +10,7 @@ import { LABEL_EDIT_POST, LABEL_POST_CREATE_TITLE, LABEL_POST_CREATE_CONTEXT } f
 
 test.describe('投稿機能:正常系テスト', () => {
 
-    test('新規投稿作成→編集→削除のテストを実施', async ({ page }) => {
+    test('新規投稿作成→編集→削除のテストを実施', async ({ page }, testInfo) => {
         // テストユーザーでログインする
         const token = await loginAsTestUser(page, TEST_USERS.testuser);
         // 投稿作成ページへ遷移
@@ -18,7 +18,7 @@ test.describe('投稿機能:正常系テスト', () => {
         // 投稿作成ページが開けたかを確認する
         await expect(page.getByRole('heading', { name: PAGE_TITLE_POST_CREATE })).toBeVisible();
         // 新規投稿の作成を実施する
-        const title = CREATE_POST_TITLE + `${Date.now()}`;
+        const title = createUniqueText(CREATE_POST_TITLE, testInfo);
         const content = CREATE_POST_CONTENT;
         await page.getByLabel(LABEL_POST_CREATE_TITLE).fill(title);
         await page.getByLabel(LABEL_POST_CREATE_CONTEXT).fill(content);
@@ -34,7 +34,7 @@ test.describe('投稿機能:正常系テスト', () => {
         // 編集ボタンを押す
         await page.getByRole('link', { name: LABEL_EDIT_POST }).click();
         // タイトルを編集する
-        const updateTitle = UPDATE_POST_TITLE + ` ${Date.now()}`;
+        const updateTitle = createUniqueText(UPDATE_POST_TITLE, testInfo);
         await page.getByLabel(LABEL_POST_CREATE_TITLE).fill(updateTitle);
         // タイトルが変わったか確認
         await expect(page.getByLabel(LABEL_POST_CREATE_TITLE)).toHaveValue(updateTitle, { timeout: ASSERTION_TIMEOUT_MS })

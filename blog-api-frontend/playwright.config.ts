@@ -1,8 +1,29 @@
-import 'tsconfig-paths/register.js';
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
+import { register } from 'tsconfig-paths';
+
+register({
+    baseUrl: '.',
+    paths: {
+        '@e2e/*': ['tests/e2e/*'],
+    },
+});
 
 export default defineConfig({
     testDir: './tests',
+    projects: [
+        {
+            name: 'chromium',
+            use: { ...devices['Desktop Chrome'] },
+        },
+        {
+            name: 'firefox',
+            use: { ...devices['Desktop Firefox'] },
+        },
+        {
+            name: 'webkit',
+            use: { ...devices['Desktop Safari'] },
+        },
+    ],
     use: {
         headless: true,
         // フロントエンドはポート3000で動作するdocker-composeのnginxコンテナを通じて提供

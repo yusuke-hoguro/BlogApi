@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAsTestUser, logout , createPost, deletePost } from '@e2e/utils/utils';
+import { loginAsTestUser, logout , createPost, deletePost, createUniqueText } from '@e2e/utils/utils';
 import { ASSERTION_TIMEOUT_MS, WAIT_FOR_ELEMENT_TIMEOUT_MS } from '@e2e/constants/config';
 import { TEST_COMMENT, TEST_COMMENT_LONG, TEST_COMMENT_TOO_LONG } from '@e2e/constants/comments';
 import { BUTTON_SEND_COMMENT, BUTTON_EDIT_COMMENT, BUTTON_SAVE_COMMENT, BUTTON_DELETE_COMMENT } from '@e2e/constants/buttons';
@@ -9,13 +9,13 @@ import { CREATE_POST_TITLE, CREATE_POST_CONTENT } from '@e2e/constants/posts';
 
 test.describe('コメント機能：正常系テスト', () => {
     
-    test('UI画面でコメントの作成→表示→編集→削除のテストを実施する', async({ page }) => {
+    test('UI画面でコメントの作成→表示→編集→削除のテストを実施する', async({ page }, testInfo) => {
         // テストユーザーでログイン
         const token = await loginAsTestUser(page, TEST_USERS.testuser)
         // トップページ（投稿一覧表示）へ遷移する
         await page.goto('/');
         // APIを使用してテスト用の投稿を作成する
-        const testTitle = CREATE_POST_TITLE + `${Date.now()}`;
+        const testTitle = createUniqueText(CREATE_POST_TITLE, testInfo);
         const testContent = CREATE_POST_CONTENT
         const post = await createPost(page, token, testTitle, testContent)
         // 投稿作成後に一覧をリロード
@@ -27,7 +27,7 @@ test.describe('コメント機能：正常系テスト', () => {
         // 新規追加した投稿の詳細画面に遷移できたかをチェック
         await expect(page.getByRole('heading', { name: testTitle })).toBeVisible();
         // テスト用コメント
-        const testComment = TEST_COMMENT + ` ${Date.now()}`;
+        const testComment = createUniqueText(TEST_COMMENT, testInfo);
         // コメント入力
         await page.getByPlaceholder('コメントを入力').fill(testComment);    
         // 送信ボタンをクリック
@@ -73,13 +73,13 @@ test.describe('コメント機能：正常系テスト', () => {
 
 test.describe('コメント機能：異常系テスト', () => {
 
-    test('空コメント、文字数オーバー、他ユーザーのコメント編集削除不可のテスト', async({ page }) => {
+    test('空コメント、文字数オーバー、他ユーザーのコメント編集削除不可のテスト', async({ page }, testInfo) => {
         // テストユーザーでログイン
         const token = await loginAsTestUser(page, TEST_USERS.testuser)
         // トップページ（投稿一覧表示）へ遷移する
         await page.goto('/');
         // APIを使用してテスト用の投稿を作成する
-        const testTitle = CREATE_POST_TITLE + `${Date.now()}`;
+        const testTitle = createUniqueText(CREATE_POST_TITLE, testInfo);
         const testContent = CREATE_POST_CONTENT
         const post = await createPost(page, token, testTitle, testContent)
         // 投稿作成後に一覧をリロード
