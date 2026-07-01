@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAsTestUser } from '@e2e/utils/utils';
+import { loginAsTestUser, createUniqueText } from '@e2e/utils/utils';
 import { ASSERTION_TIMEOUT_MS, WAIT_FOR_ELEMENT_TIMEOUT_MS } from '@e2e/constants/config';
 import { TEST_USERS } from '@e2e/fixtures/users';
 import { POST_ITEM_TEST_ID, POST_TITLE_TEST_ID, POST_CONTENT_TEST_ID, COMMENT_ITEM_TEST_ID } from '@e2e/constants/selectors';
@@ -11,7 +11,7 @@ import { TEST_COMMENT } from '@e2e/constants/comments';
 
 test.describe('全体機能テスト:正常系', () => {
 
-    test('新規投稿作成→コメント作成、編集、削除→投稿編集、削除のテストを実施', async ({ page }) => {
+    test('新規投稿作成→コメント作成、編集、削除→投稿編集、削除のテストを実施', async ({ page }, testInfo) => {
         // テストユーザーでログインする
         const token = await loginAsTestUser(page, TEST_USERS.testuser);
         // 投稿作成ページへ遷移
@@ -19,7 +19,7 @@ test.describe('全体機能テスト:正常系', () => {
         // 投稿作成ページが開けたかを確認する
         await expect(page.getByRole('heading', { name: PAGE_TITLE_POST_CREATE })).toBeVisible();
         // 新規投稿の作成を実施する
-        const title = CREATE_POST_TITLE + `${Date.now()}`;
+        const title = createUniqueText(CREATE_POST_TITLE, testInfo);
         const content = CREATE_POST_CONTENT;
         await page.getByLabel(LABEL_POST_CREATE_TITLE).fill(title);
         await page.getByLabel(LABEL_POST_CREATE_CONTEXT).fill(content);
@@ -33,7 +33,7 @@ test.describe('全体機能テスト:正常系', () => {
         // 新規追加した投稿の詳細画面に遷移できたかをチェック
         await expect(page.getByRole('heading', { name: title })).toBeVisible();
         // テスト用コメント
-        const testComment = TEST_COMMENT + ` ${Date.now()}`;
+        const testComment = createUniqueText(TEST_COMMENT, testInfo);
         // コメント入力
         await page.getByPlaceholder('コメントを入力').fill(testComment);    
         // 送信ボタンをクリック
@@ -68,7 +68,7 @@ test.describe('全体機能テスト:正常系', () => {
         // 編集ボタンを押す
         await page.getByRole('link', { name: LABEL_EDIT_POST }).click();
         // タイトルを編集する
-        const updateTitle = UPDATE_POST_TITLE + ` ${Date.now()}`;
+        const updateTitle = createUniqueText(UPDATE_POST_TITLE, testInfo);
         await page.getByLabel(LABEL_POST_CREATE_TITLE).fill(updateTitle);
         // タイトルが変わったか確認
         await expect(page.getByLabel(LABEL_POST_CREATE_TITLE)).toHaveValue(updateTitle, { timeout: ASSERTION_TIMEOUT_MS })

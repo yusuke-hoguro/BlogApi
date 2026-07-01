@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAsTestUser, createPost, deletePost, logout } from '@e2e/utils/utils';
+import { loginAsTestUser, createPost, deletePost, logout, createUniqueText } from '@e2e/utils/utils';
 import { TEST_USERS } from '@e2e/fixtures/users';
 import { POST_ITEM_TEST_ID, POST_TITLE_TEST_ID, POST_CONTENT_TEST_ID } from '@e2e/constants/selectors';
 import { CREATE_POST_TITLE, CREATE_POST_CONTENT } from '@e2e/constants/posts';
@@ -10,11 +10,11 @@ import { LABEL_EDIT_POST } from '@e2e/constants/label';
 
 test.describe('投稿詳細表示画面：正常系テスト', () => {
 
-    test('投稿詳細ページへ遷移でき、詳細が表示される', async ({ page }) => {
+    test('投稿詳細ページへ遷移でき、詳細が表示される', async ({ page }, testInfo) => {
         // テストユーザーでログイン
         const token = await loginAsTestUser(page, TEST_USERS.testuser)
         // APIを使用してテスト用の投稿を作成する
-        const testTitle = CREATE_POST_TITLE + `${Date.now()}`;
+        const testTitle = createUniqueText(CREATE_POST_TITLE, testInfo);
         const testContent = CREATE_POST_CONTENT
         const post = await createPost(page, token, testTitle, testContent)
         // トップページ（投稿一覧表示）へ遷移する
@@ -61,11 +61,11 @@ test.describe('投稿詳細表示画面：異常系テスト', () => {
         await expect(page.getByText('投稿が見つかりません')).toBeVisible();
     });
 
-    test('投稿取得APIが500の場合のテスト', async ({ page }) => {
+    test('投稿取得APIが500の場合のテスト', async ({ page }, testInfo) => {
         // テストユーザーでログイン
         const token = await loginAsTestUser(page, TEST_USERS.testuser)
         // APIを使用してテスト用の投稿を作成する
-        const testTitle = CREATE_POST_TITLE + `${Date.now()}`;
+        const testTitle = createUniqueText(CREATE_POST_TITLE, testInfo);
         const testContent = CREATE_POST_CONTENT
         const post = await createPost(page, token, testTitle, testContent)
         // トップページ（投稿一覧表示）へ遷移する
@@ -84,11 +84,11 @@ test.describe('投稿詳細表示画面：異常系テスト', () => {
         await expect(page.getByText('投稿が見つかりません')).toBeVisible();
     });
 
-    test('他ユーザーが作成した投稿に対して編集・削除ができないことをテスト', async ({ page }) => {
+    test('他ユーザーが作成した投稿に対して編集・削除ができないことをテスト', async ({ page }, testInfo) => {
         // テストユーザーでログイン
         const token = await loginAsTestUser(page, TEST_USERS.testuser)
         // APIを使用してテスト用の投稿を作成する
-        const testTitle = CREATE_POST_TITLE + `${Date.now()}`;
+        const testTitle = createUniqueText(CREATE_POST_TITLE, testInfo);
         const testContent = CREATE_POST_CONTENT
         const post = await createPost(page, token, testTitle, testContent)
         // トップページ（投稿一覧表示）へ遷移する
@@ -139,13 +139,13 @@ test.describe('投稿詳細表示画面：異常系テスト', () => {
         await expect(posts.filter({ hasText: testTitle })).toHaveCount(0);
     });
 
-    test('削除済み投稿にアクセスした場合のテスト', async ({ page }) => {
+    test('削除済み投稿にアクセスした場合のテスト', async ({ page }, testInfo) => {
         // テストユーザーでログイン
         const token = await loginAsTestUser(page, TEST_USERS.testuser)
         // トップページ（投稿一覧表示）へ遷移する
         await page.goto('/');
         // APIを使用してテスト用の投稿を作成する
-        const testTitle = CREATE_POST_TITLE + `${Date.now()}`;
+        const testTitle = createUniqueText(CREATE_POST_TITLE, testInfo);
         const testContent = CREATE_POST_CONTENT
         const post = await createPost(page, token, testTitle, testContent)
         // トップページ（投稿一覧表示）へ遷移する

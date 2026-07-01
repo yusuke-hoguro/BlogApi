@@ -1,5 +1,11 @@
-import { Page } from "@playwright/test";
+import { Page, TestInfo } from "@playwright/test";
+import { randomUUID } from 'node:crypto';
 import { TestUser } from '../fixtures/users';
+
+// ブラウザproject/workerごとに重複しないテストデータ名を作成する
+export function createUniqueText(base: string, testInfo: TestInfo) {
+    return `${base}-${testInfo.project.name}-${testInfo.workerIndex}-${randomUUID()}`;
+}
 
 /*
 * テストユーザーでログインしてTokenを取得する

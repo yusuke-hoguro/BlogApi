@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAsTestUser, createPost, deletePost } from '@e2e/utils/utils';
+import { loginAsTestUser, createPost, deletePost, createUniqueText } from '@e2e/utils/utils';
 import { WAIT_FOR_ELEMENT_TIMEOUT_MS } from '@e2e/constants/config';
 import { POST_ITEM_TEST_ID, POST_FETCH_ERROR_TEST_ID, POST_EMPTY_TEST_ID } from '@e2e/constants/selectors';
 import { TEST_USERS } from '@e2e/fixtures/users';
@@ -8,12 +8,12 @@ import { BUTTON_LOGOUT } from '@e2e/constants/buttons';
 
 test.describe('投稿一覧表示画面：正常系テスト', () => {
     // PostListが正しくAPIを叩けて表示できるかを確認する
-    test('投稿一覧が表示される', async({ page }) => {
+    test('投稿一覧が表示される', async({ page }, testInfo) => {
         // テストユーザーでログインする
         const token = await loginAsTestUser(page, TEST_USERS.testuser)
         await page.goto('/');
         // APIを使用してテスト用の投稿を作成する
-        const testTitle = CREATE_POST_TITLE + `${Date.now()}`;
+        const testTitle = createUniqueText(CREATE_POST_TITLE, testInfo);
         const testContent = CREATE_POST_CONTENT
         const post = await createPost(page, token, testTitle, testContent)
         // 投稿作成後に一覧をリロード
