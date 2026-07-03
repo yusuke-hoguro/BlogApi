@@ -8,7 +8,7 @@ RUN go build -o main ./cmd/api
 RUN go build -o migrate ./cmd/migrate
 
 # 実行ステージ
-FROM alpine:3.23
+FROM alpine:3.24
 WORKDIR /app
 # ビルドステージから実行ファイルをコピー
 COPY --from=builder /app/main ./main
