@@ -86,6 +86,8 @@ flowchart LR
 - `blog-api-frontend/` : Reactフロント（PlaywrightによるE2Eテスト含む）  
 - `sql/` : DB初期化用SQL / マイグレーションSQL
 - `docs/` : Swagger / TODO などのドキュメント
+- `AGENTS.md` : AIエージェント向けの入口ガイド
+- `docs/agents/` : Backend / Frontend / DB / Test / Review などのAI作業ガイド
 
 ---
 
@@ -395,7 +397,7 @@ make fe-preview    # フロントエンドビルドのプレビュー起動
 
 ## Roadmap / TODO
 
-現在の改善計画・技術的課題は`docs/issue/TODO_LIST.md`にまとめています。
+現在の改善計画・技術的課題は`docs/backlog.md`にまとめています。
 
 ---
 
