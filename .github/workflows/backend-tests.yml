@@ -53,12 +53,14 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Verify dependencies
-        run: go mod tidy && git diff --exit-code go.mod go.sum 
+      # 依存関係の検証とDocker Composeによるテストを並列で実行する
+      - parallel:
+          - name: Verify dependencies
+            run: go mod tidy -diff
 
-      # Docker Composeでビルドとテスト実行
-      - name: Build and run tests (docker-compose)
-        run: docker compose -f ./infra/docker-compose.test.yml --env-file ./.env up --build --abort-on-container-exit || exit 1
+          # Docker Composeでビルドとテスト実行
+          - name: Build and run tests (docker-compose)
+            run: docker compose -f ./infra/docker-compose.test.yml --env-file ./.env up --build --abort-on-container-exit || exit 1
 
       # カバレッジ対応
       - name: Upload coverage report
@@ -86,6 +88,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Cleanup
+        if: always()
         run:  docker compose -f ./infra/docker-compose.test.yml --env-file ./.env down -v
   
   generate-swagger:
