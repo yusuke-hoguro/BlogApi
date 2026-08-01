@@ -32,25 +32,29 @@ jobs:
           cache: "npm"
           cache-dependency-path: blog-api-frontend/package-lock.json
       
-      # 依存するライブラリをインストールする
-      - name: Install frontend dependencies
-        working-directory: blog-api-frontend
-        run: npm ci
+      # フロントエンド依存関係のインストールとBlogAPIのビルド・起動を並列で実行する
+      - parallel:
+          # 依存するライブラリをインストールする
+          - name: Install frontend dependencies
+            working-directory: blog-api-frontend
+            run: npm ci
 
-      # Playwrightのブラウザとライブラリをインストールする(--with-depsdeでOS側の依存ライブラリを検出してインストール)
-      - name: Install playwright browsers
-        working-directory: blog-api-frontend
-        run: npx playwright install --with-deps
+          # BlogAPIを起動する
+          - name: Start BlogApi
+            run: docker compose --env-file ./.env -f ./infra/docker-compose.yml up -d --build
 
-      # BlogAPIを起動する
-      - name: Start BlogApi
-        run: docker compose --env-file ./.env -f ./infra/docker-compose.yml up -d --build
+      # PlaywrightブラウザのインストールとBlogAPIの起動待機を並列で実行する
+      - parallel:
+          # Playwrightのブラウザとライブラリをインストールする(--with-depsdeでOS側の依存ライブラリを検出してインストール)
+          - name: Install playwright browsers
+            working-directory: blog-api-frontend
+            run: npx playwright install --with-deps
 
-      # BlogAPIの起動を待機する
-      - name: Wait for BlogAPI to start
-        run: |
-          npx wait-on http://localhost:3000 --timeout 120000
-          npx wait-on http://localhost:8080/api/healthz --timeout 120000
+          # BlogAPIの起動を待機する
+          - name: Wait for BlogAPI to start
+            run: |
+              npx wait-on http://localhost:3000 --timeout 120000
+              npx wait-on http://localhost:8080/api/healthz --timeout 120000
 
       # Playwrightのテストを実行する
       - name: Run playwright tests
