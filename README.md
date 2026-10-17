@@ -247,6 +247,7 @@ CIでのテスト内容：
 
 - Backend Tests: テスト用のDocker Composeを使用してAPIの自動テストを実施します。  
 - E2E Tests - Playwright: Chromium / Firefox / WebKit の3ブラウザで、フロントエンドからバックエンドまでのE2Eテストを実施します。
+- フロントエンド依存のインストール後に `npm run check:react-versions` で `react` と `react-dom` の完全なバージョン一致を確認します。`npm run build` でも同じ検査を自動実行します。
 
 補足：
 
@@ -265,6 +266,7 @@ make ci-test
 
 - Go modules: `go.mod` / `go.sum`
 - Frontend npm: `blog-api-frontend/package.json` / `package-lock.json`
+- React 関連の4パッケージ（`react`、`react-dom`、`@types/react`、`@types/react-dom`）の minor / patch 更新は同じ PR にまとめます。型定義のバージョン番号は実行時パッケージとの完全一致を要求しません。
 - Docker images: ルートおよびフロントエンドの`Dockerfile`
 - Docker Compose: `infra/docker-compose*.yml`
 - GitHub Actions: `.github/workflows`

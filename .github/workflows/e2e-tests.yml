@@ -37,7 +37,9 @@ jobs:
           # 依存するライブラリをインストールする
           - name: Install frontend dependencies
             working-directory: blog-api-frontend
-            run: npm ci
+            run: |
+              npm ci
+              npm run check:react-versions
 
           # BlogAPIを起動する
           - name: Start BlogApi
