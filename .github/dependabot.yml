@@ -26,6 +26,16 @@ updates:
   # Frontend npm
   - package-ecosystem: "npm"
     directory: "/blog-api-frontend"
+    groups:
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+        update-types:
+          - "minor"
+          - "patch"
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 3
